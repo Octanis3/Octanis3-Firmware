@@ -1,0 +1,46 @@
+# Object files
+*.o
+*.o.*
+*.ko
+*.obj
+*.elf
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+Debug/*
+*.sublime*
+Release/*
+/Debug/
+
+#Files that get modified when using CCS on Mac.
+src/makefile.libs
+src/sysbios/makefile
+src/sysbios/sysbios.am4fg
+.launches/*
+/Release/*
+/.config/*
+.xdchelp
