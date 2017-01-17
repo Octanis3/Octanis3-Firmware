@@ -316,7 +316,7 @@ void CR95HF_powerOff(){
 	_delay_cycles(10U*MS_SECOND);    // 10ms minimum, t4 datasheet (time to power up CR995HF)
 
 }
-
+/*
 // Set protocol and its parameters, in this project is used ISO 15963 a 26Kbps with CRC appended.  Reference DATASHEET 5.4
 void CR95HF_setProtocol(){
     GPIO_setOutputLowOnPin( GPIO_PORT_P1, GPIO_PIN3);		// UCB0STE/SPI_SS=0 (slave select), LOW ACTIVE
@@ -383,3 +383,4 @@ void CR95HF_cmdGoHibernateState(){
 
     GPIO_setOutputHighOnPin( GPIO_PORT_P1, GPIO_PIN3);	// UCB0STE/SPI_SS=1 (slave select), LOW ACTIVE
 }
+*/
