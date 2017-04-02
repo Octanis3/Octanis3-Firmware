@@ -1,0 +1,1 @@
+"./main.obj" "./nestbox_init.obj" "./fw/lightbarrier.obj" "./fw/rfid_reader.obj" "./fw/user_button.obj" "../nestbox_memory_map.cmd" -l"configPkg/linker.cmd" -llibmath.a -l"/Applications/ti/tirtos_msp43x_2_20_00_06/products/msp430_driverlib_2_70_01_01a/driverlib/MSP430FR5xx_6xx/ccs/MSP430FR5969.lib" -llibc.a 

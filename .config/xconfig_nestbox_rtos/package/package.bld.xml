@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--  This file conforms to the DTD xdc/bld/build.dtd -->
+<package name="xconfig_nestbox_rtos" version="" producerId="undefined">
+    <units>
+    </units>
+    <sources>
+        <srcFile name="package/cfg/nestbox_rtos_pe430X.c"/>
+    </sources>
+    <configscripts>
+        <srcFile name="/Users/raffael/Desktop/Octanis/Octanis3/ccs_workspace3/Octanis3-Firmware/nestbox_rtos.cfg"/>
+    </configscripts>
+    <makefiles>
+        <srcFile name="package.mak" src="package.bld"/>
+        <srcFile name="package/package.xdc.dep" src="package.xdc"/>
+        <srcFile name="package/cfg/nestbox_rtos_pe430X.mak" src="package.bld"/>
+        <srcFile name="package/cfg/nestbox_rtos_pe430X.oe430X.dep" src="package/cfg/nestbox_rtos_pe430X.c"/>
+        <srcFile name="package/cfg/nestbox_rtos_pe430X.dep" src="package/cfg/nestbox_rtos_pe430X.cfg"/>
+        <srcFile name="package/cfg/nestbox_rtos.xe430X.mak" src="package.bld"/>
+        <srcFile name="package/rel/xconfig_nestbox_rtos.tar.dep" src="package/rel/xconfig_nestbox_rtos.xdc.inc"/>
+    </makefiles>
+    <targets>
+        <target name="ti.targets.msp430.elf.MSP430X"
+            version="ti.targets.msp430.elf.MSP430X{1,0,16.9,0"
+            rawVersion="16.9.0"
+            platform="ti.platforms.exp430F5438"
+            isa="430X"
+            suffix="e430X"
+            rootDir="/Applications/ti/ccsv7/tools/compiler/ti-cgt-msp430_16.9.0.LTS"
+            os="undefined"
+            rts="ti.targets.msp430.rts430">
+            <model endian="little"
+                codeModel="large"
+                dataModel="restricted"/>
+        </target>
+    </targets>
+    <libraries>
+    </libraries>
+    <configurations>
+    <configuration name="nestbox_rtos"
+        pname="nestbox_rtos.pe430X"
+        target="ti.targets.msp430.elf.MSP430X"
+        platform="ti.platforms.msp430:MSP430FR5969"
+        profile="release"
+        isPartial="false"
+        xCfgScript="package/cfg/nestbox_rtos_pe430X.cfg"
+        xCfgPrefix="package/cfg/nestbox_rtos_pe430X"
+        cfgScript="/Users/raffael/Desktop/Octanis/Octanis3/ccs_workspace3/Octanis3-Firmware/nestbox_rtos.cfg"
+        cfgArgs="null"
+        />
+    </configurations>
+    <executables>
+    <executable name="nestbox_rtos"
+        pname="nestbox_rtos.xe430X"
+        target="ti.targets.msp430.elf.MSP430X"
+        platform="ti.platforms.msp430:MSP430FR5969"
+        profile="release"
+        xCfgScript="package/cfg/nestbox_rtos_pe430X.cfg"
+        xCfgPrefix="package/cfg/nestbox_rtos_pe430X"
+        cfgScript="/Users/raffael/Desktop/Octanis/Octanis3/ccs_workspace3/Octanis3-Firmware/nestbox_rtos.cfg"
+        cfgArgs="null"
+        />
+    </executables>
+    <tests>
+    <test exeName="nestbox_rtos.xe430X"
+        args=""
+        groupName="nestbox_rtos.xe430X"
+        refOutput="undefined"
+        refExitCode="0"
+        execArgs=""
+        />
+    </tests>
+    <releases relDir="package/rel/">
+    <release name="xconfig_nestbox_rtos"
+        pname="xconfig_nestbox_rtos.tar"
+        label="default"
+    >
+        <file name="package/package.bld.xml"/>
+        <file name="package/build.cfg"/>
+        <file name="package/package.xdc.inc"/>
+    </release>
+    </releases>
+    <repositories>
+    </repositories>
+</package>
