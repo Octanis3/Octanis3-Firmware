@@ -146,6 +146,7 @@ fw/rfid_reader.obj: /Applications/ti/tirtos_msp43x_2_20_00_06/products/tidrivers
 fw/rfid_reader.obj: /Applications/ti/tirtos_msp43x_2_20_00_06/products/tidrivers_msp43x_2_20_00_08/packages/ti/drivers/SPI.h
 fw/rfid_reader.obj: /Applications/ti/ccsv7/tools/compiler/ti-cgt-msp430_16.9.0.LTS/include/stdbool.h
 fw/rfid_reader.obj: /Applications/ti/ccsv7/tools/compiler/ti-cgt-msp430_16.9.0.LTS/include/stddef.h
+fw/rfid_reader.obj: ../fw/ST95HF.h
 
 ../fw/rfid_reader.c: 
 ../fw/rfid_reader.h: 
@@ -293,3 +294,4 @@ fw/rfid_reader.obj: /Applications/ti/ccsv7/tools/compiler/ti-cgt-msp430_16.9.0.L
 /Applications/ti/tirtos_msp43x_2_20_00_06/products/tidrivers_msp43x_2_20_00_08/packages/ti/drivers/SPI.h: 
 /Applications/ti/ccsv7/tools/compiler/ti-cgt-msp430_16.9.0.LTS/include/stdbool.h: 
 /Applications/ti/ccsv7/tools/compiler/ti-cgt-msp430_16.9.0.LTS/include/stddef.h: 
+../fw/ST95HF.h: 

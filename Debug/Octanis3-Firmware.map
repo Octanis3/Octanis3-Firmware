@@ -1,7 +1,7 @@
 ******************************************************************************
                   MSP430 Linker Unix v16.9.0                   
 ******************************************************************************
->> Linked Sun Apr  2 02:37:19 2017
+>> Linked Tue Apr  4 11:14:07 2017
 
 OUTPUT FILE NAME:   <Octanis3-Firmware.out>
 ENTRY POINT SYMBOL: "_c_int00_noargs_noexit"  address: 0000512e
@@ -207,7 +207,7 @@ section   page    origin      length       input sections
                   0000523a    00000008     ti.catalog.msp430.init.ae430X : Boot.oe430X (.text:.bootCodeSection:ti_catalog_msp430_init_Boot_disableWatchdog)
                   00005242    00000008     MSP430FR5969.lib : eusci_b_spi.obj (.text:EUSCI_B_SPI_getReceiveBufferAddress)
                   0000524a    00000008                      : eusci_b_spi.obj (.text:EUSCI_B_SPI_getTransmitBufferAddress)
-                  00005252    00000008     nestbox_init.obj (.text:nb_initGeneral)
+                  00005252    00000008     nestbox_init.obj (.text:nbox_initGeneral)
                   0000525a    00000008     sysbios.ae430X : BIOS.obj (.text:ti_sysbios_family_msp430_Hwi_switchFromBootStack__E)
                   00005262    00000008                    : BIOS.obj (.text:ti_sysbios_family_msp430_TaskSupport_getStackAlignment__E)
                   0000526a    00000008     ti.targets.msp430.rts430.ae430X : Gate.oe430X (.text:xdc_runtime_Gate_enterSystem__E)
@@ -565,7 +565,7 @@ xdc.noload
                   000137e6    0000002a     nestbox_rtos_pe430X.oe430X (.text:ti_sysbios_knl_Task_Object__get__S)
                   00013810    0000002a     sysbios.ae430X : BIOS.obj (.text:ti_sysbios_knl_Task_sleepTimeout__I)
                   0001383a    00000028     MSP430FR5969.lib : dma.obj (.text:DMA_setDstAddress)
-                  00013862    00000028     nestbox_init.obj (.text:nb_initSPI)
+                  00013862    00000028     nestbox_init.obj (.text:nbox_initSPI)
                   0001388a    00000028     nestbox_rtos_pe430X.oe430X (.text:ti_sysbios_BIOS_startFunc__I)
                   000138b2    00000028     ti.targets.msp430.rts430.ae430X : Text.oe430X (.text:xdc_runtime_Text_cordText__E)
                   000138da    00000026     MSP430FR5969.lib : dma.obj (.text:DMA_setSrcAddress)
@@ -1678,9 +1678,9 @@ ffffffff  __c_args__
 0001197e  main                                                       
 00013e5a  memcpy                                                     
 00013e02  memset                                                     
-00011bca  nb_initGPIO                                                
-00005252  nb_initGeneral                                             
-00013862  nb_initSPI                                                 
+00011bca  nbox_initGPIO                                              
+00005252  nbox_initGeneral                                           
+00013862  nbox_initSPI                                               
 00013fac  rfid_Task                                                  
 00004400  rfid_task_Stack                                            
 00005084  rfid_task_Struct                                           
@@ -2932,7 +2932,7 @@ address   name
 0000523a  ti_catalog_msp430_init_Boot_disableWatchdog                
 00005242  EUSCI_B_SPI_getReceiveBufferAddress                        
 0000524a  EUSCI_B_SPI_getTransmitBufferAddress                       
-00005252  nb_initGeneral                                             
+00005252  nbox_initGeneral                                           
 0000525a  ti_sysbios_family_msp430_Hwi_switchFromBootStack__E        
 0000525a  ti_sysbios_hal_Hwi_HwiProxy_switchFromBootStack__E         
 00005262  ti_sysbios_family_msp430_TaskSupport_getStackAlignment__E  
@@ -3129,7 +3129,7 @@ address   name
 00011a44  ti_sysbios_heaps_HeapMem_free__E                           
 00011b0a  xdc_runtime_Startup_startMods__I                           
 00011bca  GPIO_init                                                  
-00011bca  nb_initGPIO                                                
+00011bca  nbox_initGPIO                                              
 00011c82  ti_sysbios_knl_Task_schedule__I                            
 00011d3a  ti_sysbios_knl_Swi_schedule__I                             
 00011dee  ti_sysbios_knl_Swi_run__I                                  
@@ -3217,7 +3217,7 @@ address   name
 000137e6  ti_sysbios_knl_Task_Object__get__S                         
 00013810  ti_sysbios_knl_Task_sleepTimeout__I                        
 0001383a  DMA_setDstAddress                                          
-00013862  nb_initSPI                                                 
+00013862  nbox_initSPI                                               
 0001388a  ti_sysbios_BIOS_startFunc__I                               
 000138b2  xdc_runtime_Text_cordText__E                               
 000138da  DMA_setSrcAddress                                          

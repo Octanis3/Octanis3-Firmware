@@ -10,6 +10,7 @@ GEN_CMDS__FLAG := -l"configPkg/linker.cmd"
 ORDERED_OBJS += \
 "./main.obj" \
 "./nestbox_init.obj" \
+"./fw/ST95HF.obj" \
 "./fw/lightbarrier.obj" \
 "./fw/rfid_reader.obj" \
 "./fw/user_button.obj" \
@@ -160,8 +161,8 @@ Octanis3-Firmware.hex: $(EXE_OUTPUTS)
 clean:
 	-$(RM) $(GEN_CMDS__QUOTED)$(GEN_MISC_FILES__QUOTED)$(BIN_OUTPUTS__QUOTED)$(GEN_FILES__QUOTED)$(EXE_OUTPUTS__QUOTED)$(GEN_OPTS__QUOTED)
 	-$(RMDIR) $(GEN_MISC_DIRS__QUOTED)
-	-$(RM) "main.obj" "nestbox_init.obj" "fw/lightbarrier.obj" "fw/rfid_reader.obj" "fw/user_button.obj" 
-	-$(RM) "main.d" "nestbox_init.d" "fw/lightbarrier.d" "fw/rfid_reader.d" "fw/user_button.d" 
+	-$(RM) "main.obj" "nestbox_init.obj" "fw/ST95HF.obj" "fw/lightbarrier.obj" "fw/rfid_reader.obj" "fw/user_button.obj" 
+	-$(RM) "main.d" "nestbox_init.d" "fw/ST95HF.d" "fw/lightbarrier.d" "fw/rfid_reader.d" "fw/user_button.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

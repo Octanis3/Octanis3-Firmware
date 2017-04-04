@@ -55,30 +55,30 @@ extern "C" {
 
 
 
-#define Board_initGeneral           nb_initGeneral
-#define Board_initGPIO              nb_initGPIO
-#define Board_initSPI               nb_initSPI
-#define Board_initUART              nb_initUART
-#define Board_initWatchdog          nb_initWatchdog
+#define Board_initGeneral           nbox_initGeneral
+#define Board_initGPIO              nbox_initGPIO
+#define Board_initSPI               nbox_initSPI
+#define Board_initUART              nbox_initUART
+#define Board_initWatchdog          nbox_initWatchdog
 
 
-#define Board_button           		nb_button
+#define Board_button           		nbox_button
 #define Board_button_lp          	lp_button
 
-#define Board_led_green          	nb_led_green
-#define Board_led_blue          		nb_led_blue
-#define Board_LED_ON					nb_LED_ON
-#define Board_LED_OFF				nb_LED_OFF
+#define Board_led_green          	nbox_led_green
+#define Board_led_blue          		nbox_led_blue
+#define Board_LED_ON					nbox_LED_ON
+#define Board_LED_OFF				nbox_LED_OFF
 
-#define Board_led_IR          		nb_led_ir
+#define Board_led_IR          		nbox_led_ir
 
-#define Board_SPI0                  nb_SPI0
+#define Board_SPI0                  nbox_SPI
 
 #define Board_USBDEVICE             0
 
-#define Board_UART0                 nb_UARTA1
+#define Board_UART0                 nbox_UARTA1
 
-#define Board_WATCHDOG0             nb_WATCHDOG
+#define Board_WATCHDOG0             nbox_WATCHDOG
 
 #define CPY_BUFF_SIZE               256
 

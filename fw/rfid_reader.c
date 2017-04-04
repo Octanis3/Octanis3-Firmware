@@ -6,6 +6,7 @@
  */
 
 #include "rfid_reader.h"
+#include "ST95HF.h"
 
 void rfid_Task()
 {

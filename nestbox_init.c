@@ -31,9 +31,9 @@
  */
 
 /*
- *  ======== nb.c ========
+ *  ======== nbox.c ========
  *  This file is responsible for setting up the board specific items for the
- *  nb board.
+ *  nbox board.
  */
 
 #include <xdc/std.h>
@@ -61,9 +61,9 @@ const SPI_Config SPI_config[];
  *  =============================== General ===============================
  */
 /*
- *  ======== nb_initGeneral ========
+ *  ======== nbox_initGeneral ========
  */
-void nb_initGeneral(void) {
+void nbox_initGeneral(void) {
     /*
      * Disable the GPIO power-on default high-impedance mode to activate
      * previously configured port settings
@@ -75,11 +75,11 @@ void nb_initGeneral(void) {
  *  =============================== DMA ===============================
  */
 /*
- *  ======== nb_isrDMA ========
+ *  ======== nbox_isrDMA ========
  *  This is a application defined DMA ISR. This ISR must map and call the
  *  appropriate Driver_event(handle) API to indicate completed DMA transfers.
  */
-Void nb_isrDMA(UArg arg)
+Void nbox_isrDMA(UArg arg)
 {
     /* Call the SPI DMA function, passing the SPI handle used for WiFi */
     SPI_serviceISR((SPI_Handle) &(SPI_config[0]));
@@ -99,7 +99,7 @@ Void nb_isrDMA(UArg arg)
 /*
  * Array of Pin configurations
  * NOTE: The order of the pin configurations must coincide with what was
- *       defined in nb.h
+ *       defined in nbox.h
  * NOTE: Pins not used for interrupts should be placed at the end of the
  *       array.  Callback entries can be omitted from callbacks array to
  *       reduce memory usage.
@@ -123,7 +123,7 @@ GPIO_PinConfig gpioPinConfigs[] = {
 /*
  * Array of callback function pointers
  * NOTE: The order of the pin configurations must coincide with what was
- *       defined in nb.h
+ *       defined in nbox.h
  * NOTE: Pins not used for interrupts can be omitted from callbacks array to
  *       reduce memory usage (if placed at end of gpioPinConfigs array).
  */
@@ -141,9 +141,9 @@ const GPIOMSP430_Config GPIOMSP430_config = {
 };
 
 /*
- *  ======== nb_initGPIO ========
+ *  ======== nbox_initGPIO ========
  */
-void nb_initGPIO(void)
+void nbox_initGPIO(void)
 {
     /* Initialize peripheral and pins */
     GPIO_init();
@@ -162,10 +162,10 @@ void nb_initGPIO(void)
 #include <ti/drivers/SPI.h>
 #include <ti/drivers/spi/SPIEUSCIBDMA.h>
 
-SPIEUSCIBDMA_Object spiEUSCIBDMAObjects[nb_SPICOUNT];
-uint8_t spiEUSCIBDMAscratchBuf[nb_SPICOUNT];
+SPIEUSCIBDMA_Object spiEUSCIBDMAObjects[nbox_SPICOUNT];
+uint8_t spiEUSCIBDMAscratchBuf[nbox_SPICOUNT];
 
-const SPIEUSCIBDMA_HWAttrs spiEUSCIBDMAHWAttrs[nb_SPICOUNT] = {
+const SPIEUSCIBDMA_HWAttrs spiEUSCIBDMAHWAttrs[nbox_SPICOUNT] = {
     {
         .baseAddr = EUSCI_B0_BASE,
         .clockSource = EUSCI_B_SPI_CLOCKSOURCE_SMCLK,
@@ -194,9 +194,9 @@ const SPI_Config SPI_config[] = {
 };
 
 /*
- *  ======== nb_initSPI ========
+ *  ======== nbox_initSPI ========
  */
-void nb_initSPI(void)
+void nbox_initSPI(void)
 {
     /* EUSCIB0 */
     /*
@@ -235,7 +235,7 @@ void nb_initSPI(void)
 #include <ti/drivers/UART.h>
 #include <ti/drivers/uart/UARTEUSCIA.h>
 
-UARTEUSCIA_Object uartEUSCIAObjects[nb_UARTCOUNT];
+UARTEUSCIA_Object uartEUSCIAObjects[nbox_UARTCOUNT];
 
 /*
  * The baudrate dividers were determined by using the MSP430 baudrate
@@ -256,7 +256,7 @@ const UARTEUSCIA_BaudrateConfig uartEUSCIABaudrates[] = {
     {9600,   32768,  3, 0, 3, 0},
 };
 
-const UARTEUSCIA_HWAttrs uartEUSCIAHWAttrs[nb_UARTCOUNT] = {
+const UARTEUSCIA_HWAttrs uartEUSCIAHWAttrs[nbox_UARTCOUNT] = {
     {
         .baseAddr = EUSCI_A0_BASE,
         .clockSource = EUSCI_A_UART_CLOCKSOURCE_SMCLK,
@@ -276,9 +276,9 @@ const UART_Config UART_config[] = {
 };
 
 /*
- *  ======== nb_initUART ========
+ *  ======== nbox_initUART ========
  */
-void nb_initUART(void)
+void nbox_initUART(void)
 {
     /* P4.4,5 = USCI_A1 TXD/RXD */
     GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2,
@@ -302,9 +302,9 @@ void nb_initUART(void)
 #include <ti/drivers/Watchdog.h>
 #include <ti/drivers/watchdog/WatchdogMSP430.h>
 
-WatchdogMSP430_Object watchdogMSP430Objects[nb_WATCHDOGCOUNT];
+WatchdogMSP430_Object watchdogMSP430Objects[nbox_WATCHDOGCOUNT];
 
-const WatchdogMSP430_HWAttrs watchdogMSP430HWAttrs[nb_WATCHDOGCOUNT] = {
+const WatchdogMSP430_HWAttrs watchdogMSP430HWAttrs[nbox_WATCHDOGCOUNT] = {
     {
         .baseAddr = WDT_A_BASE,
         .sfrAddr = SFR_BASE,
@@ -323,9 +323,9 @@ const Watchdog_Config Watchdog_config[] = {
 };
 
 /*
- *  ======== nb_initWatchdog ========
+ *  ======== nbox_initWatchdog ========
  */
-void nb_initWatchdog(void)
+void nbox_initWatchdog(void)
 {
     /* Initialize the Watchdog driver */
     Watchdog_init();

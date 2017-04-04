@@ -50,52 +50,52 @@ extern "C" {
 #endif
 
 /* LEDs on nestbox_board are active high. */
-#define nb_LED_OFF (0)
-#define nb_LED_ON  (1)
+#define nbox_LED_OFF (0)
+#define nbox_LED_ON  (1)
 
 /*!
- *  @def    nb_GPIOName
- *  @brief  Enum of GPIO names on the nb dev board
+ *  @def    nbox_GPIOName
+ *  @brief  Enum of GPIO names on the nbox dev board
  */
-typedef enum nb_GPIOName {
-    nb_button = 0,
+typedef enum nbox_GPIOName {
+    nbox_button = 0,
 	lp_button, // bottom left button on launchpad
-    nb_led_green,
-    nb_led_blue,
-	nb_led_ir,
+    nbox_led_green,
+    nbox_led_blue,
+	nbox_led_ir,
 
-    nb_GPIOCOUNT
-} nb_GPIOName;
-
-/*!
- *  @def    nb_SPIName
- *  @brief  Enum of SPI names on the nb dev board
- */
-typedef enum nb_SPIName {
-    nb_SPIB0 = 0,
-
-    nb_SPICOUNT
-} nb_SPIName;
+    nbox_GPIOCOUNT
+} nbox_GPIOName;
 
 /*!
- *  @def    nb_UARTName
- *  @brief  Enum of UART names on the nb dev board
+ *  @def    nbox_SPIName
+ *  @brief  Enum of SPI names on the nbox dev board
  */
-typedef enum nb_UARTName {
-    nb_UARTA1 = 0,
+typedef enum nbox_SPIName {
+    nbox_SPI = 0,
 
-    nb_UARTCOUNT
-} nb_UARTName;
+    nbox_SPICOUNT
+} nbox_SPIName;
 
 /*!
- *  @def    nb_WatchdogName
- *  @brief  Enum of Watchdog names on the nb dev board
+ *  @def    nbox_UARTName
+ *  @brief  Enum of UART names on the nbox dev board
  */
-typedef enum nb_WatchdogName {
-    nb_WATCHDOG = 0,
+typedef enum nbox_UARTName {
+    nbox_UARTA1 = 0,
 
-    nb_WATCHDOGCOUNT
-} nb_WatchdogName;
+    nbox_UARTCOUNT
+} nbox_UARTName;
+
+/*!
+ *  @def    nbox_WatchdogName
+ *  @brief  Enum of Watchdog names on the nbox dev board
+ */
+typedef enum nbox_WatchdogName {
+    nbox_WATCHDOG = 0,
+
+    nbox_WATCHDOGCOUNT
+} nbox_WatchdogName;
 
 
 /*!
@@ -103,7 +103,7 @@ typedef enum nb_WatchdogName {
  *
  *  This function initializes the general board specific settings.
  */
-extern void nb_initGeneral(void);
+extern void nbox_initGeneral(void);
 
 /*!
  *  @brief  Initialize board specific GPIO settings
@@ -114,7 +114,7 @@ extern void nb_initGeneral(void);
  *  The GPIOs controlled by the GPIO module are determined by the GPIO_PinConfig
  *  variable.
  */
-extern void nb_initGPIO(void);
+extern void nbox_initGPIO(void);
 
 /*!
  *  @brief  Initialize board specific SPI settings
@@ -125,7 +125,7 @@ extern void nb_initGPIO(void);
  *  The SPI peripherals controlled by the SPI module are determined by the
  *  SPI_config variable.
  */
-extern void nb_initSPI(void);
+extern void nbox_initSPI(void);
 
 /*!
  *  @brief  Initialize board specific UART settings
@@ -136,7 +136,7 @@ extern void nb_initSPI(void);
  *  The UART peripherals controlled by the UART module are determined by the
  *  UART_config variable.
  */
-extern void nb_initUART(void);
+extern void nbox_initUART(void);
 
 /*!
  *  @brief  Initialize board specific Watchdog settings
@@ -147,7 +147,7 @@ extern void nb_initUART(void);
  *  The Watchdog peripherals controlled by the Watchdog module are determined
  *  by the Watchdog_config variable.
  */
-extern void nb_initWatchdog(void);
+extern void nbox_initWatchdog(void);
 
 
 
