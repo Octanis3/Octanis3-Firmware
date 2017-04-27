@@ -9,8 +9,8 @@
 #define FW_ST95HF_H_
 
 
-void init_spi();
-int init_st95hf();
+void init_st95_spi();
+int startup_st95hf();
 
 
 #endif /* FW_ST95HF_H_ */
