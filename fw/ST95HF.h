@@ -10,7 +10,7 @@
 
 
 void init_st95_spi();
-int startup_st95hf();
+int startup_st95();
 
 
 #endif /* FW_ST95HF_H_ */

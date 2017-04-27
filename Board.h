@@ -72,7 +72,11 @@ extern "C" {
 
 #define Board_led_IR          		nbox_led_ir
 
-#define Board_SPI0                  nbox_SPI
+// NFC module definitions
+#define Board_SPI0                  	nbox_SPI
+#define Board_nfc_spi_sel_n			nbox_spi_nfc_sel_n
+#define Board_nfc_wakeup_n			nbox_nfc_wakeup_n
+#define Board_nfc_irq_n				nbox_nfc_irq_n
 
 #define Board_USBDEVICE             0
 

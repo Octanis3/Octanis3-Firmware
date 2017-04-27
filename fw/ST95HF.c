@@ -41,7 +41,14 @@ void close_st95_spi()
 	SPI_close(st95_spi);
 }
 
-int spi_transfer(unsigned int n, UChar* transmitBuffer, UChar* receiveBuffer)
+void spi_sel()
+{GPIO_write(Board_nfc_spi_sel_n, 0);}
+void spi_unsel()
+{GPIO_write(Board_nfc_spi_sel_n, 1);}
+
+#define RELEASE_SEL 	0
+#define KEEP_SEL		1
+int spi_transfer(unsigned int n, UChar* transmitBuffer, UChar* receiveBuffer, Bool keep_selected)
 {
 	SPI_Transaction  spiTransaction;
 	Bool	 transferOK;
@@ -49,7 +56,12 @@ int spi_transfer(unsigned int n, UChar* transmitBuffer, UChar* receiveBuffer)
 	spiTransaction.count = n;
 	spiTransaction.txBuf = transmitBuffer;
 	spiTransaction.rxBuf = receiveBuffer;
-	transferOK =  SPI_transfer(st95_spi, &spiTransaction);
+
+	spi_sel();
+	transferOK = SPI_transfer(st95_spi, &spiTransaction);
+	if(keep_selected == 0)
+		spi_unsel();
+
 	if (!transferOK) {
 	   return 0;/* Error in SPI transfer or transfer is already in progress */
 	}
@@ -57,9 +69,10 @@ int spi_transfer(unsigned int n, UChar* transmitBuffer, UChar* receiveBuffer)
 	return 1;
 }
 
-UChar spi_transfer_byte(UChar command)
+//!!! NOTE that SPI_SEL has to be done externally!!
+UChar spi_send_byte(UChar command)
 {
-	unsigned int n = 2; // number of frames to be transferred
+	unsigned int n = 1; // number of frames to be transferred
 
 	SPI_Transaction  spiTransaction;
 
@@ -77,40 +90,60 @@ UChar spi_transfer_byte(UChar command)
 	   return 0;/* Error in SPI transfer or transfer is already in progress */
 	}
 
-	return receiveBuffer[1];
+	return receiveBuffer[0];
 }
 
-
-int startup_st95hf()
+void spi_poll()
 {
-	// I just put an example on how to initialize a transfer. Adapt code accordingly:
-	// example for Transferring n 4-8 bit SPI frames:
-
-	unsigned int n = 2; // number of frames to be transferred
-
-	SPI_Transaction  spiTransaction;
-	UChar 	transmitBuffer[n];
-	UChar 	receiveBuffer[n];
-	Bool	 transferOK;
-
-	// if needed, redefine the data size. CLOSE the spi first by calling close_spi()
-//	SPI_Params_init(&spiParams);
-//	spiParams.dataSize = 6;  /* dataSize can range from 4 to 8 bits */
-//	spi = SPI_open(peripheralNum, &spiParams);
-
-	//TODO: fill in frames:
-	//transmitBuffer[0] = SOME_COMMAND;
-	//transmitBuffer[1] = 0x00; // dummy (if we need to wait for reply, SPI still needs to send something empty at the same time.)
-
-	spiTransaction.count = n;
-	spiTransaction.txBuf = transmitBuffer;
-	spiTransaction.rxBuf = receiveBuffer;
-	transferOK =  SPI_transfer(st95_spi, &spiTransaction);
-	if (!transferOK) {
-	   /* Error in SPI transfer or transfer is already in progress */
+	UChar answer = 0;
+	spi_sel();
+	while((answer && 0x08) == 0)
+	{
+		answer = spi_send_byte(0x03);
 	}
 
+	spi_unsel();
+}
 
+// inspired from http://blog.solutions-cubed.com/near-field-communication-nfc-with-the-arduino/
+int startup_st95()
+{
+	Task_sleep(11); // 10ms minimum, t4 datasheet (time to power up CR995HF)
+						// + 100us min, t0 in datasheet
+
+	GPIO_write(Board_nfc_wakeup_n, 0);
+	Task_sleep(1); // 10us minumum, t1 in datasheet
+	GPIO_write(Board_nfc_wakeup_n, 1);
+
+	Task_sleep(10); //ready in <10ms, t3 in datasheet
+
+	UChar transmitBuffer[3] = {0,1,0};
+	UChar receiveBuffer[3] = {0,0,0};
+
+	spi_transfer(3, transmitBuffer, receiveBuffer, RELEASE_SEL);
+
+	Task_sleep(1);
+	spi_poll();
+	Task_sleep(1);
+
+	transmitBuffer[0] = 0x03; // SPI control byte for read
+	spi_transfer(3, transmitBuffer, receiveBuffer, KEEP_SEL);
+
+	UChar response_code = receiveBuffer[1];
+	unsigned int readlength = receiveBuffer[2];
+	UChar dummy_tx[readlength];
+	UChar idn_response[readlength];
+	spi_transfer(readlength, dummy_tx, idn_response, RELEASE_SEL);
+
+	if ((response_code == 0) & (readlength == 15))
+	{
+		// received good ID response
+		GPIO_write(Board_led_green,1);
+	}
+	else
+	{
+	    //BAD RESPONSE TO IDN COMMAND
+	}
 
 	return 0;
 }

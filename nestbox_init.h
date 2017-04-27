@@ -58,11 +58,17 @@ extern "C" {
  *  @brief  Enum of GPIO names on the nbox dev board
  */
 typedef enum nbox_GPIOName {
-    nbox_button = 0,
+    //inputs
+	nbox_button = 0,
 	lp_button, // bottom left button on launchpad
+	nbox_nfc_irq_n,
+
+	//outputs
     nbox_led_green,
     nbox_led_blue,
 	nbox_led_ir,
+	nbox_spi_nfc_sel_n,
+	nbox_nfc_wakeup_n,
 
     nbox_GPIOCOUNT
 } nbox_GPIOName;
