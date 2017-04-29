@@ -34,11 +34,12 @@ void lightBarrier_init()
 
 void lightBarrier_Task()
 {
-	Hwi_enable(); //not sure if needed here??
+//	Hwi_enable(); //not sure if needed here??
+//
+//	GPIO_enableInt(lp_button);
 
-	GPIO_enableInt(lp_button);
-
-
+	GPIO_write(Board_led_blue,1);
+	GPIO_write(Board_led_green,0);
 
     while (1) {
         Task_sleep(100);

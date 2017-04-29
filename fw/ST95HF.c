@@ -22,7 +22,7 @@ void init_st95_spi()
 	spiParams.transferCallbackFxn = NULL;
 	spiParams.frameFormat = SPI_POL0_PHA0; // The ST95HF supports (CPOL = 0, CPHA = 0) and (CPOL = 1, CPHA = 1) modes.
 	spiParams.mode = SPI_MASTER;
-	spiParams.bitRate = 500000; /*!< SPI bit rate in Hz */ //max can be 2 MHz.
+//	spiParams.bitRate = 500000; /*!< SPI bit rate in Hz */ //max can be 2 MHz.
 	// spiParams.dataSize = ????; /*!< SPI data frame size in bits (default = 8) */
 	// NOTE:  .bitOrder = EUSCI_B_SPI_MSB_FIRST is defined in nestbox_init.
 
@@ -30,6 +30,7 @@ void init_st95_spi()
 	st95_spi = SPI_open(Board_SPI0, &spiParams);
 	if (st95_spi == NULL) {
 	   /* Error opening SPI */
+		GPIO_write(Board_led_IR,1);
 	}
 
 
@@ -69,6 +70,10 @@ int spi_transfer(unsigned int n, UChar* transmitBuffer, UChar* receiveBuffer, Bo
 	return 1;
 }
 
+
+UChar transmitBuffer3[3] = {0,1,0};
+UChar receiveBuffer3[3] = {0,0,0};
+
 //!!! NOTE that SPI_SEL has to be done externally!!
 UChar spi_send_byte(UChar command)
 {
@@ -77,20 +82,18 @@ UChar spi_send_byte(UChar command)
 	SPI_Transaction  spiTransaction;
 
 	Bool	 transferOK;
-	UChar transmitBuffer[n];
-	UChar receiveBuffer[n];
 
-	transmitBuffer[0] = command;
+	transmitBuffer3[0] = command;
 
 	spiTransaction.count = n;
-	spiTransaction.txBuf = transmitBuffer;
-	spiTransaction.rxBuf = receiveBuffer;
+	spiTransaction.txBuf = transmitBuffer3;
+	spiTransaction.rxBuf = receiveBuffer3;
 	transferOK =  SPI_transfer(st95_spi, &spiTransaction);
 	if (!transferOK) {
 	   return 0;/* Error in SPI transfer or transfer is already in progress */
 	}
 
-	return receiveBuffer[0];
+	return receiveBuffer3[0];
 }
 
 void spi_poll()
@@ -105,6 +108,8 @@ void spi_poll()
 	spi_unsel();
 }
 
+
+
 // inspired from http://blog.solutions-cubed.com/near-field-communication-nfc-with-the-arduino/
 int startup_st95()
 {
@@ -117,20 +122,18 @@ int startup_st95()
 
 	Task_sleep(10); //ready in <10ms, t3 in datasheet
 
-	UChar transmitBuffer[3] = {0,1,0};
-	UChar receiveBuffer[3] = {0,0,0};
 
-	spi_transfer(3, transmitBuffer, receiveBuffer, RELEASE_SEL);
+	spi_transfer(3, transmitBuffer3, receiveBuffer3, RELEASE_SEL);
 
 	Task_sleep(1);
 	spi_poll();
 	Task_sleep(1);
 
-	transmitBuffer[0] = 0x03; // SPI control byte for read
-	spi_transfer(3, transmitBuffer, receiveBuffer, KEEP_SEL);
+	transmitBuffer3[0] = 0x03; // SPI control byte for read
+	spi_transfer(3, transmitBuffer3, receiveBuffer3, KEEP_SEL);
 
-	UChar response_code = receiveBuffer[1];
-	unsigned int readlength = receiveBuffer[2];
+	UChar response_code = receiveBuffer3[1];
+	unsigned int readlength = receiveBuffer3[2];
 	UChar dummy_tx[readlength];
 	UChar idn_response[readlength];
 	spi_transfer(readlength, dummy_tx, idn_response, RELEASE_SEL);

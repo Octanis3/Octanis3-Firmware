@@ -15,4 +15,6 @@ void rfid_Task();
 
 
 
+void nfc_wakeup_isr();
+
 #endif /* FW_RFID_READER_H_ */

@@ -20,7 +20,7 @@ void user_button_isr(unsigned int index)
 	GPIO_toggle(Board_led_IR);
 	//check interrupt source
 
-	Hwi_enable(); //not sure if needed here??
+//	Hwi_enable(); //not sure if needed here??
 
-	GPIO_enableInt(lp_button);//not sure if needed here??
+//	GPIO_enableInt(lp_button);//not sure if needed here??
 }

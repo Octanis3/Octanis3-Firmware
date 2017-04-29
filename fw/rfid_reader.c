@@ -73,3 +73,15 @@ void rfid_Task()
     }
 }
 
+
+void nfc_wakeup_isr()
+{
+
+	GPIO_toggle(Board_led_blue);
+	//check interrupt source
+
+//	Hwi_enable(); //not sure if needed here??
+
+//	GPIO_enableInt(lp_button);//not sure if needed here??
+}
+

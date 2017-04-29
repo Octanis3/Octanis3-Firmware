@@ -54,6 +54,7 @@
 #include <ti/drivers/SPI.h>
 
 #include "fw/user_button.h"
+#include "fw/rfid_reader.h"
 
 const SPI_Config SPI_config[];
 
@@ -137,7 +138,8 @@ GPIO_PinConfig gpioPinConfigs[] = {
  */
 GPIO_CallbackFxn gpioCallbackFunctions[] = {
 	user_button_isr,  /* nestbox user button */
-	user_button_isr   /* launchpad user button  */
+	user_button_isr,   /* launchpad user button  */
+	nfc_wakeup_isr
 };
 
 /* The device-specific GPIO_config structure */

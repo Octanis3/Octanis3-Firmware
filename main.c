@@ -99,12 +99,14 @@ int main(void)
 	Task_Params_init(&lb_taskParams);
 	lb_taskParams.stackSize = LB_TASKSTACKSIZE;
 	lb_taskParams.stack = &lb_task_Stack;
+	lb_taskParams.priority = 2;
 	Task_construct(&lb_task_Struct, (Task_FuncPtr)lightBarrier_Task, &lb_taskParams, NULL);
 
-	/* Construct ligthBarrier Task  thread */
+	/* Construct rfidBarrier Task  thread */
 	Task_Params_init(&rfid_taskParams);
 	rfid_taskParams.stackSize = RFID_TASKSTACKSIZE;
 	rfid_taskParams.stack = &rfid_task_Stack;
+	lb_taskParams.priority = 1; // <--- MUST HAVE LOWER PRIORITY, OTHERWISE THE SPI POLLING MAY GET IT STUCK AND HANG OTHER TASKS.
 	Task_construct(&rfid_task_Struct, (Task_FuncPtr)rfid_Task, &rfid_taskParams, NULL);
 
 
