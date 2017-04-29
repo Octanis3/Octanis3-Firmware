@@ -12,8 +12,12 @@
 // global handle, to be used to perform a spi_read/write action
 SPI_Handle  st95_spi;
 
+// SPI data buffers
+UChar spi_transmitBuffer[16];
+UChar spi_receiveBuffer[16];
 
-void init_st95_spi()
+
+void st95_init_spi()
 {
 	// initialize
 	SPI_Params  spiParams;
@@ -37,7 +41,7 @@ void init_st95_spi()
 
 }
 
-void close_st95_spi()
+void st95_close_spi()
 {
 	SPI_close(st95_spi);
 }
@@ -71,9 +75,6 @@ int spi_transfer(unsigned int n, UChar* transmitBuffer, UChar* receiveBuffer, Bo
 }
 
 
-UChar transmitBuffer3[3] = {0,1,0};
-UChar receiveBuffer3[3] = {0,0,0};
-
 //!!! NOTE that SPI_SEL has to be done externally!!
 UChar spi_send_byte(UChar command)
 {
@@ -83,17 +84,17 @@ UChar spi_send_byte(UChar command)
 
 	Bool	 transferOK;
 
-	transmitBuffer3[0] = command;
+	spi_transmitBuffer[0] = command;
 
 	spiTransaction.count = n;
-	spiTransaction.txBuf = transmitBuffer3;
-	spiTransaction.rxBuf = receiveBuffer3;
+	spiTransaction.txBuf = spi_transmitBuffer;
+	spiTransaction.rxBuf = spi_receiveBuffer;
 	transferOK =  SPI_transfer(st95_spi, &spiTransaction);
 	if (!transferOK) {
 	   return 0;/* Error in SPI transfer or transfer is already in progress */
 	}
 
-	return receiveBuffer3[0];
+	return spi_receiveBuffer[0];
 }
 
 void spi_poll()
@@ -111,7 +112,7 @@ void spi_poll()
 
 
 // inspired from http://blog.solutions-cubed.com/near-field-communication-nfc-with-the-arduino/
-int startup_st95()
+int st95_startup()
 {
 	Task_sleep(11); // 10ms minimum, t4 datasheet (time to power up CR995HF)
 						// + 100us min, t0 in datasheet
@@ -122,24 +123,25 @@ int startup_st95()
 
 	Task_sleep(10); //ready in <10ms, t3 in datasheet
 
+	spi_transmitBuffer[0] = 0x00; //send command
+	spi_transmitBuffer[1] = 0x01; //command = IDN
 
-	spi_transfer(3, transmitBuffer3, receiveBuffer3, RELEASE_SEL);
+	spi_transfer(3, spi_transmitBuffer, spi_receiveBuffer, RELEASE_SEL);
 
 	Task_sleep(1);
 	spi_poll();
 	Task_sleep(1);
 
-	transmitBuffer3[0] = 0x03; // SPI control byte for read
-	spi_transfer(3, transmitBuffer3, receiveBuffer3, KEEP_SEL);
+	spi_transmitBuffer[0] = 0x02; // SPI control byte for read
+	spi_transfer(3, spi_transmitBuffer, spi_receiveBuffer, KEEP_SEL);
 
-	UChar response_code = receiveBuffer3[1];
-	unsigned int readlength = receiveBuffer3[2];
-	UChar dummy_tx[readlength];
-	UChar idn_response[readlength];
-	spi_transfer(readlength, dummy_tx, idn_response, RELEASE_SEL);
+	UChar response_code = spi_receiveBuffer[1];
+	UChar readlength = spi_receiveBuffer[2];
 
 	if ((response_code == 0) & (readlength == 15))
 	{
+		spi_transfer(readlength, spi_transmitBuffer, spi_receiveBuffer, RELEASE_SEL);
+
 		// received good ID response
 		GPIO_write(Board_led_green,1);
 	}
@@ -149,6 +151,12 @@ int startup_st95()
 	}
 
 	return 0;
+}
+
+int st95_echo()
+{
+	return 0;
+
 }
 
 

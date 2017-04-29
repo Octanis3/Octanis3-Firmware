@@ -11,8 +11,10 @@
 void rfid_Task()
 {
 	/* Initialize SPI structures*/
-	init_st95_spi();
-	startup_st95();
+	st95_init_spi();
+	st95_startup();
+
+	st95_echo();
 
 	/* Initialize ST95HF as reader by default*/
 
@@ -76,6 +78,10 @@ void rfid_Task()
 
 void nfc_wakeup_isr()
 {
+//IMPORTANT NOTE:
+	/*When the ST95HF is configure to use the SPI serial interface, pin IRQ_OUT is used to give additional information to user. When the ST95HF is ready to send back a reply, it sends an Interrupt Request by setting a low level on pin IRQ_OUT, which remains low until the host reads the data.
+  The application can use the Interrupt mode to skip the polling stage.
+  */
 
 	GPIO_toggle(Board_led_blue);
 	//check interrupt source
