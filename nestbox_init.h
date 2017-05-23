@@ -66,7 +66,7 @@ typedef enum nbox_GPIOName {
 	//outputs
     nbox_led_green,
     nbox_led_blue,
-	nbox_led_ir,
+//	nbox_led_ir,
 	nbox_spi_nfc_sel_n,
 	nbox_nfc_wakeup_n,
 

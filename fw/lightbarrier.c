@@ -20,7 +20,7 @@ void lightBarrier_init()
     /*
     int main(void)
     {*/
-    WDTCTL = WDTPW | WDTHOLD;                 // Stop WDT
+//---    WDTCTL = WDTPW | WDTHOLD;                 // Stop WDT
 
     // Configure GPIO
     P1DIR |= BIT0 | BIT1;                     // P1.0 and P1.1 output
@@ -28,7 +28,7 @@ void lightBarrier_init()
 
     // Disable the GPIO power-on default high-impedance mode to activate
     // previously configured port settings
-    PM5CTL0 &= ~LOCKLPM5;
+//---    PM5CTL0 &= ~LOCKLPM5;
 
     CSCTL0_H = CSKEY >> 8;                    // Unlock CS registers
     CSCTL1 = DCOFSEL_6;                       // Set DCO = 8MHz
@@ -44,8 +44,8 @@ void lightBarrier_init()
     TA0CCR2 = 250;                            // CCR2 PWM duty cycle
     TA0CTL = TASSEL__SMCLK | MC__UP | TACLR;  // SMCLK, up mode, clear TAR
 
-    __bis_SR_register(LPM0_bits);             // Enter LPM0
-    __no_operation();                         // For debugger
+//---    __bis_SR_register(LPM0_bits);             // Enter LPM0
+//---    __no_operation();                         // For debugger
     //}
 
 	//configure P1.3 and P1.4 as analog inputs

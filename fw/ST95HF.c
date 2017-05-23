@@ -34,7 +34,7 @@ void st95_init_spi()
 	st95_spi = SPI_open(Board_SPI0, &spiParams);
 	if (st95_spi == NULL) {
 	   /* Error opening SPI */
-		GPIO_write(Board_led_IR,1);
+//		GPIO_write(Board_led_blue,1);
 	}
 
 
