@@ -56,8 +56,6 @@ Char lb_task_Stack[LB_TASKSTACKSIZE];
 Task_Struct rfid_task_Struct;
 Char rfid_task_Stack[RFID_TASKSTACKSIZE];
 
-
-
 /*
  *  ======== heartBeatFxn ========
  *  Toggle the Board_led_green. The Task_sleep is determined by arg0 which
