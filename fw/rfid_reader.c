@@ -14,7 +14,7 @@ void rfid_Task()
 	st95_init_spi();
 	st95_startup();
 
-	st95_echo();
+//	st95_echo();
 
 	/* Initialize ST95HF as reader by default*/
 
@@ -83,7 +83,7 @@ void nfc_wakeup_isr()
   The application can use the Interrupt mode to skip the polling stage.
   */
 
-	GPIO_toggle(Board_led_blue);
+//	GPIO_toggle(Board_led_blue);
 	//check interrupt source
 
 //	Hwi_enable(); //not sure if needed here??
