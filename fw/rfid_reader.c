@@ -11,10 +11,10 @@
 void rfid_Task()
 {
 	/* Initialize SPI structures*/
-	st95_init_spi();
-	st95_startup();
+	//st95_init_spi();
+	//st95_startup();
 
-	st95_echo();
+	//st95_echo();
 
 	/* Initialize ST95HF as reader by default*/
 
