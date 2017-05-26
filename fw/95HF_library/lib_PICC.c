@@ -104,7 +104,7 @@
 //int8_t PICC_PORsequence( void )
 //{
 //	uint16_t NthAttempt=0;
-//	uc8 command[]= {ECHO};
+//	unsigned char command[]= {ECHO};
 //
 //	if(drv95HF_GetSerialInterface() == RFTRANS_95HF_INTERFACE_SPI)
 //	{
@@ -148,7 +148,7 @@
 // */
 //int8_t PICC_Echo(uint8_t *pResponse)
 //{
-//	uc8 command[]= {ECHO};
+//	unsigned char command[]= {ECHO};
 //	/* send the command to the PICC and retrieve its response */
 //	return( drv95HF_SendReceive(command, pResponse));
 //}
@@ -173,7 +173,7 @@
 // *  @retval PICC_ERRORCODE_PARAMETERLENGTH : the Length parameter is erroneous
 // *  @retval PICC_ERRORCODE_PARAMETER : a parameter is erroneous
 // */
-//int8_t PICC_ProtocolSelect(uc8 Length,uc8 Protocol,uc8 *Parameters,uint8_t *pResponse)
+//int8_t PICC_ProtocolSelect(unsigned char Length,unsigned char Protocol,unsigned char *Parameters,uint8_t *pResponse)
 //{
 //	uint8_t *DataToSend = u95HFBuffer;
 //	int8_t	status;
@@ -225,7 +225,7 @@
 // *  @retval PICC_SUCCESSCODE : the command was succedfully send
 // *  @retval PICC_ERRORCODE_PARAMETERLENGTH : Length parameter is erroneous
 // */
-//int8_t PICC_Send(uc8 Length,uc8 *Parameters)
+//int8_t PICC_Send(unsigned char Length,unsigned char *Parameters)
 //{
 //	uint8_t *DataToSend = u95HFBuffer,
 //					*pResponse = u95HFBuffer;
@@ -264,7 +264,7 @@
 // *  @param	pResponse 	: the PICC device response
 // *  @retval PICC_SUCCESSCODE : the function
 // */
-//int8_t PICC_AcFilter (uc8 Length,uc8 ATQAParam[2], uc8 SAKParam,uc8 *pUIDData	,uint8_t *pResponse)
+//int8_t PICC_AcFilter (unsigned char Length,unsigned char ATQAParam[2], unsigned char SAKParam,unsigned char *pUIDData	,uint8_t *pResponse)
 //{
 //	uint8_t *DataToSend = u95HFBuffer;
 //
@@ -332,7 +332,7 @@
 // *  @retval PICC_ERRORCODE_DEFAULT : the PICC device returned an error code
 // *  @retval PICC_ERRORCODE_PARAMETERLENGTH : Length parameter is erroneous
 // */
-//int8_t PICC_Idle( uc8 Length, uc8 *Data )
+//int8_t PICC_Idle( unsigned char Length, unsigned char *Data )
 //{
 //	uint8_t *DataToSend = u95HFBuffer;
 //
@@ -363,7 +363,7 @@
 // *  @retval PICC_ERRORCODE_DEFAULT : PICC returned an error code
 // *  @retval PICC_ERRORCODE_PARAMETERLENGTH : Length parameter is erroneous
 // */
-//int8_t PICC_ReadRegister (uc8 Length,uc8 Address,uc8 RegCount,uc8 Flags,uint8_t *pResponse)
+//int8_t PICC_ReadRegister (unsigned char Length,unsigned char Address,unsigned char RegCount,unsigned char Flags,uint8_t *pResponse)
 //{
 //	uint8_t DataToSend[RDREG_BUFFER_SIZE];
 //
@@ -395,7 +395,7 @@
 // *  @retval PICC_SUCCESSCODE : the command was succedfully send
 // *  @retval PICC_ERRORCODE_DEFAULT : the function is not successfull
 // */
-//int8_t PICC_WriteRegister (uc8 Length,uc8 Address,uc8 Flags,uc8 *pData,uint8_t *pResponse)
+//int8_t PICC_WriteRegister (unsigned char Length,unsigned char Address,unsigned char Flags,unsigned char *pData,uint8_t *pResponse)
 //{
 //	uint8_t *DataToSend = u95HFBuffer;
 //
@@ -425,7 +425,7 @@
 // *  @retval PICC_SUCCESSCODE : the command was succedfully send
 // *  @retval PICC_ERRORCODE_DEFAULT : the function is not successfull
 // */
-//int8_t PICC_SetBackscatteringLoad (uc8 bLoad)
+//int8_t PICC_SetBackscatteringLoad (unsigned char bLoad)
 //{
 //	int8_t result;
 //	uint8_t				pData [2]= {AFE_ACCONFIGA_OFFSET,0x00};
@@ -552,7 +552,7 @@
 //* @retval  	PICC_ERRORCODE_DEFAULT  :  PICC didn't return a succesful code
 //* @retval  	PICC_NOREPLY_CODE : no PICC response
 //*/
-//int8_t PICC_IsResultCodeOk ( uint8_t CmdCode, uc8 *ReaderReply )
+//int8_t PICC_IsResultCodeOk ( uint8_t CmdCode, unsigned char *ReaderReply )
 //{
 //	CmdCode = CmdCode & 0xFF;
 //

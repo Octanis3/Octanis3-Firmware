@@ -105,11 +105,11 @@ uint8_t  (*P2PReceiveBUFCallBack)(uint8_t*pSendReceive, uint16_t *nbByte);					 
  * 	@{
  */
 /* Initiator (Server) */
-static void PP2P_SendReceive(uc8 pcb, uc8 *pData,uint8_t pDataSize);
+static void PP2P_SendReceive(unsigned char pcb, unsigned char *pData,uint8_t pDataSize);
 
 
 /* Target (Client) */
-static void PP2PT_Send(uc8 pcb, uc8 *pData,uint8_t pDataSize);
+static void PP2PT_Send(unsigned char pcb, unsigned char *pData,uint8_t pDataSize);
 
 /**
   * @}
@@ -353,7 +353,7 @@ uint8_t PP2P_SendBUF(uint8_t *pData, uint16_t *size )
  * @param  pData 		 : buffer with frame to send
  * @param  pDataSize : Frame Size
  */
-void PP2P_SendReceive(uc8 pcb, uc8 *pData,uint8_t pDataSize)
+void PP2P_SendReceive(unsigned char pcb, unsigned char *pData,uint8_t pDataSize)
 {
 	uint16_t nbByte;
 	
@@ -388,7 +388,7 @@ void PP2P_TargetInit(void)
  * @param  pData 		 : buffer with frame to send
  * @param  pDataSize : Frame Size
  */
-static void PP2PT_Send(uc8 pcb, uc8 *pData,uint8_t pDataSize)
+static void PP2PT_Send(unsigned char pcb, unsigned char *pData,uint8_t pDataSize)
 {
 	uint16_t nbByte = pDataSize+1;
 	PP2P_SendBuff[0] = pcb; 

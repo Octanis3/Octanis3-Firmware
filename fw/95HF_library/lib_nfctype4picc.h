@@ -140,12 +140,12 @@ typedef enum {
 /* public function	 ---------------------------------------------------------------------*/
 void 		PICCNFCT4_Init 									( PICCNFCT4_SELECT_TYPE SelectedType );
 void 		PICCNFCT4_DeInit 								( PICCNFCT4_SELECT_TYPE SelectedType );
-int8_t 	PICCNFCT4_ReplyCommand					( uc8 *pData );
-void 		PICCNFCT4_SelectApplication			( uc8 *pData );
-void 		PICCNFCT4_SelectNDEFfile				( uc8 *pData );
-void 		PICCNFCT4_SelectCCfile					( uc8 *pData );
-int8_t 	PICCNFCT4_ReadBinary 						( uc8 *pData );
-int8_t 	PICCNFCT4_UpdateBinary 					( uc8 *pData );
+int8_t 	PICCNFCT4_ReplyCommand					( unsigned char *pData );
+void 		PICCNFCT4_SelectApplication			( unsigned char *pData );
+void 		PICCNFCT4_SelectNDEFfile				( unsigned char *pData );
+void 		PICCNFCT4_SelectCCfile					( unsigned char *pData );
+int8_t 	PICCNFCT4_ReadBinary 						( unsigned char *pData );
+int8_t 	PICCNFCT4_UpdateBinary 					( unsigned char *pData );
 
 
 #endif

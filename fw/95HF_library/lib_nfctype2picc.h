@@ -70,10 +70,10 @@
 
 /* public function	 ---------------------------------------------------------------------*/
 void PICCNFCT2_Init ( void );
-int8_t PICCNFCT2_ReplyCommand( uc8 *pData );
-int8_t PICCNFCT2_SelectSector (uc8 *pData);
-int8_t PICCNFCT2_Read (uc8 *pData);
-int8_t PICCNFCT2_Write (uc8 *pData );
+int8_t PICCNFCT2_ReplyCommand( unsigned char *pData );
+int8_t PICCNFCT2_SelectSector (unsigned char *pData);
+int8_t PICCNFCT2_Read (unsigned char *pData);
+int8_t PICCNFCT2_Write (unsigned char *pData );
 void PICCNFCT2_ACK (void);
 void PICCNFCT2_NACK (void);
 

@@ -50,6 +50,18 @@
 }
 #endif
 
+ /**
+   * @brief  Bit_SET and Bit_RESET enumeration
+   */
+
+ /********* imported from STM32F10x_StdPeriph_Driver/inc/....h *************/
+
+ typedef enum
+ { Bit_RESET = 0,
+   Bit_SET
+ }BitAction;
+
+ /***************************************************************************/
 #endif /* __STM32F10x_H */
 
 /**

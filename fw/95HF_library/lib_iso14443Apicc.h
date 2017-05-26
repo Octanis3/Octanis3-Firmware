@@ -50,8 +50,8 @@
 #define LIB14443APICC_TC1														0x00
 
 
-int8_t PICC14A_RATS	( uc8 *pData );
-int8_t PICC14A_PPS	( uc8 *pData );
+int8_t PICC14A_RATS	( unsigned char *pData );
+int8_t PICC14A_PPS	( unsigned char *pData );
 
 
 #endif

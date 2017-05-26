@@ -84,9 +84,9 @@ typedef struct
 } APDU_Responce;
 
 
-int8_t 	ISO7816_SelectFile 	( uc8 P1byte , uc8 P2byte , uc8 LCbyte , uint8_t *PData );
-int8_t 	ISO7816_ReadBinary		( uc8 P1byte , uc8 P2byte , uc8 LEbyte , uint8_t *pDataRead );
-int8_t 	ISO7816_UpdateBinary	( uc8 P1byte , uc8 P2byte , uc8 LCbyte , uint8_t *pData);
+int8_t 	ISO7816_SelectFile 	( unsigned char P1byte , unsigned char P2byte , unsigned char LCbyte , uint8_t *PData );
+int8_t 	ISO7816_ReadBinary		( unsigned char P1byte , unsigned char P2byte , unsigned char LEbyte , uint8_t *pDataRead );
+int8_t 	ISO7816_UpdateBinary	( unsigned char P1byte , unsigned char P2byte , unsigned char LCbyte , uint8_t *pData);
 
 
 #endif /* __SMARTCARD_H */

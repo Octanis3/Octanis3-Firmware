@@ -116,9 +116,8 @@ UChar spi_poll()
 	}
 
 	spi_unsel();
-	answer = interruptpin;
 
-	return answer;
+	return i_loop<100;
 }
 
 

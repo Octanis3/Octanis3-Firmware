@@ -32,8 +32,8 @@ extern uint8_t *TT3AttribInfo, *TT3NDEFfile;
 
 static uint8_t PCDNFCT3_ReadAttribInfo(uint8_t *pBufferRead);
 static uint8_t PCDNFCT3_WriteAttribInfo(uint8_t *pBufferWrite);
-static uint8_t PCDNFCT3_ReadMessage(uc32 NbByteToRead, uint8_t *pBufferRead);
-static uint8_t PCDNFCT3_WriteMessage(uc32 NbByteToWrite, uint8_t *pBufferWrite, uint8_t maxBlocWrite);
+static uint8_t PCDNFCT3_ReadMessage(uint32_t NbByteToRead, uint8_t *pBufferRead);
+static uint8_t PCDNFCT3_WriteMessage(uint32_t NbByteToWrite, uint8_t *pBufferWrite, uint8_t maxBlocWrite);
 static void PCDNFCT3_UpdateCheckSum(uint8_t *bufferAttrib);
 
 /** @addtogroup _95HF_Libraries
@@ -114,7 +114,7 @@ static uint8_t PCDNFCT3_WriteAttribInfo(uint8_t *pBufferWrite)
  * @retval PCDNFCT3_OK : Command success
  * @retval PCDNFCT3_ERROR : Transmission error
  */
-static uint8_t PCDNFCT3_ReadMessage(uc32 NbByteToRead, uint8_t *pBufferRead)
+static uint8_t PCDNFCT3_ReadMessage(uint32_t NbByteToRead, uint8_t *pBufferRead)
 {
 	uint8_t nbBloc,i,j=0,maxBlocRead;
 	uint8_t buffer[48] = {PCDNFCT3_CHECK,0,0,0,0,0,0,0,0,0x01,PCDNFCT3_CODE_READ_LSB,PCDNFCT3_CODE_READ_MSB};
@@ -169,7 +169,7 @@ static uint8_t PCDNFCT3_ReadMessage(uc32 NbByteToRead, uint8_t *pBufferRead)
  * @retval PCDNFCT3_OK : Command success
  * @retval PCDNFCT3_ERROR : Transmission error
  */
-static uint8_t PCDNFCT3_WriteMessage(uc32 NbByteToWrite, uint8_t *pBufferWrite, uint8_t maxBlocWrite)
+static uint8_t PCDNFCT3_WriteMessage(uint32_t NbByteToWrite, uint8_t *pBufferWrite, uint8_t maxBlocWrite)
 {
 	uint8_t nbBloc,i,j=0;
 	uint8_t buffer[280] = {PCDNFCT3_UPDATE,0,0,0,0,0,0,0,0,0x01,PCDNFCT3_CODE_WRITE_LSB,PCDNFCT3_CODE_WRITE_MSB};

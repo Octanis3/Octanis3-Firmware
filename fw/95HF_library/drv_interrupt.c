@@ -26,6 +26,7 @@
   */ 
 
 #include "drv_interrupt.h"
+#include "../ST95HF.h"
 
 /** @addtogroup _95HF_Libraries
  * 	@{
@@ -50,7 +51,7 @@
 /**
  *	@brief  this uTimeOut variable is used as a timeout duting the communication with the RF tranceiver
  */
-extern __IO uint8_t						uTimeOut;
+extern /*__IO*/ uint8_t						uTimeOut;
 extern volatile bool										uAppliTimeOut;
 
 extern volatile bool RF_DataExpected;
@@ -64,28 +65,28 @@ uint16_t delay_appli = 0;
 uint16_t delay_timeout = 0;
 /* Private functions Prototype -----------------------------------------------*/
 
-static void IRQOut_GPIO_Config		( void );
+//static void IRQOut_GPIO_Config		( void );
 
 /** @addtogroup drv_interrupt_Private_Functions
  * 	@{
  */
 
-/**
- *	@brief This function configures the GPIO for the EXTI interupt
- *  @param  None
- *  @retval None
- */
-static void IRQOut_GPIO_Config( void )
-{
-	GPIO_InitTypeDef GPIO_InitStructure;
-	
-	/* Configure IRQ pin as open drain output */
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Pin  = IRQOUT_RFTRANS_95HF_PIN;
-	GPIO_Init(GPIOA, &GPIO_InitStructure);
-	RFTRANS_95HF_IRQIN_HIGH() ;
-}
+///**
+// *	@brief This function configures the GPIO for the EXTI interupt
+// *  @param  None
+// *  @retval None
+// */
+//static void IRQOut_GPIO_Config( void )
+//{
+//	GPIO_InitTypeDef GPIO_InitStructure;
+//
+//	/* Configure IRQ pin as open drain output */
+//	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;
+//	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+//	GPIO_InitStructure.GPIO_Pin  = IRQOUT_RFTRANS_95HF_PIN;
+//	GPIO_Init(GPIOA, &GPIO_InitStructure);
+//	RFTRANS_95HF_IRQIN_HIGH() ;
+//}
 
 
 /**
@@ -96,124 +97,124 @@ static void IRQOut_GPIO_Config( void )
  * 	@{
  */
 
-/**
- *	@brief  Timeout timer config
- *  @param  None
- *  @retval None
- */
-void drvInt_TimeoutTimerConfig(void)
-{
-	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
-/* -------------------------------------------------------------------------- 
-	 * TimeOut TIMER configuration
-	 * -------------------------------------------------------------------------- 
-	 * 72 MHz / 7200 = 10KHz (100us)
-	 * 100us * 300 + 100us ~= 30ms	
-	 * -------------------------------------------------------------------------- */
-	TIM_TimeBaseStructure.TIM_Period 					= TIMER_TIMEOUT_PERIOD;     
-	TIM_TimeBaseStructure.TIM_Prescaler 			= TIMER_TIMEOUT_PRESCALER;       
-	TIM_TimeBaseStructure.TIM_ClockDivision 	= TIM_CKD_DIV1;      
-	TIM_TimeBaseStructure.TIM_CounterMode 		= TIM_CounterMode_Down;	  
-	/* Update the timeout timer (TIM3) 	*/
-	TIM_TimeBaseInit(TIMER_TIMEOUT, &TIM_TimeBaseStructure);
-	
-	TIM_UpdateRequestConfig(TIMER_TIMEOUT, TIM_UpdateSource_Global);
-	
-	TIM_ClearITPendingBit(TIMER_TIMEOUT, TIM_IT_Update);
-		
-	/* Enable TIMER Update interrupt */
-	TIM_ITConfig(TIMER_TIMEOUT, TIM_IT_Update, ENABLE);
-	
-	/* Disable timer	*/
-	TIM_Cmd(TIMER_TIMEOUT, DISABLE);
-}
+///**
+// *	@brief  Timeout timer config
+// *  @param  None
+// *  @retval None
+// */
+//void drvInt_TimeoutTimerConfig(void)
+//{
+//	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
+///* --------------------------------------------------------------------------
+//	 * TimeOut TIMER configuration
+//	 * --------------------------------------------------------------------------
+//	 * 72 MHz / 7200 = 10KHz (100us)
+//	 * 100us * 300 + 100us ~= 30ms
+//	 * -------------------------------------------------------------------------- */
+//	TIM_TimeBaseStructure.TIM_Period 					= TIMER_TIMEOUT_PERIOD;
+//	TIM_TimeBaseStructure.TIM_Prescaler 			= TIMER_TIMEOUT_PRESCALER;
+//	TIM_TimeBaseStructure.TIM_ClockDivision 	= TIM_CKD_DIV1;
+//	TIM_TimeBaseStructure.TIM_CounterMode 		= TIM_CounterMode_Down;
+//	/* Update the timeout timer (TIM3) 	*/
+//	TIM_TimeBaseInit(TIMER_TIMEOUT, &TIM_TimeBaseStructure);
+//
+//	TIM_UpdateRequestConfig(TIMER_TIMEOUT, TIM_UpdateSource_Global);
+//
+//	TIM_ClearITPendingBit(TIMER_TIMEOUT, TIM_IT_Update);
+//
+//	/* Enable TIMER Update interrupt */
+//	TIM_ITConfig(TIMER_TIMEOUT, TIM_IT_Update, ENABLE);
+//
+//	/* Disable timer	*/
+//	TIM_Cmd(TIMER_TIMEOUT, DISABLE);
+//}
 
+
+///**
+// *	@brief  This function starts the time out used to avoid the STM32 freeze
+// *  @param  delay : delay in tenth of milliseconds (100us).
+// *  @retval None
+// */
+//void StartTimeOut( uint16_t delay )
+//{
+//	/* Set the TimeOut flag to false */
+//	uTimeOut 	 = false;
+//	delay_timeout = delay;
+//	/* Set the timer counter */
+//	TIM_SetCounter(TIMER_TIMEOUT, delay);
+//  /* Enable the Time out timer */
+//	TIM_Cmd(TIMER_TIMEOUT, ENABLE);
+//}
+
+///**
+// *	@brief  Stop the timer used for the time out
+// *  @param  None
+// *  @retval None
+// */
+//void StopTimeOut( void )
+//{
+//	/* Disable the Time out timer */
+//	TIM_Cmd(TIMER_TIMEOUT, DISABLE);
+//}
+
+///**
+// *	@brief  Timeout timer config
+// *  @param  None
+// *  @retval None
+// */
+//void drvInt_AppliTimeoutTimerConfig(void)
+//{
+//	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
+///* --------------------------------------------------------------------------
+//	 * TimeOut TIMER configuration
+//	 * --------------------------------------------------------------------------
+//	 * 72 MHz / 72 = 1MHz (1us)
+//	 * 1us * 1000 + 1us ~= 1ms
+//	 * -------------------------------------------------------------------------- */
+//	TIM_TimeBaseStructure.TIM_Period 					= APPLI_TIMER_TIMEOUT_PERIOD;
+//	TIM_TimeBaseStructure.TIM_Prescaler 			= APPLI_TIMER_TIMEOUT_PRESCALER;
+//	TIM_TimeBaseStructure.TIM_ClockDivision 	= TIM_CKD_DIV1;
+//	TIM_TimeBaseStructure.TIM_CounterMode 		= TIM_CounterMode_Down;
+//	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
+//	/* Update the timeout timer (TIM3) 	*/
+//	TIM_TimeBaseInit(APPLI_TIMER_TIMEOUT, &TIM_TimeBaseStructure);
+//
+//	TIM_UpdateRequestConfig(APPLI_TIMER_TIMEOUT, TIM_UpdateSource_Global);
+//
+//	TIM_ClearITPendingBit(APPLI_TIMER_TIMEOUT, TIM_IT_Update);
+//
+//	/* Enable TIMER Update interrupt */
+//	TIM_ITConfig(APPLI_TIMER_TIMEOUT, TIM_IT_Update, ENABLE);
+//
+//	/* Disable timer	*/
+//	TIM_Cmd(APPLI_TIMER_TIMEOUT, DISABLE);
+//}
 
 /**
  *	@brief  This function starts the time out used to avoid the STM32 freeze
  *  @param  delay : delay in tenth of milliseconds (100us).
  *  @retval None
  */
-void StartTimeOut( uint16_t delay )
-{
-	/* Set the TimeOut flag to false */
-	uTimeOut 	 = false;
-	delay_timeout = delay;
-	/* Set the timer counter */
-	TIM_SetCounter(TIMER_TIMEOUT, delay);
-  /* Enable the Time out timer */
-	TIM_Cmd(TIMER_TIMEOUT, ENABLE);
-}
+//void StartAppliTimeOut( uint16_t delay )
+//{
+//	/* Set the TimeOut flag to false */
+//	uAppliTimeOut 	 = false;
+//	delay_appli = delay;
+//	TIM_SetCounter(APPLI_TIMER_TIMEOUT, delay);
+//	/* TIM2 enable counter */
+//  TIM_Cmd(APPLI_TIMER_TIMEOUT, ENABLE);
+//}
 
 /**
  *	@brief  Stop the timer used for the time out
  *  @param  None
  *  @retval None
  */
-void StopTimeOut( void )
-{	
-	/* Disable the Time out timer */
-	TIM_Cmd(TIMER_TIMEOUT, DISABLE);	
-}
-
-/**
- *	@brief  Timeout timer config
- *  @param  None
- *  @retval None
- */
-void drvInt_AppliTimeoutTimerConfig(void)
-{
-	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
-/* -------------------------------------------------------------------------- 
-	 * TimeOut TIMER configuration
-	 * -------------------------------------------------------------------------- 
-	 * 72 MHz / 72 = 1MHz (1us)
-	 * 1us * 1000 + 1us ~= 1ms	
-	 * -------------------------------------------------------------------------- */
-	TIM_TimeBaseStructure.TIM_Period 					= APPLI_TIMER_TIMEOUT_PERIOD;     
-	TIM_TimeBaseStructure.TIM_Prescaler 			= APPLI_TIMER_TIMEOUT_PRESCALER;       
-	TIM_TimeBaseStructure.TIM_ClockDivision 	= TIM_CKD_DIV1;      
-	TIM_TimeBaseStructure.TIM_CounterMode 		= TIM_CounterMode_Down;	  
-	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
-	/* Update the timeout timer (TIM3) 	*/
-	TIM_TimeBaseInit(APPLI_TIMER_TIMEOUT, &TIM_TimeBaseStructure);
-	
-	TIM_UpdateRequestConfig(APPLI_TIMER_TIMEOUT, TIM_UpdateSource_Global);
-	
-	TIM_ClearITPendingBit(APPLI_TIMER_TIMEOUT, TIM_IT_Update);
-		
-	/* Enable TIMER Update interrupt */
-	TIM_ITConfig(APPLI_TIMER_TIMEOUT, TIM_IT_Update, ENABLE);
-
-	/* Disable timer	*/
-	TIM_Cmd(APPLI_TIMER_TIMEOUT, DISABLE);
-}
-
-/**
- *	@brief  This function starts the time out used to avoid the STM32 freeze
- *  @param  delay : delay in tenth of milliseconds (100us).
- *  @retval None
- */
-void StartAppliTimeOut( uint16_t delay )
-{
-	/* Set the TimeOut flag to false */
-	uAppliTimeOut 	 = false;
-	delay_appli = delay;
-	TIM_SetCounter(APPLI_TIMER_TIMEOUT, delay);
-	/* TIM2 enable counter */
-  TIM_Cmd(APPLI_TIMER_TIMEOUT, ENABLE);
-}
-
-/**
- *	@brief  Stop the timer used for the time out
- *  @param  None
- *  @retval None
- */
-void StopAppliTimeOut( void )
-{	
-	/* Disable the Time out timer */
-	TIM_Cmd(APPLI_TIMER_TIMEOUT, DISABLE);	
-}
+//void StopAppliTimeOut( void )
+//{
+//	/* Disable the Time out timer */
+//	TIM_Cmd(APPLI_TIMER_TIMEOUT, DISABLE);
+//}
 
 
 /**
@@ -221,11 +222,11 @@ void StopAppliTimeOut( void )
  */
 void SendSPINSSPulse(void)
 {
-		RFTRANS_95HF_NSS_HIGH() ;
-		delayHighPriority_ms(1);
-		RFTRANS_95HF_NSS_LOW() ;
-		delayHighPriority_ms(1);
-		RFTRANS_95HF_NSS_HIGH() ;
+	spi_unsel();
+	Task_sleep(1);
+	spi_sel() ;
+	Task_sleep(1);
+	spi_unsel() ;
 }
 
 /**
@@ -233,71 +234,71 @@ void SendSPINSSPulse(void)
  *  @param  None
  *  @return None
  */
-void IRQOut_Config( void )
-{
-	// GPIOA pin2 (as Open drain output)
-	IRQOut_GPIO_Config( ); 
-	
-	// GPIOA pin3 (as floatting)
-	//EXTI_GPIO_Config();
-}
+//void IRQOut_Config( void )
+//{
+//	// GPIOA pin2 (as Open drain output)
+//	IRQOut_GPIO_Config( );
+//
+//	// GPIOA pin3 (as floatting)
+//	//EXTI_GPIO_Config();
+//}
 
 /**
  *	@brief  This function configures the Extern Interrupt for the IRQ coming from the RF transceiver
  */
-void drvInt_Enable_Reply_IRQ( void )
-{
-	EXTI_InitTypeDef EXTI_InitStructure;
-	
-	RF_DataExpected = false;
-	uDataReady = false;
-	
-	/* Configure RF transceiver IRQ EXTI line */
-	EXTI_InitStructure.EXTI_Line 		= EXTI_RFTRANS_95HF_LINE;
-	EXTI_InitStructure.EXTI_Mode 		= EXTI_Mode_Interrupt;
-	EXTI_InitStructure.EXTI_Trigger 	= EXTI_Trigger_Falling;    
-	EXTI_InitStructure.EXTI_LineCmd 	= ENABLE;
-	EXTI_Init(&EXTI_InitStructure); 
-
-}
-
-/**
- *	@brief  This function configures the Extern Interrupt for the IRQ coming from the RF transceiver
- */
-void drvInt_Enable_RFEvent_IRQ( void )
-{
-	EXTI_InitTypeDef EXTI_InitStructure;
-	
-	RF_DataExpected = true;
-	uDataReady = false;
-	
-	/* Configure RF transceiver IRQ EXTI line */
-	EXTI_InitStructure.EXTI_Line 		= EXTI_RFTRANS_95HF_LINE;
-	EXTI_InitStructure.EXTI_Mode 		= EXTI_Mode_Interrupt;
-	EXTI_InitStructure.EXTI_Trigger 	= EXTI_Trigger_Falling;    
-	EXTI_InitStructure.EXTI_LineCmd 	= ENABLE;
-	EXTI_Init(&EXTI_InitStructure); 
-
-}
+//void drvInt_Enable_Reply_IRQ( void )
+//{
+//	EXTI_InitTypeDef EXTI_InitStructure;
+//
+//	RF_DataExpected = false;
+//	uDataReady = false;
+//
+//	/* Configure RF transceiver IRQ EXTI line */
+//	EXTI_InitStructure.EXTI_Line 		= EXTI_RFTRANS_95HF_LINE;
+//	EXTI_InitStructure.EXTI_Mode 		= EXTI_Mode_Interrupt;
+//	EXTI_InitStructure.EXTI_Trigger 	= EXTI_Trigger_Falling;
+//	EXTI_InitStructure.EXTI_LineCmd 	= ENABLE;
+//	EXTI_Init(&EXTI_InitStructure);
+//
+//}
 
 /**
  *	@brief  This function configures the Extern Interrupt for the IRQ coming from the RF transceiver
  */
-void drvInt_Disable_95HF_IRQ( void )
-{
-	EXTI_InitTypeDef EXTI_InitStructure;
-	
-	RF_DataExpected = false;
-	uDataReady = false;
-	
-	/* Configure RF transceiver IRQ EXTI line */
-	EXTI_InitStructure.EXTI_Line 		= EXTI_RFTRANS_95HF_LINE;
-	EXTI_InitStructure.EXTI_Mode 		= EXTI_Mode_Interrupt;
-	EXTI_InitStructure.EXTI_Trigger 	= EXTI_Trigger_Falling;    
-	EXTI_InitStructure.EXTI_LineCmd 	= DISABLE;
-	EXTI_Init(&EXTI_InitStructure); 
+//void drvInt_Enable_RFEvent_IRQ( void )
+//{
+//	EXTI_InitTypeDef EXTI_InitStructure;
+//
+//	RF_DataExpected = true;
+//	uDataReady = false;
+//
+//	/* Configure RF transceiver IRQ EXTI line */
+//	EXTI_InitStructure.EXTI_Line 		= EXTI_RFTRANS_95HF_LINE;
+//	EXTI_InitStructure.EXTI_Mode 		= EXTI_Mode_Interrupt;
+//	EXTI_InitStructure.EXTI_Trigger 	= EXTI_Trigger_Falling;
+//	EXTI_InitStructure.EXTI_LineCmd 	= ENABLE;
+//	EXTI_Init(&EXTI_InitStructure);
+//
+//}
 
-}
+/**
+ *	@brief  This function configures the Extern Interrupt for the IRQ coming from the RF transceiver
+ */
+//void drvInt_Disable_95HF_IRQ( void )
+//{
+//	EXTI_InitTypeDef EXTI_InitStructure;
+//
+//	RF_DataExpected = false;
+//	uDataReady = false;
+//
+//	/* Configure RF transceiver IRQ EXTI line */
+//	EXTI_InitStructure.EXTI_Line 		= EXTI_RFTRANS_95HF_LINE;
+//	EXTI_InitStructure.EXTI_Mode 		= EXTI_Mode_Interrupt;
+//	EXTI_InitStructure.EXTI_Trigger 	= EXTI_Trigger_Falling;
+//	EXTI_InitStructure.EXTI_LineCmd 	= DISABLE;
+//	EXTI_Init(&EXTI_InitStructure);
+//
+//}
 
 /* Next function are wrapped in the IRQ handler */
 
@@ -306,38 +307,38 @@ void drvInt_Disable_95HF_IRQ( void )
  * @param  None
  * @retval None
  */
-void TIMER_TIMEOUT_IRQ_HANDLER(void)
-{
-	if (delay_timeout > 0)
-		delay_timeout--;
-	else
-	{
-		uTimeOut = true;	
-		/* Disable the Time out timer */
-		TIM_Cmd(TIMER_TIMEOUT, DISABLE);
-	}
-	/* Clear TIMER update interrupt flag */
-	TIM_ClearITPendingBit(TIMER_TIMEOUT, TIM_IT_Update);
-}
-
-/**
- * @brief  This function handles the timer interrupt.
- * @param  None
- * @retval None
- */
-void APPLI_TIMER_TIMEOUT_IRQ_HANDLER(void)
-{
-	if (delay_appli > 0)
-		delay_appli--;
-	else
-	{
-		uAppliTimeOut = true;	
-		/* Disable the Time out timer */
-		TIM_Cmd(APPLI_TIMER_TIMEOUT, DISABLE);
-	}
-	/* Clear TIMER update interrupt flag */
-	TIM_ClearITPendingBit(APPLI_TIMER_TIMEOUT, TIM_IT_Update);
-}
+//void TIMER_TIMEOUT_IRQ_HANDLER(void)
+//{
+//	if (delay_timeout > 0)
+//		delay_timeout--;
+//	else
+//	{
+//		uTimeOut = true;
+//		/* Disable the Time out timer */
+//		TIM_Cmd(TIMER_TIMEOUT, DISABLE);
+//	}
+//	/* Clear TIMER update interrupt flag */
+//	TIM_ClearITPendingBit(TIMER_TIMEOUT, TIM_IT_Update);
+//}
+//
+///**
+// * @brief  This function handles the timer interrupt.
+// * @param  None
+// * @retval None
+// */
+//void APPLI_TIMER_TIMEOUT_IRQ_HANDLER(void)
+//{
+//	if (delay_appli > 0)
+//		delay_appli--;
+//	else
+//	{
+//		uAppliTimeOut = true;
+//		/* Disable the Time out timer */
+//		TIM_Cmd(APPLI_TIMER_TIMEOUT, DISABLE);
+//	}
+//	/* Clear TIMER update interrupt flag */
+//	TIM_ClearITPendingBit(APPLI_TIMER_TIMEOUT, TIM_IT_Update);
+//}
 
 #ifdef CR95HF
 /**

@@ -23,7 +23,7 @@
 #define __DRV_INTERRUPT_H
 
 /* Includes ------------------------------------------------------------------*/
-#include "hw_config.h"
+#include "common.h"
 
 /* Exported types ------------------------------------------------------------*/
 
@@ -39,7 +39,7 @@
 /** 
  * @brief  SPI Interface pins 
  */ 
-#define RFTRANS_95HF_SPI			     						SPI1
+#define RFTRANS_95HF_SPI			     				st95_spi
 #define RFTRANS_95HF_SPI_CLK		    					RCC_APB2Periph_SPI1
 
 #define RFTRANS_95HF_SPI_SCK_PIN        			GPIO_Pin_5                 
@@ -113,7 +113,7 @@
 * timeout configuration (us)
 * --------------------------------------------------------------------------
 * 72 MHz / 72 = 1MHz (1us )
-* 1µs * 1000 + 1µs ~= 1ms	
+* 1ï¿½s * 1000 + 1ï¿½s ~= 1ms	
 * -------------------------------------------------------------------------- */
 #define TIMER_TIMEOUT													TIM3
 #define TIMER_TIMEOUT_PERIOD									1000
@@ -124,7 +124,7 @@
 * timeout configuration (ms)
 * --------------------------------------------------------------------------
 * 72 MHz / 72 = 1MHz (1us )
-* 1µs * 1000 + 1µs ~= 1ms	
+* 1ï¿½s * 1000 + 1ï¿½s ~= 1ms	
 * -------------------------------------------------------------------------- */
 #define APPLI_TIMER_TIMEOUT										TIM4
 #define APPLI_TIMER_TIMEOUT_PERIOD						1000
@@ -167,32 +167,32 @@
 /* Exported functions ------------------------------------------------------- */
 
 // set state on SPI_NSS pin
-#define RFTRANS_95HF_NSS_LOW() 					GPIO_ResetBits(RFTRANS_95HF_SPI_NSS_GPIO_PORT, RFTRANS_95HF_SPI_NSS_PIN)
-#define RFTRANS_95HF_NSS_HIGH()  				GPIO_SetBits  (RFTRANS_95HF_SPI_NSS_GPIO_PORT, RFTRANS_95HF_SPI_NSS_PIN)
+#define RFTRANS_95HF_NSS_LOW() 					spi_sel()
+#define RFTRANS_95HF_NSS_HIGH()  				spi_unsel()
 // set state on IRQ_In pin
-#define RFTRANS_95HF_IRQIN_LOW() 				GPIO_WriteBit(RFTRANS_95HF_UART_RX_GPIO_PORT, RFTRANS_95HF_UART_RX_PIN,Bit_RESET)	
-#define RFTRANS_95HF_IRQIN_HIGH()  			GPIO_WriteBit(RFTRANS_95HF_UART_RX_GPIO_PORT, RFTRANS_95HF_UART_RX_PIN,Bit_SET)
+#define RFTRANS_95HF_IRQIN_LOW() 				GPIO_write(Board_nfc_wakeup_n, 0)
+#define RFTRANS_95HF_IRQIN_HIGH()  				GPIO_write(Board_nfc_wakeup_n, 1)
 // set state on SPI_CLK pin
-#define RFTRANS_95HF_SCK_LOW() 					GPIO_ResetBits(RFTRANS_95HF_SPI_SCK_GPIO_PORT, RFTRANS_95HF_SPI_SCK_PIN)
-#define RFTRANS_95HF_SCK_HIGH()  				GPIO_SetBits  (RFTRANS_95HF_SPI_SCK_GPIO_PORT, RFTRANS_95HF_SPI_SCK_PIN)
+//#define RFTRANS_95HF_SCK_LOW() 					GPIO_ResetBits(RFTRANS_95HF_SPI_SCK_GPIO_PORT, RFTRANS_95HF_SPI_SCK_PIN)
+//#define RFTRANS_95HF_SCK_HIGH()  				GPIO_SetBits  (RFTRANS_95HF_SPI_SCK_GPIO_PORT, RFTRANS_95HF_SPI_SCK_PIN)
 
 
 
 /* Timeout use during the communication with the 95HF device with SPI or UART path */
-void drvInt_TimeoutTimerConfig				 ( void );
-void drvInt_AppliTimeoutTimerConfig		 ( void );
-void StartTimeOut											 ( uint16_t delay );
-void StopTimeOut											 ( void );
-void StartAppliTimeOut								 ( uint16_t delay );
-void StopAppliTimeOut									 ( void );
+//void drvInt_TimeoutTimerConfig				 ( void );
+//void drvInt_AppliTimeoutTimerConfig		 ( void );
+//void StartTimeOut											 ( uint16_t delay );
+//void StopTimeOut											 ( void );
+//void StartAppliTimeOut								 ( uint16_t delay );
+//void StopAppliTimeOut									 ( void );
 
-void IRQOut_Config										 ( void );
+//void IRQOut_Config										 ( void );
 
 void SendSPINSSPulse									 ( void );
 
-void drvInt_Enable_Reply_IRQ					 ( void );
-void drvInt_Enable_RFEvent_IRQ				 ( void );
-void drvInt_Disable_95HF_IRQ					 ( void );
+//void drvInt_Enable_Reply_IRQ					 ( void );
+//void drvInt_Enable_RFEvent_IRQ				 ( void );
+//void drvInt_Disable_95HF_IRQ					 ( void );
 
 /* SPI or UART configuration */
 #ifdef CR95HF

@@ -22,6 +22,8 @@
 #ifndef _LIB_PICCEMULATOR_H
 #define _LIB_PICCEMULATOR_H
 
+#include "common.h"
+
 #if defined(ST95HF)
 #define CARD_EMULATION
 #define TAG_MANAGEMENT

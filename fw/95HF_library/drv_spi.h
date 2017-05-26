@@ -23,17 +23,18 @@
 #define __SPI_H
 
 /* Includes ----------------------------------------------------------------- */
-#include "hw_config.h"
+#include "common.h"
+#include "drv_interrupt.h"
 
 #define SPI_RESPONSEBUFFER_SIZE		(uint16_t)528
 
-void SPI_SendByte(SPI_TypeDef* SPIx, uint8_t data);
-void SPI_SendWord(SPI_TypeDef* SPIx, uint16_t data);
+void SPI_SendByte(SPI_Handle st95_spi_handle, uint8_t data);
+void SPI_SendWord(SPI_Handle st95_spi_handle, uint16_t data);
 
-uint8_t SPI_SendReceiveByte		(SPI_TypeDef* SPIx, uint8_t data); 
-void 		SPI_SendReceiveBuffer	(SPI_TypeDef* SPIx, uc8 *pCommand, uint16_t length, uint8_t *pResponse);
+uint8_t SPI_SendReceiveByte(SPI_Handle st95_spi_handle, uint8_t data);
+void SPI_SendReceiveBuffer(SPI_Handle st95_spi_handle, unsigned char *pCommand, uint16_t length, uint8_t *pResponse);
 #ifdef USE_DMA
-void SPI_SendReceiveBufferDMA(SPI_TypeDef* SPIx, uc8 *pCommand, uint16_t length, uint8_t *pResponse); 
+void SPI_SendReceiveBufferDMA(SPI_Handle* st95_spi_handle, unsigned char *pCommand, uint16_t length, uint8_t *pResponse); 
 #endif /* USE_DMA */
 
 #endif /* __SPI_H */

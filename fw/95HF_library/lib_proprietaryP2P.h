@@ -18,8 +18,8 @@
   * <h2><center>&copy; COPYRIGHT 2014 STMicroelectronics</center></h2>
   */
 #include "lib_PCD.h"
-#include "lib_piccemulator.h"
-#include "lib_picc.h"
+#include "lib_PICCemulator.h"
+#include "lib_PICC.h"
 
 #define PP2P_SUCCESS													  0x00
 #define PP2P_ERRORCODE_DEFAULT  							  0x02

@@ -28,6 +28,7 @@
 
 /* Includes ------------------------------------------------------------------------------ */
 #include "drv_95HF.h"
+#include "../ST95HF.h"
 
 /** @addtogroup _95HF_Libraries
  * 	@{
@@ -56,7 +57,7 @@ uint8_t				u95HFBuffer [RFTRANS_95HF_MAX_BUFFER_SIZE+3];
  *  @brief This uTimeOut variable is used as a timeout duting the communication with the RF tranceiver 
  */
 extern volatile bool							uDataReady; 
-__IO uint8_t						uTimeOut;
+/*__IO*/ uint8_t						uTimeOut;
 bool EnableTimeOut = true;
 
 
@@ -64,10 +65,10 @@ bool EnableTimeOut = true;
 drv95HF_ConfigStruct			drv95HFConfig;
 
 /* drv95HF_Private_Functions */
-static void drv95HF_RCCConfigSPI						( void );
-static void drv95HF_GPIOConfigSPI						( void );
-static void drv95HF_StructureConfigSPI			( void );
-static void drv95HF_InitializeSPI						( void );
+//static void drv95HF_RCCConfigSPI						( void );
+//static void drv95HF_GPIOConfigSPI						( void );
+//static void drv95HF_StructureConfigSPI			( void );
+//static void drv95HF_InitializeSPI						( void );
 static void drv95HF_SendSPIResetByte				( void );
 
 static int8_t drv95HF_SPIPollingCommand			( void );
@@ -76,113 +77,115 @@ static int8_t drv95HF_SPIPollingCommand			( void );
 static void drv95HF_StructureConfigUART ( uc32 BaudRate );
 static void drv95HF_RCCConfigUART						( void );
 static void drv95HF_GPIOConfigUART					( void );
-static void drv95HF_SendUARTCommand		(uc8 *pData);
+static void drv95HF_SendUARTCommand		(unsigned char *pData);
 #endif /* CR95HF */
 
 
-/** @addtogroup drv_95HF_Private_Functions
- *  @{
- */
+///** @addtogroup drv_95HF_Private_Functions
+// *  @{
+// */
+//
+///**
+// *	@brief  Initializes clock
+// *  @param  None
+// *  @retval void
+// */
+//static void drv95HF_RCCConfigSPI ( void )
+//{
+//	/* Enable GPIO clock  */
+//  RCC_APB2PeriphClockCmd( 	RFTRANS_95HF_SPI_SCK_GPIO_CLK  |
+//														RFTRANS_95HF_SPI_MISO_GPIO_CLK |
+//														RFTRANS_95HF_SPI_MOSI_GPIO_CLK ,
+//														ENABLE);
+//
+//  /* Enable SPI clock  */
+//  RCC_APB2PeriphClockCmd(RFTRANS_95HF_SPI_CLK, ENABLE);
+//
+//#ifdef USE_DMA
+//	/* Enable DMA1 or/and DMA2 clock */
+//	RCC_AHBPeriphClockCmd(RFTRANS_95HF_SPI_DMA_CLK, ENABLE);
+//#endif
+//
+//}
+//
+///**
+// *	@brief  Initializes GPIO for SPI communication
+// *  @param  None
+// *  @retval None
+// */
+//static void drv95HF_GPIOConfigSPI(void)
+//{
+//	GPIO_InitTypeDef GPIO_InitStructure;
+//
+//	/* Configure SPI pins: SCK, MISO and MOSI */
+//	GPIO_InitStructure.GPIO_Pin 				= RFTRANS_95HF_SPI_SCK_PIN;
+//	GPIO_InitStructure.GPIO_Speed 			= GPIO_Speed_50MHz;
+//	GPIO_InitStructure.GPIO_Mode 				= GPIO_Mode_AF_PP;
+//	GPIO_Init(RFTRANS_95HF_SPI_SCK_GPIO_PORT, &GPIO_InitStructure);
+//
+//	GPIO_InitStructure.GPIO_Pin 				= RFTRANS_95HF_SPI_MOSI_PIN;
+//	GPIO_Init(RFTRANS_95HF_SPI_MOSI_GPIO_PORT, &GPIO_InitStructure);
+//
+//
+//	/*	GPIO_InitStructure.GPIO_Mode 			= GPIO_Mode_AF_PP; */
+//	GPIO_InitStructure.GPIO_Mode 				= GPIO_Mode_IN_FLOATING;
+//	GPIO_InitStructure.GPIO_Pin 				= RFTRANS_95HF_SPI_MISO_PIN;
+//	GPIO_Init(RFTRANS_95HF_SPI_MISO_GPIO_PORT, &GPIO_InitStructure);
+//
+//	/* Configure I/O for Chip select */
+//	GPIO_InitStructure.GPIO_Pin   			= RFTRANS_95HF_SPI_NSS_PIN;
+//	GPIO_InitStructure.GPIO_Mode  			= GPIO_Mode_Out_PP;
+//	GPIO_Init(RFTRANS_95HF_SPI_NSS_GPIO_PORT, &GPIO_InitStructure);
+//
+//	/* SPI_NSS  = High Level  */
+//	GPIO_SetBits(RFTRANS_95HF_SPI_NSS_GPIO_PORT, RFTRANS_95HF_SPI_NSS_PIN);
+//}
+//
+///**
+// *	@brief  SET SPI protocol
+// *  @param  None
+// *  @retval None
+// */
+//static void drv95HF_StructureConfigSPI ( void )
+//{
+//	SPI_InitTypeDef  SPI_InitStructure;
+//
+//	/* Initialize the SPI with default values */
+//	SPI_StructInit(&SPI_InitStructure);
+//
+//	/* SPI Config master with NSS manages by software using the SSI bit*/
+//	SPI_InitStructure.SPI_Mode 				= SPI_Mode_Master;
+//  SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_64;
+//	SPI_InitStructure.SPI_NSS  				= SPI_NSS_Soft;
+//	SPI_InitStructure.SPI_CPOL 				= SPI_CPOL_High;
+//	SPI_InitStructure.SPI_CPHA 				= SPI_CPHA_2Edge;
+//
+//	/* Init the SPI BRIDGE */
+//	SPI_Init(RFTRANS_95HF_SPI, &SPI_InitStructure);
+//#ifdef USE_DMA
+//	SPI_I2S_DMACmd(RFTRANS_95HF_SPI, SPI_I2S_DMAReq_Rx, ENABLE);
+//	SPI_I2S_DMACmd(RFTRANS_95HF_SPI, SPI_I2S_DMAReq_Tx, ENABLE);
+//#endif
+// 	/* Enable SPI */
+//	SPI_Cmd(RFTRANS_95HF_SPI, ENABLE);
+//}
+//
+///**
+// *	@brief  this functions initializes the SPI in order to communicate with the 95HF device
+// *  @param  None
+// *  @retval void
+// */
+//static void drv95HF_InitializeSPI ( void )
+//{
+//	SPI_I2S_DeInit(RFTRANS_95HF_SPI);
+//	/* enables SPI and GPIO clocks */
+//	drv95HF_RCCConfigSPI( );
+//  /* configures GPIO A PA4-7 as SPI bus  (NSS = HL) */
+//	drv95HF_GPIOConfigSPI( );
+//	drv95HF_StructureConfigSPI( );
+//}
 
-/**
- *	@brief  Initializes clock
- *  @param  None
- *  @retval void 
- */
-static void drv95HF_RCCConfigSPI ( void )
-{	
-	/* Enable GPIO clock  */
-  RCC_APB2PeriphClockCmd( 	RFTRANS_95HF_SPI_SCK_GPIO_CLK  | 
-														RFTRANS_95HF_SPI_MISO_GPIO_CLK | 
-														RFTRANS_95HF_SPI_MOSI_GPIO_CLK , 
-														ENABLE);
-	
-  /* Enable SPI clock  */
-  RCC_APB2PeriphClockCmd(RFTRANS_95HF_SPI_CLK, ENABLE);
-
-#ifdef USE_DMA
-	/* Enable DMA1 or/and DMA2 clock */
-	RCC_AHBPeriphClockCmd(RFTRANS_95HF_SPI_DMA_CLK, ENABLE);
-#endif
-	
-}
-
-/**
- *	@brief  Initializes GPIO for SPI communication
- *  @param  None
- *  @retval None 
- */
-static void drv95HF_GPIOConfigSPI(void)
-{
-	GPIO_InitTypeDef GPIO_InitStructure;
-	
-	/* Configure SPI pins: SCK, MISO and MOSI */
-	GPIO_InitStructure.GPIO_Pin 				= RFTRANS_95HF_SPI_SCK_PIN;
-	GPIO_InitStructure.GPIO_Speed 			= GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Mode 				= GPIO_Mode_AF_PP;
-	GPIO_Init(RFTRANS_95HF_SPI_SCK_GPIO_PORT, &GPIO_InitStructure);
-	
-	GPIO_InitStructure.GPIO_Pin 				= RFTRANS_95HF_SPI_MOSI_PIN;
-	GPIO_Init(RFTRANS_95HF_SPI_MOSI_GPIO_PORT, &GPIO_InitStructure);
-
-
-	/*	GPIO_InitStructure.GPIO_Mode 			= GPIO_Mode_AF_PP; */
-	GPIO_InitStructure.GPIO_Mode 				= GPIO_Mode_IN_FLOATING;
-	GPIO_InitStructure.GPIO_Pin 				= RFTRANS_95HF_SPI_MISO_PIN;
-	GPIO_Init(RFTRANS_95HF_SPI_MISO_GPIO_PORT, &GPIO_InitStructure);
-	
-	/* Configure I/O for Chip select */		
-	GPIO_InitStructure.GPIO_Pin   			= RFTRANS_95HF_SPI_NSS_PIN;
-	GPIO_InitStructure.GPIO_Mode  			= GPIO_Mode_Out_PP; 
-	GPIO_Init(RFTRANS_95HF_SPI_NSS_GPIO_PORT, &GPIO_InitStructure);
-	
-	/* SPI_NSS  = High Level  */
-	GPIO_SetBits(RFTRANS_95HF_SPI_NSS_GPIO_PORT, RFTRANS_95HF_SPI_NSS_PIN);  
-}
-
-/**
- *	@brief  SET SPI protocol
- *  @param  None
- *  @retval None 
- */ 
-static void drv95HF_StructureConfigSPI ( void )
-{
-	SPI_InitTypeDef  SPI_InitStructure;
-
-	/* Initialize the SPI with default values */
-	SPI_StructInit(&SPI_InitStructure);
-
-	/* SPI Config master with NSS manages by software using the SSI bit*/
-	SPI_InitStructure.SPI_Mode 				= SPI_Mode_Master;
-  SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_64; 
-	SPI_InitStructure.SPI_NSS  				= SPI_NSS_Soft;
-	SPI_InitStructure.SPI_CPOL 				= SPI_CPOL_High;
-	SPI_InitStructure.SPI_CPHA 				= SPI_CPHA_2Edge;
-
-	/* Init the SPI BRIDGE */
-	SPI_Init(RFTRANS_95HF_SPI, &SPI_InitStructure);
-#ifdef USE_DMA
-	SPI_I2S_DMACmd(RFTRANS_95HF_SPI, SPI_I2S_DMAReq_Rx, ENABLE);
-	SPI_I2S_DMACmd(RFTRANS_95HF_SPI, SPI_I2S_DMAReq_Tx, ENABLE);
-#endif
- 	/* Enable SPI */
-	SPI_Cmd(RFTRANS_95HF_SPI, ENABLE);
-}
-
-/**
- *	@brief  this functions initializes the SPI in order to communicate with the 95HF device
- *  @param  None
- *  @retval void 
- */
-static void drv95HF_InitializeSPI ( void )
-{
-	SPI_I2S_DeInit(RFTRANS_95HF_SPI);
-	/* enables SPI and GPIO clocks */
-	drv95HF_RCCConfigSPI( );
-  /* configures GPIO A PA4-7 as SPI bus  (NSS = HL) */ 
-	drv95HF_GPIOConfigSPI( );	
-	drv95HF_StructureConfigSPI( );
-}
+extern SPI_Handle  st95_spi;
 
 /**
  *	@brief  This function sends a reset command over SPI bus
@@ -192,7 +195,7 @@ static void drv95HF_InitializeSPI ( void )
 static void drv95HF_SendSPIResetByte(void)
 {
 	/* Send reset control byte */
-	SPI_SendReceiveByte(RFTRANS_95HF_SPI, RFTRANS_95HF_COMMAND_RESET);
+	SPI_SendReceiveByte(st95_spi, RFTRANS_95HF_COMMAND_RESET);
 }
 
 
@@ -262,7 +265,7 @@ static void drv95HF_StructureConfigUART ( uc32 BaudRate )
  *  @param  *pData : pointer on data to send to the 95HF device
  *  @retval None
  */
-static void drv95HF_SendUARTCommand(uc8 *pData)
+static void drv95HF_SendUARTCommand(unsigned char *pData)
 {
   uint16_t bufferlength = 0;
 	if(pData[0] == ECHO)
@@ -348,18 +351,18 @@ void drv95HF_ResetSPI ( void )
 {	
 	/* Deselect Rftransceiver over SPI */
 	RFTRANS_95HF_NSS_HIGH();
-	delayHighPriority_ms(1);
+	Task_sleep(1);
 	/* Select 95HF device over SPI */
 	RFTRANS_95HF_NSS_LOW();
 	/* Send reset control byte	*/
 	drv95HF_SendSPIResetByte();
 	/* Deselect 95HF device over SPI */
 	RFTRANS_95HF_NSS_HIGH();
-	delayHighPriority_ms(3);
+	Task_sleep(3);
 
 	/* send a pulse on IRQ_in to wake-up 95HF device */
 	drv95HF_SendIRQINPulse();
-	delayHighPriority_ms(10);  /* mandatory before issuing a new command */
+	Task_sleep(10);  /* mandatory before issuing a new command */
 
 	drv95HFConfig.uState = RFTRANS_95HF_STATE_READY;
 	
@@ -376,7 +379,7 @@ void drv95HF_ResetSPI ( void )
  */
 int8_t drv95HF_GetInterfacePinState ( void )
 {
-	return RFTRANS_95HF_GET_INTERFACE();
+	return 1;
 }
 
 /**  
@@ -387,7 +390,7 @@ int8_t drv95HF_GetInterfacePinState ( void )
  */
 int8_t drv95HF_GetIRQOutState ( void )
 {
-	if ((GPIO_ReadInputData(EXTI_GPIO_PORT) & 0x0008) != 0x00)
+	if (GPIO_read(Board_nfc_irq_n) != 0x00)
 	{
 		return 0x01;
 	}
@@ -402,27 +405,26 @@ int8_t drv95HF_GetIRQOutState ( void )
  *  @param  None
  *  @retval None
  */
-void drv95HF_InitilizeSerialInterface ( void )
-{
-	/* -- Get interface pin state to select UART or SPI mode -- */
-	if (drv95HF_GetInterfacePinState () != RFTRANS_95HF_INTERFACE_UART)
-	{
-		drv95HFConfig.uInterface = RFTRANS_95HF_INTERFACE_SPI;
-		/* -- Initialize SPI Interface -- */ 
-		drv95HF_InitializeSPI( );
-		/* -- IRQout configuration PA2 to send pulse on USART_RX of 95HF device */
-		IRQOut_Config( );
-	}
-#ifdef CR95HF
-	else
-	{
-		drv95HFConfig.uInterface = RFTRANS_95HF_INTERFACE_UART;
-		/* -- Initialize UART Interface -- */ 
-		drv95HF_InitializeUART(BAUDRATE_DATARATE_DEFAULT );
-	}
-#endif /* CR95HF */
-	
-}
+//void drv95HF_InitilizeSerialInterface ( void )
+//{
+//	/* -- Get interface pin state to select UART or SPI mode -- */
+//	if (drv95HF_GetInterfacePinState () != RFTRANS_95HF_INTERFACE_UART)
+//	{
+//		drv95HFConfig.uInterface = RFTRANS_95HF_INTERFACE_SPI;
+//		/* -- Initialize SPI Interface -- */
+//		drv95HF_InitializeSPI( );
+//		/* -- IRQout configuration PA2 to send pulse on USART_RX of 95HF device */
+//		IRQOut_Config( );
+//	}
+//#ifdef CR95HF
+//	else
+//	{
+//		drv95HFConfig.uInterface = RFTRANS_95HF_INTERFACE_UART;
+//		/* -- Initialize UART Interface -- */
+//		drv95HF_InitializeUART(BAUDRATE_DATARATE_DEFAULT );
+//	}
+//#endif /* CR95HF */
+//}
 
 /**
  *	@brief  This function enable the interruption
@@ -432,7 +434,7 @@ void drv95HF_InitilizeSerialInterface ( void )
 void drv95HF_EnableInterrupt(void)
 {
 	/* enable interruption */
-	drvInt_Enable_Reply_IRQ();
+	GPIO_enableInt(Board_nfc_irq_n);
 	
 	/* set back driver in polling mode */
 	drv95HFConfig.uSpiMode = RFTRANS_95HF_SPI_INTERRUPT;	
@@ -447,7 +449,7 @@ void drv95HF_EnableInterrupt(void)
 void drv95HF_DisableInterrupt(void)
 {
 	/* disable interruption */
-	drvInt_Disable_95HF_IRQ();
+	GPIO_disableInt(Board_nfc_irq_n);
 	
 	/* set back driver in polling mode */
 	drv95HFConfig.uSpiMode = RFTRANS_95HF_SPI_POLLING;	
@@ -470,10 +472,10 @@ uint8_t drv95HF_GetSerialInterface ( void )
  *  @param  *pData : pointer on data to send to the xx95HF
  *  @retval void
  */
-void drv95HF_SendSPICommand(uc8 *pData)
+void drv95HF_SendSPICommand(unsigned char *pData)
 {
 	uint8_t DummyBuffer[MAX_BUFFER_SIZE];
-  uint16_t bufferlength = 0;
+	uint16_t bufferlength = 0;
 	  	
 	/*  Select xx95HF over SPI  */
 	RFTRANS_95HF_NSS_LOW();
@@ -488,18 +490,18 @@ void drv95HF_SendSPICommand(uc8 *pData)
 	}
 	else
 	{
-    if( pData[RFTRANS_95HF_COMMAND_OFFSET] == 0x24 )
-    {
-      bufferlength = pData[RFTRANS_95HF_LENGTH_OFFSET] + RFTRANS_95HF_DATA_OFFSET + 256;
-    }
-    else if (pData[RFTRANS_95HF_COMMAND_OFFSET] == 0x44)
-    {
-      bufferlength = pData[RFTRANS_95HF_LENGTH_OFFSET] + RFTRANS_95HF_DATA_OFFSET + 512;
-    }
-    else
-    {
-      bufferlength = pData[RFTRANS_95HF_LENGTH_OFFSET] + RFTRANS_95HF_DATA_OFFSET;
-    }
+		if( pData[RFTRANS_95HF_COMMAND_OFFSET] == 0x24 )
+		{
+			bufferlength = pData[RFTRANS_95HF_LENGTH_OFFSET] + RFTRANS_95HF_DATA_OFFSET + 256;
+		}
+		else if (pData[RFTRANS_95HF_COMMAND_OFFSET] == 0x44)
+		{
+			bufferlength = pData[RFTRANS_95HF_LENGTH_OFFSET] + RFTRANS_95HF_DATA_OFFSET + 512;
+		}
+		else
+		{
+			bufferlength = pData[RFTRANS_95HF_LENGTH_OFFSET] + RFTRANS_95HF_DATA_OFFSET;
+		}
 
 		/* Transmit the buffer over SPI */
 #ifdef USE_DMA	
@@ -507,6 +509,7 @@ void drv95HF_SendSPICommand(uc8 *pData)
 #else
 		SPI_SendReceiveBuffer(RFTRANS_95HF_SPI, pData, bufferlength, DummyBuffer);
 #endif
+
 	}
 	
 	/* Deselect xx95HF over SPI  */
@@ -521,43 +524,43 @@ void drv95HF_SendSPICommand(uc8 *pData)
  */
 static int8_t drv95HF_SPIPollingCommand( void )
 {
-	uint8_t Polling_Status = 0;
-
-	if(EnableTimeOut)
-		StartTimeOut(3000);		/* 3sec for LLCP can be improved to adjust it dynamically */
-
-	if (drv95HFConfig.uSpiMode == RFTRANS_95HF_SPI_POLLING)
-	{
-		
-		do{
-			/* in case of an HID interuption during the process that can desactivate the timeout */
-			/* Enable the Time out timer */
-			TIM_Cmd(TIMER_TIMEOUT, ENABLE);
-			
-			RFTRANS_95HF_NSS_LOW();
-			
-			delay_ms(2);
-					
-			/*  poll the 95HF transceiver until he's ready ! */
-			Polling_Status  = SPI_SendReceiveByte(RFTRANS_95HF_SPI, RFTRANS_95HF_COMMAND_POLLING);
-			
-			Polling_Status &= RFTRANS_95HF_FLAG_DATA_READY_MASK;
+//	uint8_t Polling_Status = 0;
+//
+//	if(EnableTimeOut)
+//		StartTimeOut(3000);		/* 3sec for LLCP can be improved to adjust it dynamically */
+//
+//	if (drv95HFConfig.uSpiMode == RFTRANS_95HF_SPI_POLLING)
+//	{
+//
+//		do{
+//			/* in case of an HID interuption during the process that can desactivate the timeout */
+//			/* Enable the Time out timer */
+//			TIM_Cmd(TIMER_TIMEOUT, ENABLE);
+//
+//			RFTRANS_95HF_NSS_LOW();
+//
+//			delay_ms(2);
+//
+//			/*  poll the 95HF transceiver until he's ready ! */
+//			Polling_Status  = SPI_SendReceiveByte(RFTRANS_95HF_SPI, RFTRANS_95HF_COMMAND_POLLING);
+//
+//			Polling_Status &= RFTRANS_95HF_FLAG_DATA_READY_MASK;
+//
+//		}	while( Polling_Status 	!= RFTRANS_95HF_FLAG_DATA_READY && uTimeOut != true );
+//
+//		RFTRANS_95HF_NSS_HIGH();
+//	}
+//	else if (drv95HFConfig.uSpiMode == RFTRANS_95HF_SPI_INTERRUPT)
+//	{
+//		/* Wait a low level on the IRQ pin or the timeout  */
+//		while( (uDataReady == false) & (uTimeOut == false) )
+//		{	}
+//	}
+//
+//	if(EnableTimeOut)
+//		StopTimeOut( );
 	
-		}	while( Polling_Status 	!= RFTRANS_95HF_FLAG_DATA_READY && uTimeOut != true );
-		
-		RFTRANS_95HF_NSS_HIGH();
-	}	
-	else if (drv95HFConfig.uSpiMode == RFTRANS_95HF_SPI_INTERRUPT)
-	{
-		/* Wait a low level on the IRQ pin or the timeout  */
-		while( (uDataReady == false) & (uTimeOut == false) )
-		{	}		
-	}
-
-	if(EnableTimeOut)
-		StopTimeOut( );
-
-	if ( uTimeOut == true )
+	if (spi_poll() == 0)
 		return RFTRANS_95HF_POLLING_TIMEOUT;
 
 	return RFTRANS_95HF_SUCCESS_CODE;	
@@ -625,14 +628,15 @@ void drv95HF_ReceiveSPIResponse(uint8_t *pData)
  *  @param  *pResponse : pointer on the 95HF device response ( Command | Length | Data)
  *  @retval RFTRANS_95HF_SUCCESS_CODE : the function is succesful
  */
-int8_t  drv95HF_SendReceive(uc8 *pCommand, uint8_t *pResponse)
+int8_t  drv95HF_SendReceive(unsigned char *pCommand, uint8_t *pResponse)
 {		
-	u8 command = *pCommand;
+	uint8_t command = *pCommand;
 	
 	/* if we want to send a command we are not expected a interrupt from RF event */
 	if(drv95HFConfig.uSpiMode == RFTRANS_95HF_SPI_INTERRUPT)
 	{	
-		drvInt_Enable_Reply_IRQ();
+//		drvInt_Enable_Reply_IRQ();
+		GPIO_enableInt(Board_nfc_irq_n);
 	}
 	
 	if(drv95HFConfig.uInterface == RFTRANS_95HF_INTERFACE_SPI)
@@ -662,7 +666,8 @@ int8_t  drv95HF_SendReceive(uc8 *pCommand, uint8_t *pResponse)
 	{	
 		if(drv95HFConfig.uSpiMode == RFTRANS_95HF_SPI_INTERRUPT)
 		{		
-			drvInt_Enable_RFEvent_IRQ( );
+//			drvInt_Enable_RFEvent_IRQ( );
+			GPIO_enableInt(Board_nfc_irq_n);
 		}
 	}
 
@@ -674,7 +679,7 @@ int8_t  drv95HF_SendReceive(uc8 *pCommand, uint8_t *pResponse)
  *  @param  *pCommand  : pointer on the buffer to send to the 95HF ( Command | Length | Data)
  *  @retval None
  */
-void drv95HF_SendCmd(uc8 *pCommand)
+void drv95HF_SendCmd(unsigned char *pCommand)
 {
 	if(drv95HFConfig.uInterface == RFTRANS_95HF_INTERFACE_SPI)
 		/* First step  - Sending command 	*/
@@ -729,10 +734,10 @@ void drv95HF_SendIRQINPulse(void)
 	if (drv95HFConfig.uInterface == RFTRANS_95HF_INTERFACE_SPI)
 	{
 		/* Send a pulse on IRQ_IN */
-		RFTRANS_95HF_IRQIN_HIGH() ;
-		delayHighPriority_ms(1);
+		RFTRANS_95HF_IRQIN_HIGH();
+		Task_sleep(1);
 		RFTRANS_95HF_IRQIN_LOW() ;
-		delayHighPriority_ms(1);
+		Task_sleep(1);
 		RFTRANS_95HF_IRQIN_HIGH() ;
 	}
 #ifdef CR95HF	
@@ -744,7 +749,7 @@ void drv95HF_SendIRQINPulse(void)
 #endif /* CR95HF */
 	
 	/* Need to wait 10ms after the pulse before to send the first command */
-	delayHighPriority_ms(10);
+	Task_sleep(10);
 
 }
 
@@ -776,7 +781,7 @@ void drv95HF_InitializeUART (uc32 BaudRate)
  *  @param  mode : Can be IDLE_SLEEP_MODE or IDLE_HIBERNATE_MODE
  *  @retval None 
  */
-void drv95HF_Idle(uc8 WU_source, uc8 mode)
+void drv95HF_Idle(unsigned char WU_source, unsigned char mode)
 {
 	uint8_t pCommand[] = {RFTRANS_95HF_COMMAND_IDLE, IDLE_CMD_LENTH, 0, 0, 0, 0, 0 ,0x18 ,0x00 ,0x00 ,0x60 ,0x00 ,0x00 ,0x00 ,0x00 ,0x00};
 

@@ -104,7 +104,7 @@
 
 
 // set state on IRQ in pin
-#define RFTRANS_95HF_GET_INTERFACE() 		GPIO_ReadInputDataBit(INTERFACE_GPIO_PORT,INTERFACE_PIN)
+//#define RFTRANS_95HF_GET_INTERFACE()
 
 
 #define READERREPLY_MAX_BUFFER_SIZE			0x40	
@@ -196,14 +196,14 @@ void  	drv95HF_InitConfigStructure (void);
 
 void 		drv95HF_InitilizeSerialInterface ( void );
 void 		drv95HF_ReceiveSPIResponse ( uint8_t *pData );
-void 		drv95HF_SendSPICommand ( uc8 *pData );
+void 		drv95HF_SendSPICommand ( unsigned char *pData );
 
 
-int8_t  drv95HF_SendReceive ( uc8 *pCommand, uint8_t *pResponse );
-void  	drv95HF_SendCmd ( uc8 *pCommand );
+int8_t  drv95HF_SendReceive (unsigned char *pCommand, uint8_t *pResponse );
+void  	drv95HF_SendCmd (unsigned char *pCommand );
 int8_t  drv95HF_PoolingReading ( uint8_t *pResponse );
 
-void drv95HF_Idle(uc8 WU_source, uc8 mode);
+void drv95HF_Idle(unsigned char WU_source, unsigned char mode);
 
 
 void drv95HF_SendIRQINPulse(void);

@@ -22,7 +22,7 @@
 #define __FELICA_H
 
 #include "lib_PCD.h"
-
+#include "lib_ConfigManager.h"
 
 /* 	-------------------------------------------------------------------------- */
 #define ATQC_SIZE																				0x20

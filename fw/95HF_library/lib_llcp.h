@@ -16,7 +16,7 @@
 #ifndef _LIB_LLCP_H
 #define _LIB_LLCP_H
 
-#include "stm32f10x.h"
+//#include "stm32f10x.h"
 #include "lib_nfcdeptarget.h"
 #include "lib_nfcdepinitiator.h"
 #include <string.h>
@@ -335,7 +335,7 @@ uint8_t LLCP_SendRNR 				( LLCP_LLC * LLC);
 uint8_t LLCP_HandleTLVCONNECT(LLCP_LLC * LLC);
 
 uint8_t LLCP_WritePAXTLV( uint8_t * Buffer , uint8_t TLVFlags );
-void LLCP_HandleTLVPAX( uc8 * Buffer,uc16 Length);
+void LLCP_HandleTLVPAX( unsigned char * Buffer,uint16_t Length);
 void LLCP_SendReceiveTLVPAX( uint8_t * Buffer,uint16_t* Length);
 
 #endif /* _LIB_LLCP_H */

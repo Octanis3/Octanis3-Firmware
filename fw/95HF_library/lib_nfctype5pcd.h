@@ -44,10 +44,10 @@ uint8_t PCDNFCT5_ReadNDEF( void );
 uint8_t PCDNFCT5_WriteNDEF( void );
 
 /* Extended commands defined by the NFC Forum Type5 */
-int8_t PCDNFCT5_ExtendedReadSingleBlock (uc8 Flags, uc8 *UIDin, uc16 BlockNumber,uint8_t *pResponse );
-int8_t PCDNFCT5_ExtendedGetSystemInfo ( uc8 Flags, uc8 ParamRequest, uc8 *UIDin, uint8_t *pResponse);
-int8_t PCDNFCT5_ExtendedReadMultipleBlock (uc8 Flags, uc8 *UIDin, uint16_t BlockNumber, uc8 NbBlock, uint8_t *pResponse );
-int8_t PCDNFCT5_ExtendedWriteSingleBlock(uc8 Flags, uc8 *UIDin, uc16 BlockNumber,uc8 *DataToWrite,uint8_t *pResponse );
-int8_t PCDNFCT5_ExtendedLockSingleBlock ( uc8 Flags, uc8 *UIDin, uc16 BlockNumber,uint8_t *pResponse);
+int8_t PCDNFCT5_ExtendedReadSingleBlock (unsigned char Flags, unsigned char *UIDin, uint16_t BlockNumber,uint8_t *pResponse );
+int8_t PCDNFCT5_ExtendedGetSystemInfo ( unsigned char Flags, unsigned char ParamRequest, unsigned char *UIDin, uint8_t *pResponse);
+int8_t PCDNFCT5_ExtendedReadMultipleBlock (unsigned char Flags, unsigned char *UIDin, uint16_t BlockNumber, unsigned char NbBlock, uint8_t *pResponse );
+int8_t PCDNFCT5_ExtendedWriteSingleBlock(unsigned char Flags, unsigned char *UIDin, uint16_t BlockNumber,unsigned char *DataToWrite,uint8_t *pResponse );
+int8_t PCDNFCT5_ExtendedLockSingleBlock ( unsigned char Flags, unsigned char *UIDin, uint16_t BlockNumber,uint8_t *pResponse);
 
 #endif

@@ -125,7 +125,7 @@ Error:
 static int8_t ISO14443BReadARConfigB (uint8_t *pDataRead )
 {
 	int8_t 	status;
-	uc8 data = 0x01;
+	unsigned char data = 0x01;
 	
 	/* Select the register */
 	errchk(PCD_WriteRegister (0x03,AFE_ANALOG_CONF_REG_SELECTION,0x00,&data,pDataRead));	
@@ -184,7 +184,7 @@ int8_t ISO14443B_Init( void )
 	uint8_t		*pDataRead = u95HFBuffer;
 	int8_t		status;
 	uint8_t * ProtocolSelectParameters;
-	uc8 ProtocolSelectParametersQJC[] 	= { 
+	unsigned char ProtocolSelectParametersQJC[] 	= { 
 																		/* Parameters */		
 																		PCD_ISO14443B_TRANSMISSION_SPEED_106K     |
 																		PCD_ISO14443B_RECEPTION_SPEED_106K        |
@@ -193,7 +193,7 @@ int8_t ISO14443B_Init( void )
 																		0x02                         ,
 																		0x00    																	
 														};
-	uc8 ProtocolSelectParametersQJE[] 	= { 
+	unsigned char ProtocolSelectParametersQJE[] 	= { 
 																		/* Parameters */		
 																		PCD_ISO14443B_TRANSMISSION_SPEED_106K     |
 																		PCD_ISO14443B_RECEPTION_SPEED_106K        |
@@ -203,7 +203,7 @@ int8_t ISO14443B_Init( void )
 																		0x1A
 																		
 														};
-    uc8	Length = 0x04;
+    unsigned char	Length = 0x04;
 														
 	if( IcVers < QJE)
 	{
@@ -239,7 +239,7 @@ Error:
 int8_t ISO14443B_ReqB ( uint8_t *pDataRead )
 {
 	int8_t	status;
-	uc8 ReqB[]					= { 			/* APf */
+	unsigned char ReqB[]					= { 			/* APf */
 															ISO14443B_ANTICOLLISION_PREFIX_BYTE   , 
 															/* AFI */
 															ISO14443B_AFI_ALL_FAMILIES            , 
@@ -343,7 +343,7 @@ int8_t ISO14443B_Anticollision(void)
 {
 	int8_t	status;
 	uint8_t *pDataRead = u95HFBuffer;
-	uc8 ProtocolSelectParameters[] 	= {PCD_ISO14443B_TRANSMISSION_SPEED_106K|PCD_ISO14443B_RECEPTION_SPEED_106K|PCD_ISO14443B_APPEND_CRC,0x04,0x3E};
+	unsigned char ProtocolSelectParameters[] 	= {PCD_ISO14443B_TRANSMISSION_SPEED_106K|PCD_ISO14443B_RECEPTION_SPEED_106K|PCD_ISO14443B_APPEND_CRC,0x04,0x3E};
 	
 	/* ATTRIB attempt */
 	errchk(ISO14443B_AttriB(pDataRead));
@@ -367,7 +367,7 @@ Error:
 int8_t ISO14443B_IsCardIntheField ( void )
 {
 	uint8_t *pDataRead = u95HFBuffer;
-	uc8			 Parameter			= 0xB2;
+	unsigned char			 Parameter			= 0xB2;
 	int8_t	status;
 	
 	/* sends the command to the PCD device*/

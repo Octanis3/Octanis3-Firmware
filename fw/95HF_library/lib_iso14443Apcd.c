@@ -34,11 +34,11 @@ extern IC_VERSION IcVers;
  * command =  Command code | Length | data(Le)
  * -------------------------------------------------- */
 
-static uc8 TOPAZ[] = {SEND_RECEIVE, 0x08, 0x78, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xA8};
+static unsigned char TOPAZ[] = {SEND_RECEIVE, 0x08, 0x78, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xA8};
 
-static u8 MultiID[200] = {0};
-static u8 MultiIDPart2[64] = {0};
-static u8 RemainingID = 0;
+static uint8_t MultiID[200] = {0};
+static uint8_t MultiIDPart2[64] = {0};
+static uint8_t RemainingID = 0;
 
 
 uint16_t FSC = 32;
@@ -62,7 +62,7 @@ static int8_t ISO14443A_RATS( uint8_t *pDataRead );
 #if 0
 static int8_t ISO14443A_PPS( uint8_t *pDataRead );
 #endif
-static int8_t ISO14443A_AC( uint8_t *pDataRead, u8 CascadeLevel );
+static int8_t ISO14443A_AC( uint8_t *pDataRead, uint8_t CascadeLevel );
 static int8_t ISO14443A_ACLevel1 ( uint8_t *pDataRead );
 static int8_t ISO14443A_ACLevel2 ( uint8_t *pDataRead );
 static int8_t ISO14443A_ACLevel3 ( uint8_t *pDataRead );
@@ -139,7 +139,7 @@ static uint16_t FSCIToFSC(uint8_t FSCI)
  */
 static int8_t ISO14443A_REQA( uint8_t *pDataRead )
 {
-	uc8 		ReqA[]					= { 0x26, 0x07};
+	unsigned char 		ReqA[]					= { 0x26, 0x07};
 	int8_t	status;
 
 	/* sends the command to the PCD device*/
@@ -163,19 +163,19 @@ Error:
  * @return ISO14443A_SUCCESSCODE the function is succesful
  * @return ISO14443A_ERRORCODE_DEFAULT : an error occured
  */
-static int8_t ISO14443A_AC( uint8_t *pDataRead, u8 CascadeLevel )
+static int8_t ISO14443A_AC( uint8_t *pDataRead, uint8_t CascadeLevel )
 {
-	u8 AnticolParameter [7] = {0x00, ISO14443A_NVM_20, 0x08,0x00,0x00,0x00,0x00};
-	u8 NbResponseByte = 0;
-	u8 NbResponseByteOrigin = 0;
-	u8 Collision = 0;
-	u8 ByteCollisionIndex = 0;
-	u8 BitCollisionIndex = 0;
+	uint8_t AnticolParameter [7] = {0x00, ISO14443A_NVM_20, 0x08,0x00,0x00,0x00,0x00};
+	uint8_t NbResponseByte = 0;
+	uint8_t NbResponseByteOrigin = 0;
+	uint8_t Collision = 0;
+	uint8_t ByteCollisionIndex = 0;
+	uint8_t BitCollisionIndex = 0;
 
-	u8 RemainingBit = 0;
-	u8 NewByteCollisionIndex = 0;
-	u8 NewBitCollisionIndex = 0;
-	u8 UID[4] = {0x00,0x00,0x00,0x00};
+	uint8_t RemainingBit = 0;
+	uint8_t NewByteCollisionIndex = 0;
+	uint8_t NewBitCollisionIndex = 0;
+	uint8_t UID[4] = {0x00,0x00,0x00,0x00};
 	int8_t status;
 
 	/* prepare command regarding cascade level on-going */
@@ -207,14 +207,14 @@ static int8_t ISO14443A_AC( uint8_t *pDataRead, u8 CascadeLevel )
 		AnticolParameter[1] = ISO14443A_NVM_20 + ((ByteCollisionIndex) <<4) + (BitCollisionIndex+1);
 		if( ByteCollisionIndex == 0)
 		{	
-			AnticolParameter[2] = pDataRead[2] & ((u8)(~(0xFF<<(BitCollisionIndex+1)))); /* ISO said it's better to put collision bit to value 1 */
+			AnticolParameter[2] = pDataRead[2] & ((uint8_t)(~(0xFF<<(BitCollisionIndex+1)))); /* ISO said it's better to put collision bit to value 1 */
 			AnticolParameter[3] = (BitCollisionIndex+1) | 0x40; /* add split frame bit */
 			UID [0] = AnticolParameter[2];
 		}
 		else if( ByteCollisionIndex == 1)
 		{
 			AnticolParameter[2] = pDataRead[2];
-			AnticolParameter[3] = pDataRead[3] & ((u8)(~(0xFF<<(BitCollisionIndex+1)))); /* ISO said it's better to put collision bit to value 1 */			
+			AnticolParameter[3] = pDataRead[3] & ((uint8_t)(~(0xFF<<(BitCollisionIndex+1)))); /* ISO said it's better to put collision bit to value 1 */
 			AnticolParameter[4] = (BitCollisionIndex+1) | 0x40; /* add split frame bit */
 			UID [0] = AnticolParameter[2];
 			UID [1] = AnticolParameter[3];
@@ -223,7 +223,7 @@ static int8_t ISO14443A_AC( uint8_t *pDataRead, u8 CascadeLevel )
 		{
 			AnticolParameter[2] = pDataRead[2];
 			AnticolParameter[3] = pDataRead[3];
-			AnticolParameter[4] = pDataRead[4] & ((u8)(~(0xFF<<(BitCollisionIndex+1)))); /* ISO said it's better to put collision bit to value 1 */			
+			AnticolParameter[4] = pDataRead[4] & ((uint8_t)(~(0xFF<<(BitCollisionIndex+1)))); /* ISO said it's better to put collision bit to value 1 */
 			AnticolParameter[5] = (BitCollisionIndex+1) | 0x40; /* add split frame bit */;
 			UID [0] = AnticolParameter[2];
 			UID [1] = AnticolParameter[3];
@@ -234,7 +234,7 @@ static int8_t ISO14443A_AC( uint8_t *pDataRead, u8 CascadeLevel )
 			AnticolParameter[2] = pDataRead[2];
 			AnticolParameter[3] = pDataRead[3];
 			AnticolParameter[4] = pDataRead[4];
-			AnticolParameter[5] = pDataRead[5] & ((u8)(~(0xFF<<(BitCollisionIndex+1)))); /* ISO said it's better to put collision bit to value 1 */			
+			AnticolParameter[5] = pDataRead[5] & ((uint8_t)(~(0xFF<<(BitCollisionIndex+1)))); /* ISO said it's better to put collision bit to value 1 */
 			AnticolParameter[6] = (BitCollisionIndex+1) | 0x40; /* add split frame bit */;
 			UID [0] = AnticolParameter[2];
 			UID [1] = AnticolParameter[3];
@@ -500,7 +500,7 @@ Error:
  */
 static int8_t ISO14443A_HLTA( uint8_t *pDataRead )
 {
-	uc8 	 pdata[]= { 0x50, 0x00, 0x28};
+	unsigned char 	 pdata[]= { 0x50, 0x00, 0x28};
 
 	/* send the command to the PCD device*/
 	PCD_SendRecv(0x03,pdata,pDataRead);
@@ -520,7 +520,7 @@ static int8_t ISO14443A_RATS( uint8_t *pDataRead )
 {
 	int8_t status;	
 	uint8_t FSCI;
-	uc8 	 pdata[]= { 0xE0, 0x80, 0x28};
+	unsigned char 	 pdata[]= { 0xE0, 0x80, 0x28};
 
 	/* send the command to the PCD device*/
 	errchk(PCD_SendRecv(0x03,pdata,pDataRead));
@@ -555,7 +555,7 @@ Error:
  */
 static int8_t ISO14443A_PPS( uint8_t *pDataRead )
 {
-	uc8 	 pdata[]= { 0xD0, 0x11, 0x00, 0x28};
+	unsigned char 	 pdata[]= { 0xD0, 0x11, 0x00, 0x28};
 	int8_t status;
 
 	/* sends the command to the PCD device*/
@@ -778,10 +778,10 @@ Error:
 
 int8_t ISO14443A_ConfigFDTforAnticollision( void)
 {
-	u8 ProtocolSelectParameters [6]  = {0x00, 0x00, 0x00, 0x00, 0x02, 0x02}; /* last 2 bytes since QJE version */
-	u8 WriteRegisterParameters [2]  = {PCD_TYPEA_TIMERW, TIMER_WINDOW_UPDATE_CONFIRM_CMD};
-  u8 DemoGainParameters [2]  = {PCD_TYPEA_ARConfigA, PCD_TYPEA_ARConfigB};
-	u8 NbParam = 0;
+	uint8_t ProtocolSelectParameters [6]  = {0x00, 0x00, 0x00, 0x00, 0x02, 0x02}; /* last 2 bytes since QJE version */
+	uint8_t WriteRegisterParameters [2]  = {PCD_TYPEA_TIMERW, TIMER_WINDOW_UPDATE_CONFIRM_CMD};
+  uint8_t DemoGainParameters [2]  = {PCD_TYPEA_ARConfigA, PCD_TYPEA_ARConfigB};
+	uint8_t NbParam = 0;
 	uint8_t *pDataRead = u95HFBuffer;
 	int8_t 	status;	
 	
@@ -802,10 +802,10 @@ Error:
 
 int8_t ISO14443A_ConfigFDTforRATS( void)
 {
-	u8 ProtocolSelectParameters [6]  = {0x00, 0x00, 0x00, 0x00, 0x03, 0x03}; /* last 2 bytes since QJE version */
-	u8 WriteRegisterParameters [2]  = {PCD_TYPEA_TIMERW, TIMER_WINDOW_UPDATE_CONFIRM_CMD};
-  u8 DemoGainParameters [2]  = {PCD_TYPEA_ARConfigA, PCD_TYPEA_ARConfigB};
-	u8 NbParam = 0;
+	uint8_t ProtocolSelectParameters [6]  = {0x00, 0x00, 0x00, 0x00, 0x03, 0x03}; /* last 2 bytes since QJE version */
+	uint8_t WriteRegisterParameters [2]  = {PCD_TYPEA_TIMERW, TIMER_WINDOW_UPDATE_CONFIRM_CMD};
+  uint8_t DemoGainParameters [2]  = {PCD_TYPEA_ARConfigA, PCD_TYPEA_ARConfigB};
+	uint8_t NbParam = 0;
 	uint8_t *pDataRead = u95HFBuffer;
 	int8_t 	status;	
 	
@@ -837,10 +837,10 @@ Error:
 
 int8_t ISO14443A_ConfigFDT( uint8_t WTXM)
 {
-	u8 ProtocolSelectParameters [6]  = {0x00, 0x00, 0x00, 0x00, 0x03, 0x03}; /* last 2 bytes since QJE version */
-	u8 WriteRegisterParameters [2]  = {PCD_TYPEA_TIMERW, TIMER_WINDOW_UPDATE_CONFIRM_CMD};
-  u8 DemoGainParameters [2]  = {PCD_TYPEA_ARConfigA, PCD_TYPEA_ARConfigB};
-	u8 NbParam = 0;
+	uint8_t ProtocolSelectParameters [6]  = {0x00, 0x00, 0x00, 0x00, 0x03, 0x03}; /* last 2 bytes since QJE version */
+	uint8_t WriteRegisterParameters [2]  = {PCD_TYPEA_TIMERW, TIMER_WINDOW_UPDATE_CONFIRM_CMD};
+  uint8_t DemoGainParameters [2]  = {PCD_TYPEA_ARConfigA, PCD_TYPEA_ARConfigB};
+	uint8_t NbParam = 0;
 	uint8_t *pDataRead = u95HFBuffer;
 	int8_t 	status;	
 	
@@ -901,8 +901,8 @@ void ISO14443A_MultiTagHunting ( uint8_t *pNbTag, uint8_t *pUIDout )
 {
 
 	bool exit = false;
-	u8 loop = 0;
-	u8 		i = 0;
+	uint8_t loop = 0;
+	uint8_t 		i = 0;
 
 	RemainingID = 0;
 	*pNbTag = 0;

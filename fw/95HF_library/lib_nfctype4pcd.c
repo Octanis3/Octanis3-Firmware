@@ -37,9 +37,9 @@ extern uint16_t FSC;
 
 static int8_t PCDNFCT4_SelectApplication ( void );
 static int8_t PCDNFCT4_SelectCCfile ( void );
-static int8_t PCDNFCT4_SelectNDEFfile ( uc8 NDEF_ID_MSB, uc8 NDEF_ID_LSB );
-static uint8_t PCDNFCT4_ReadBinary ( uc16 Offset ,uc8 NbByteToRead , uint8_t *pBufferRead );
-static uint8_t PCDNFCT4_UpdateBinary ( uc16 Offset ,uc8 NbByteToWrite , uint8_t *pBufferWrite );
+static int8_t PCDNFCT4_SelectNDEFfile ( unsigned char NDEF_ID_MSB, unsigned char NDEF_ID_LSB );
+static uint8_t PCDNFCT4_ReadBinary ( uint16_t Offset ,unsigned char NbByteToRead , uint8_t *pBufferRead );
+static uint8_t PCDNFCT4_UpdateBinary ( uint16_t Offset ,unsigned char NbByteToWrite , uint8_t *pBufferWrite );
 
 /** @addtogroup _95HF_Libraries
  * 	@{
@@ -110,7 +110,7 @@ if (ISO7816_SelectFile ( P1byte , P2byte , LCbyte ,FileId ) == ISO7816_SUCCESSCO
 	* @retval PCDNFCT4_OK : Command success
 	* @retval PCDNFCT4_ERROR : Transmission error
   */
-static int8_t PCDNFCT4_SelectNDEFfile ( uc8 NDEF_ID_MSB, uc8 NDEF_ID_LSB )
+static int8_t PCDNFCT4_SelectNDEFfile ( unsigned char NDEF_ID_MSB, unsigned char NDEF_ID_LSB )
 {
 	uint8_t P1byte = 0x00,
 					P2byte = 0x0C,
@@ -134,7 +134,7 @@ static int8_t PCDNFCT4_SelectNDEFfile ( uc8 NDEF_ID_MSB, uc8 NDEF_ID_LSB )
 	* @retval PCDNFCT4_OK : Command success
 	* @retval PCDNFCT4_ERROR : Transmission error
   */
-static uint8_t PCDNFCT4_ReadBinary ( uc16 Offset ,uc8 NbByteToRead , uint8_t *pBufferRead )
+static uint8_t PCDNFCT4_ReadBinary ( uint16_t Offset ,unsigned char NbByteToRead , uint8_t *pBufferRead )
 {
 	uint8_t P1byte = GETMSB(Offset),
 					P2byte = GETLSB(Offset),
@@ -155,7 +155,7 @@ static uint8_t PCDNFCT4_ReadBinary ( uc16 Offset ,uc8 NbByteToRead , uint8_t *pB
 	* @retval PCDNFCT4_OK : Command success
 	* @retval PCDNFCT4_ERROR : Transmission error
   */
-static uint8_t PCDNFCT4_UpdateBinary ( uc16 Offset ,uc8 NbByteToWrite , uint8_t *pBufferWrite )
+static uint8_t PCDNFCT4_UpdateBinary ( uint16_t Offset ,unsigned char NbByteToWrite , uint8_t *pBufferWrite )
 {
 	uint8_t P1byte = GETMSB(Offset),
 					P2byte = GETLSB(Offset),

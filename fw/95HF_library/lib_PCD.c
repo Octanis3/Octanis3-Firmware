@@ -67,14 +67,14 @@ PCD_PROTOCOL TechnoSelected = PCDPROTOCOL_UNKNOWN;
  */
 
 #ifdef CR95HF
-static uint32_t PCD_ComputeUARTBaudRate (uc8 BaudRateCommandParameter);
+static uint32_t PCD_ComputeUARTBaudRate (unsigned char BaudRateCommandParameter);
 
 /**
  *	@brief  This function computes the UART baud rate according to Baudrate command parameter
  *  @param  BaudRateCommandParameter  : Baudrate command parameter (1 byte)
  *  @retval the UART baud rate value
  */
-static uint32_t PCD_ComputeUARTBaudRate (uc8 BaudRateCommandParameter)
+static uint32_t PCD_ComputeUARTBaudRate (unsigned char BaudRateCommandParameter)
 {
 	return (13.56e6/ (2*BaudRateCommandParameter+2));
 }
@@ -121,7 +121,7 @@ static uint8_t IsAnAvailableProtocol (uint8_t Protocol)
  */
 int8_t PCD_SendEOF(uint8_t *pResponse)
 {
-uc8 DataToSend[] = {SEND_RECEIVE	,0x00};
+unsigned char DataToSend[] = {SEND_RECEIVE	,0x00};
 
 	drv95HF_SendReceive(DataToSend, pResponse);
 
@@ -165,7 +165,7 @@ void PCD_FieldOn ( void )
  */
 int8_t PCD_Echo(uint8_t *pResponse)
 {
-uc8 command[]= {ECHO};
+unsigned char command[]= {ECHO};
 
 	drv95HF_SendReceive(command, pResponse);
 
@@ -183,7 +183,7 @@ return PCD_SUCCESSCODE;
  *  @return PCD_ERRORCODE_PARAMETERLENGTH : the Length parameter is erroneous
  *  @return PCD_ERRORCODE_PARAMETER : a parameter is erroneous
  */
-int8_t PCD_ProtocolSelect(uc8 Length,uc8 Protocol,uc8 *Parameters,uint8_t *pResponse)
+int8_t PCD_ProtocolSelect(unsigned char Length,unsigned char Protocol,unsigned char *Parameters,uint8_t *pResponse)
 {
 	uint8_t DataToSend[SELECT_BUFFER_SIZE];
 	int8_t	status; 
@@ -231,7 +231,7 @@ Error:
  *  @return PCD_ERRORCODE_DEFAULT : the PCD device returned an error code
  *  @return PCD_ERRORCODE_PARAMETERLENGTH : Length parameter is erroneous
  */
-int8_t PCD_SendRecv(uc8 Length,uc8 *Parameters,uint8_t *pResponse)
+int8_t PCD_SendRecv(unsigned char Length,unsigned char *Parameters,uint8_t *pResponse)
 {
 	uint8_t DataToSend[SENDRECV_BUFFER_SIZE];
 
@@ -274,7 +274,7 @@ int8_t PCD_SendRecv(uc8 Length,uc8 *Parameters,uint8_t *pResponse)
  *  @return PCD_ERRORCODE_DEFAULT : the PCD device returned an error code
  *  @return PCD_ERRORCODE_PARAMETERLENGTH : Length parameter is erroneous
  */
-int8_t PCD_Idle( uc8 Length, uc8 *Data )
+int8_t PCD_Idle( unsigned char Length, unsigned char *Data )
 {
 	uint8_t DataToSend[IDLE_BUFFER_SIZE];
 
@@ -304,7 +304,7 @@ int8_t PCD_Idle( uc8 Length, uc8 *Data )
  *  @return PCD_ERRORCODE_DEFAULT : the PCD device returned an error code
  *  @return PCD_ERRORCODE_PARAMETERLENGTH : Length parameter is erroneous
  */
-int8_t PCD_ReadRegister (uc8 Length,uc8 Address,uc8 RegCount,uc8 Flags,uint8_t *pResponse)
+int8_t PCD_ReadRegister (unsigned char Length,unsigned char Address,unsigned char RegCount,unsigned char Flags,uint8_t *pResponse)
 {
 	uint8_t DataToSend[RDREG_BUFFER_SIZE];
 
@@ -334,7 +334,7 @@ int8_t PCD_ReadRegister (uc8 Length,uc8 Address,uc8 RegCount,uc8 Flags,uint8_t *
  *  @return PCD_SUCCESSCODE : the command was succedfully send
  *  @return PCD_ERRORCODE_PARAMETERLENGTH : Length parameter is erroneous
  */
-int8_t PCD_WriteRegister (uc8 Length,uc8 Address,uc8 Flags,uc8 *pData,uint8_t *pResponse)
+int8_t PCD_WriteRegister (unsigned char Length,unsigned char Address,unsigned char Flags,unsigned char *pData,uint8_t *pResponse)
 {
 	uint8_t DataToSend[WRREG_BUFFER_SIZE];
 
@@ -402,7 +402,7 @@ return PCD_ERRORCODE_PORERROR;
 *  @return PCD_SUCCESSCODE : the the PCD device returns an success code
 *  @return PCD_ERRORCODE_DEFAULT : the the PCD device returns an error code
  */
-int8_t PCD_CheckSendReceive(uc8 *pCommand, uint8_t *pResponse) 
+int8_t PCD_CheckSendReceive(unsigned char *pCommand, uint8_t *pResponse) 
 {
 	
 	drv95HF_SendReceive(pCommand, pResponse);
@@ -421,7 +421,7 @@ int8_t PCD_CheckSendReceive(uc8 *pCommand, uint8_t *pResponse)
 * @retval  	PCD_SUCCESSCODE :  the CRC is Ok
 * @retval  	PCD_NOREPLY_CODE : the CRC is erroenous
 */
-int8_t PCD_IsCRCOk (uc8 Protocol ,uc8 *pReaderReply)
+int8_t PCD_IsCRCOk (unsigned char Protocol ,unsigned char *pReaderReply)
 {
 uint8_t NbByte = pReaderReply[PCD_LENGTH_OFFSET];
 	
@@ -481,7 +481,7 @@ uint8_t NbByte = pReaderReply[PCD_LENGTH_OFFSET];
 * @retval  	PCD_ERRORCODE_DEFAULT  :  the PCD device didn't return a succesful code
 * @retval  	PCD_NOREPLY_CODE : no the PCD device response
 */
-int8_t PCD_IsReaderResultCodeOk (uint8_t CmdCode,uc8 *ReaderReply)
+int8_t PCD_IsReaderResultCodeOk (uint8_t CmdCode,unsigned char *ReaderReply)
 {
 
 	if (ReaderReply[READERREPLY_STATUSOFFSET] == PCD_ERRORCODE_DEFAULT)
@@ -579,7 +579,7 @@ int8_t PCD_IsReaderResultCodeOk (uint8_t CmdCode,uc8 *ReaderReply)
  *  @param	pDacDataH	: Value computed for DacDataH (DacDataL = DacDataH – 0x10)
  *  @return PCD_SUCCESSCODE : the calibration was successfully performed (DacDataH value is significant)
  */
-int8_t PCD_TagDetectCalibration (uc8 Wuperiod, uint8_t *pDacDataH)
+int8_t PCD_TagDetectCalibration (unsigned char Wuperiod, uint8_t *pDacDataH)
 {
 	uint8_t DataToSend[IDLE_CMD_LENTH+2] = { 0x00, 0x00, 0x03, 0xA1, 0x00, 0xF8, 0x01, 0x18, 
 																					 0x00, 0x00, 0x60, 0x60, 0x00, 0x00, 0x3F, 0x01};
@@ -663,7 +663,7 @@ int8_t PCD_TagDetectCalibration (uc8 Wuperiod, uint8_t *pDacDataH)
  *  @param	NbTrials	: number of trial to find tag before time out
  *  @return PCD_SUCCESSCODE : the calibration was succesfully performed (DacDataH value is significant)
  */
-int8_t PCD_WaitforTagDetection (uint8_t *WuSource, uc8 WuPeriod, uc8 DacDataH, uc8 NbTrials)
+int8_t PCD_WaitforTagDetection (uint8_t *WuSource, unsigned char WuPeriod, unsigned char DacDataH, unsigned char NbTrials)
 {
 	uint8_t DataToSend[IDLE_CMD_LENTH+2] = { 0x00, 0x00, 0x00, 0x21, 0x00, 0x79, 0x01, 0x18, 
 																					 0x00, 0x20, 0x60, 0x60, 0x00, 0x00, 0x3F, 0x01};
@@ -702,7 +702,7 @@ int8_t PCD_WaitforTagDetection (uint8_t *WuSource, uc8 WuPeriod, uc8 DacDataH, u
  *  @param	pResponse 	: pseudo reply (shall be 0x55)
  *  @return PCD_SUCCESSCODE : the command was succedfully send
  */
-int8_t PCD_BaudRate (uc8 BaudRate,uint8_t *pResponse)
+int8_t PCD_BaudRate (unsigned char BaudRate,uint8_t *pResponse)
 {
 	uint8_t DataToSend[BAUDRATE_BUFFER_SIZE];
 
@@ -723,7 +723,7 @@ int8_t PCD_BaudRate (uc8 BaudRate,uint8_t *pResponse)
  *  @retval  PCD_ERRORCODE_UARTDATARATEUNCHANGED : the UART baud rate has not changed 
  *  @retval  PCD_ERRORCODE_UARTDATARATEPROCESS : command DaubRate was send to the PCD device but the MCU was not able to comunicatewith the PCD device
  */
-int8_t PCD_ChangeUARTBaudRate (uc8 *pCommand, uint8_t *pResponse)
+int8_t PCD_ChangeUARTBaudRate (unsigned char *pCommand, uint8_t *pResponse)
 {
 	/* initialize the response	*/
 	*pResponse =PCD_ERRORCODE_DEFAULT;

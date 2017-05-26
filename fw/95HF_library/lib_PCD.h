@@ -241,10 +241,10 @@ typedef enum {
 
 					 
 /* Functions ---------------------------------------------------------------- */
-int8_t PCD_IsReaderResultCodeOk 		( uint8_t CmdCode,uc8 *ReaderReply);
-int8_t PCD_IsCRCOk 									( uc8 Protocol , uc8 *pReaderReply );
+int8_t PCD_IsReaderResultCodeOk 		( uint8_t CmdCode,unsigned char *ReaderReply);
+int8_t PCD_IsCRCOk 									( unsigned char Protocol , unsigned char *pReaderReply );
 
-int8_t 	PCD_CheckSendReceive				(uc8 *pCommand, uint8_t *pResponse);
+int8_t 	PCD_CheckSendReceive				(unsigned char *pCommand, uint8_t *pResponse);
 
 void PCD_FieldOff								( void );
 void PCD_FieldOn 								( void );
@@ -253,22 +253,22 @@ void PCD_FieldOn 								( void );
 int8_t PCD_IDN						( uint8_t *pResponse);
 int8_t PCD_Echo						( uint8_t *pResponse);
 int8_t PCD_SendEOF				( uint8_t *pResponse);
-int8_t PCD_ProtocolSelect	( uc8 Length,uc8 Protocol, uc8 *Parameters, uint8_t *pResponse);
-int8_t PCD_SendRecv				( uc8 Length,uc8 *Parameters,uint8_t *pResponse);
-int8_t PCD_Idle						( uc8 Length,uc8 *Data );
-int8_t PCD_ReadRegister		( uc8 Length,uc8 Address,uc8 RegCount,uc8 Flags,uint8_t *pResponse);
-int8_t PCD_WriteRegister	( uc8 Length,uc8 Address,uc8 Flags,uc8 *pData,uint8_t *pResponse);
+int8_t PCD_ProtocolSelect	( unsigned char Length,unsigned char Protocol, unsigned char *Parameters, uint8_t *pResponse);
+int8_t PCD_SendRecv				( unsigned char Length,unsigned char *Parameters,uint8_t *pResponse);
+int8_t PCD_Idle						( unsigned char Length,unsigned char *Data );
+int8_t PCD_ReadRegister		( unsigned char Length,unsigned char Address,unsigned char RegCount,unsigned char Flags,uint8_t *pResponse);
+int8_t PCD_WriteRegister	( unsigned char Length,unsigned char Address,unsigned char Flags,unsigned char *pData,uint8_t *pResponse);
 
 
 int8_t PCD_PORsequence				( void );
 void PCD_Receive_SPI_Response( uint8_t *pData );
 
-int8_t PCD_TagDetectCalibration (uc8 Wuperiod,uint8_t *pDacDataH);
-int8_t PCD_WaitforTagDetection (uint8_t *WuSource, uc8 WuPeriod, uc8 DacDataH, uc8 NbTrials);
+int8_t PCD_TagDetectCalibration (unsigned char Wuperiod,uint8_t *pDacDataH);
+int8_t PCD_WaitforTagDetection (uint8_t *WuSource, unsigned char WuPeriod, unsigned char DacDataH, unsigned char NbTrials);
 
 #ifdef CR95HF
-int8_t PCD_BaudRate 			( uc8 BaudRate,uint8_t *pResponse);
-int8_t PCD_ChangeUARTBaudRate 		( uc8 *pCommand, uint8_t *pResponse);
+int8_t PCD_BaudRate 			( unsigned char BaudRate,uint8_t *pResponse);
+int8_t PCD_ChangeUARTBaudRate 		( unsigned char *pCommand, uint8_t *pResponse);
 #endif /* CR95HF */
 
 

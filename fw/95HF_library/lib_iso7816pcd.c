@@ -162,7 +162,7 @@ Error :
  * @return ISO7816_SUCCESSCODE : the function is successful and the tag returns a success code
  * @return ISO7816_ERRORCODE_DEFAULT : the function is not successful 
  */
-int8_t ISO7816_SelectFile ( uc8 P1byte , uc8 P2byte , uc8 LCbyte ,uint8_t *pDataSel )
+int8_t ISO7816_SelectFile ( unsigned char P1byte , unsigned char P2byte , unsigned char LCbyte ,uint8_t *pDataSel )
 {
 		// add the class byte
 		APDUcommand.Header.CLA = ISO7816_CLASS_0X00; 
@@ -196,7 +196,7 @@ int8_t ISO7816_SelectFile ( uc8 P1byte , uc8 P2byte , uc8 LCbyte ,uint8_t *pData
  * @return ISO7816_SUCCESSCODE : the function is successful and the tag returns a success code
  * @return ISO7816_ERRORCODE_DEFAULT : the function is not successful 
  */
-int8_t ISO7816_ReadBinary( uc8 P1byte , uc8 P2byte , uc8 LEbyte , uint8_t *pDataRead )
+int8_t ISO7816_ReadBinary( unsigned char P1byte , unsigned char P2byte , unsigned char LEbyte , uint8_t *pDataRead )
 {
 	// add the class byte
 	APDUcommand.Header.CLA = ISO7816_CLASS_0X00; 
@@ -223,7 +223,7 @@ int8_t ISO7816_ReadBinary( uc8 P1byte , uc8 P2byte , uc8 LEbyte , uint8_t *pData
  * @return ISO7816_SUCCESSCODE : the function is successful and the tag returns a success code
  * @return ISO7816_ERRORCODE_DEFAULT : the function is not successful 
  */
-int8_t ISO7816_UpdateBinary( uc8 P1byte , uc8 P2byte , uc8 LCbyte , uint8_t *pData)
+int8_t ISO7816_UpdateBinary( unsigned char P1byte , unsigned char P2byte , unsigned char LCbyte , uint8_t *pData)
 {
   	
 	// add the class byte

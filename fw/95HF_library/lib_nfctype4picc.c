@@ -52,8 +52,8 @@
  /** @addtogroup NFCtype4_Private_Functions
  * 	@{
  */
-static void 		PICCNFCT4_Select 				( uc8 *pData);
-static int8_t 	PICCNFCT4_IsReadWriteParametersOk ( uc8 FileSelected , uc8 FileOffset , uc8 NbByteToRead  );
+static void 		PICCNFCT4_Select 				( unsigned char *pData);
+static int8_t 	PICCNFCT4_IsReadWriteParametersOk ( unsigned char FileSelected , unsigned char FileOffset , unsigned char NbByteToRead  );
 
 PICCNFCT4_SELECTCMD_APPL		ApplicationSelected = PICCNFCT4_APPLI_UNKNOWN;
 static uint8_t		FileSelected = NDEFFILE_SELECTED_NONE;
@@ -74,7 +74,7 @@ extern bool				ISO14443A_TT4Used;
  */	
 extern uint8_t CardCCfile[];
 #define CC_INIT_LENGTH 16
-uc8 CardCCfileInit[] = {CCLEN_UB, CCLEN_LB, MAPVER, MLE_UB, MLE_LB, MLC_UB, MLC_LB, TLV_T, TLV_L,
+unsigned char CardCCfileInit[] = {CCLEN_UB, CCLEN_LB, MAPVER, MLE_UB, MLE_LB, MLC_UB, MLC_LB, TLV_T, TLV_L,
  															 TLV_V_FILEID_UB, TLV_V_FILEID_LB, TLV_V_FILESIZE_UB, TLV_V_FILESIZE_LB,
  															 TLV_V_FILEREADACCESS, TLV_V_FILEWRITEACCESS};
 
@@ -101,7 +101,7 @@ extern uint8_t								FILE_TRANSFER_END;
  * @retval 	PICCNFCT4_SUCCESSCODE : the receiving command is a Select CC file 
  * @retval 	PICCNFCT4_ERRORCODE_GENERIC : the receiving command is a Select Application
  */
-static int8_t PICCNFCT4_IsReadWriteParametersOk ( uc8 FileSelected ,uc8 FileOffset , uc8 NbByteToRead  )
+static int8_t PICCNFCT4_IsReadWriteParametersOk ( unsigned char FileSelected ,unsigned char FileOffset , unsigned char NbByteToRead  )
 {
 	/* Check the file offset and the number of byte to read parameters. */
 	switch (FileSelected)
@@ -151,7 +151,7 @@ void PICCNFCT4_DeInit ( PICCNFCT4_SELECT_TYPE SelectedType )
  * @param  pData : Pointer on the PICC buffer which contain the RF command
  * @retval Error if command sent by reader was not appropriate, succes in other cases
  */
-int8_t PICCNFCT4_ReplyCommand( uc8 *pData )
+int8_t PICCNFCT4_ReplyCommand( unsigned char *pData )
 {
 	uint8_t	State[] = {0x80,0x00},
 					InsCode = pData[PICC_DATA_OFFSET];
@@ -322,7 +322,7 @@ Common:
  * @retval 	PICCPROTOCOL_SELECTCMD_SELECTNDEFFILE	: the receiving command is a Select NDEF file
  * @retval 	PICCPROTOCOL_SELECTCMD_UNKNOWN	: Command unknown
  */
-static int8_t PICCNFCT4_GetCommandId (uc8 *pData)
+static int8_t PICCNFCT4_GetCommandId (unsigned char *pData)
 {
 	uint16_t FileIdentifier=0x0000;	
 	uint8_t		applicationFieldFWU[17] = {0xF0,0x02,0x46,0x57,0x55,0x5F,0x58,0x58,	
@@ -365,7 +365,7 @@ static int8_t PICCNFCT4_GetCommandId (uc8 *pData)
  * @brief  this function decodes and returns a response to Select commands
  * @param  pData : RF command received by 95HF device
  */
-static void PICCNFCT4_Select ( uc8 *pData)
+static void PICCNFCT4_Select ( unsigned char *pData)
 {	
 	switch (PICCNFCT4_GetCommandId ( pData ))
 	{			
@@ -398,7 +398,7 @@ static void PICCNFCT4_Select ( uc8 *pData)
  * @param  pData : RF command received by 95HF device
  * @retval 	None
  */
-void PICCNFCT4_SelectApplication( uc8 *pData )
+void PICCNFCT4_SelectApplication( unsigned char *pData )
 {
 	ApplicationSelected = PICCNFCT4_APPLI_NFCTYPE4; 
 	 	
@@ -411,7 +411,7 @@ void PICCNFCT4_SelectApplication( uc8 *pData )
  * @param  pData : RF command received by 95HF device
  * @retval 	None
  */
-void PICCNFCT4_SelectCCfile( uc8 *pData )
+void PICCNFCT4_SelectCCfile( unsigned char *pData )
 {
 	FileSelected = NDEFFILE_SELECTED_CCFILE;
 	
@@ -424,7 +424,7 @@ void PICCNFCT4_SelectCCfile( uc8 *pData )
  * @brief  this function decodes the Select NDEF file command and emits the response to the PCD
  * @param  pData : RF command received by 95HF device
  */
-void PICCNFCT4_SelectNDEFfile( uc8 *pData )
+void PICCNFCT4_SelectNDEFfile( unsigned char *pData )
 {
 	FileSelected = NDEFFILE_SELECTED_NDEFFILE1;
 	
@@ -440,7 +440,7 @@ void PICCNFCT4_SelectNDEFfile( uc8 *pData )
  * @retval 	PICCNFCT4_ERRORCODE_PARAMETER	: one parameter is erroneous
  * @retval 	PICCNFCT4_ERRORCODE_GENERIC	: the function is not succesful
  */
-int8_t PICCNFCT4_ReadBinary (uc8 *pData )
+int8_t PICCNFCT4_ReadBinary (unsigned char *pData )
 {
 	uint16_t 	FileOffset  = ((pData[PICC_DATA_OFFSET+3]<<8 & 0xFF00) | pData[PICC_DATA_OFFSET+4]);
 	uint8_t		*pFile,
@@ -488,7 +488,7 @@ Error:
  * @retval 	PICCNFCT4_ERRORCODE_PARAMETER	: one parameter is erroneous
  * @retval 	PICCNFCT4_ERRORCODE_GENERIC	: the function is not succesful
   */
-int8_t PICCNFCT4_UpdateBinary (uc8 *pData )
+int8_t PICCNFCT4_UpdateBinary (unsigned char *pData )
 {
 	uint16_t 	FileOffset  = (pData[5]<<8 & 0xFF00) | pData[6];
 	uint8_t		*pFile,

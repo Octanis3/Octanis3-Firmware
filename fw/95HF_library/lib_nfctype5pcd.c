@@ -69,7 +69,7 @@ extern uint8_t TT5Tag[];
 * @retval 	ISO15693_SUCCESSCODE	: 	PCD  returns a succesful code
 * @retval 	ISO15693_ERRORCODE_DEFAULT	: 	 PCD  returns an error code
 */
-int8_t PCDNFCT5_ExtendedReadSingleBlock (uc8 Flags, uc8 *UIDin, uc16 BlockNumber,uint8_t *pResponse )
+int8_t PCDNFCT5_ExtendedReadSingleBlock (unsigned char Flags, unsigned char *UIDin, uint16_t BlockNumber,uint8_t *pResponse )
 {
 uint8_t DataToSend[ISO15693_MAXLENGTH_READSINGLEBLOCK],
 		NthByte=0;
@@ -102,7 +102,7 @@ uint8_t DataToSend[ISO15693_MAXLENGTH_READSINGLEBLOCK],
 * @retval ISO15693_SUCCESSCODE : the function is successful
 * @retval ISO15693_ERRORCODE_DEFAULT : an error occured
 */
-int8_t PCDNFCT5_ExtendedGetSystemInfo ( uc8 Flags, uc8 ParamRequest, uc8 *UIDin, uint8_t *pResponse)
+int8_t PCDNFCT5_ExtendedGetSystemInfo ( unsigned char Flags, unsigned char ParamRequest, unsigned char *UIDin, uint8_t *pResponse)
 {
 uint8_t DataToSend[ISO15693_MAXLENGTH_GETSYSTEMINFO],
 		NthByte=0;
@@ -138,7 +138,7 @@ Error:
 * @retval 	ISO15693_SUCCESSCODE	: 	PCD  returns a succesful code
 * @retval 	ISO15693_ERRORCODE_DEFAULT	: 	 PCD  returns an error code
 */
-int8_t PCDNFCT5_ExtendedReadMultipleBlock (uc8 Flags, uc8 *UIDin, uint16_t BlockNumber, uc8 NbBlock, uint8_t *pResponse )
+int8_t PCDNFCT5_ExtendedReadMultipleBlock (unsigned char Flags, unsigned char *UIDin, uint16_t BlockNumber, unsigned char NbBlock, uint8_t *pResponse )
 {
 uint8_t DataToSend[ISO15693_MAXLENGTH_READSINGLEBLOCK],
 		NthByte=0;
@@ -185,7 +185,7 @@ uint8_t DataToSend[ISO15693_MAXLENGTH_READSINGLEBLOCK],
 * @retval 	ISO15693_SUCCESSCODE	: 	PCD  returns a succesful code
 * @retval 	ISO15693_ERRORCODE_DEFAULT	: 	 PCD  returns an error code
 */
-int8_t PCDNFCT5_ExtendedWriteSingleBlock(uc8 Flags, uc8 *UIDin, uc16 BlockNumber,uc8 *DataToWrite,uint8_t *pResponse )
+int8_t PCDNFCT5_ExtendedWriteSingleBlock(unsigned char Flags, unsigned char *UIDin, uint16_t BlockNumber,unsigned char *DataToWrite,uint8_t *pResponse )
 {
 uint8_t DataToSend[MAX_BUFFER_SIZE],
 		NthByte=0,
@@ -234,7 +234,7 @@ uint8_t DataToSend[MAX_BUFFER_SIZE],
 * @retval 	RESULTOK	: 	PCD  returns a succesful code
 * @retval 	ERRORCODE_GENERIC	: 	 PCD  returns an error code
 */
-int8_t PCDNFCT5_ExtendedLockSingleBlock ( uc8 Flags, uc8 *UIDin, uc16 BlockNumber,uint8_t *pResponse)
+int8_t PCDNFCT5_ExtendedLockSingleBlock ( unsigned char Flags, unsigned char *UIDin, uint16_t BlockNumber,uint8_t *pResponse)
 {
 	uint8_t DataToSend[ISO15693_MAXLENGTH_LOCKSINGLEBLOCK],
 		NthByte=0;
