@@ -16,7 +16,7 @@
 #ifndef _LIB_SNEP_H
 #define _LIB_SNEP_H
 
-//#include "stm32f10x.h"
+#include "drv_interrupt.h" //replaces: #include "stm32f10x.h"
 #include "lib_llcp.h"
 
 /* SNEP version 1.0 requiered 1024B to be supported */

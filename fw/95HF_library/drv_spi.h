@@ -23,8 +23,11 @@
 #define __SPI_H
 
 /* Includes ----------------------------------------------------------------- */
-#include "common.h"
-#include "drv_interrupt.h"
+/*
+ * includes from "hw_config.h" :
+ */
+#include "common.h" // --> contains defines from hw_config.h and includes miscellaneous.h
+#include "drv_interrupt.h" // was included in "stm32f10x.h"
 
 #define SPI_RESPONSEBUFFER_SIZE		(uint16_t)528
 
