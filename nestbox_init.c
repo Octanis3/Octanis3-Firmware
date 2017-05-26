@@ -36,6 +36,9 @@
  *  nbox board.
  */
 
+#define LAUNCHPAD_PINDEF 1
+
+
 #include <xdc/std.h>
 #include <xdc/runtime/System.h>
 #include <xdc/runtime/Timestamp.h>
@@ -116,7 +119,11 @@ GPIO_PinConfig gpioPinConfigs[] = {
 
     /* Output pins */
     /* NESTBOX_LED_GREEN */
+#ifdef LAUNCHPAD_PINDEF
+    GPIOMSP430_P4_6 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+#else
     GPIOMSP430_P4_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+#endif
     /* NESTBOX_LED_BLUE */
     GPIOMSP430_P4_1 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 	/* NESTBOX_LED_INFRARED */
@@ -124,8 +131,11 @@ GPIO_PinConfig gpioPinConfigs[] = {
 	/* NESTBOX_SPI_NFC_SEL_N */
 	GPIOMSP430_P3_4 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
 	/* NESTBOX_SPI_NFC_WAKEUP_N */
+#ifdef LAUNCHPAD_PINDEF
+	GPIOMSP430_P3_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
+#else
 	GPIOMSP430_P3_7 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
-
+#endif
 
 };
 

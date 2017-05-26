@@ -7,9 +7,7 @@
 
 #include "lightbarrier.h"
 #include "../Board.h"
-
-#include <ti/sysbios/hal/Hwi.h>
-
+#include "user_button.h"
 
 void lightBarrier_init()
 {
@@ -34,10 +32,6 @@ void lightBarrier_init()
 
 void lightBarrier_Task()
 {
-//	Hwi_enable(); //not sure if needed here??
-//
-//	GPIO_enableInt(lp_button);
-
 	GPIO_write(Board_led_blue,1);
 	GPIO_write(Board_led_green,0);
 
@@ -45,24 +39,3 @@ void lightBarrier_Task()
         Task_sleep(100);
     }
 }
-
-
-
-
-
-//// Comp_A interrupt service routine -- toggles LED
-////#pragma vector=COMP_E_VECTOR
-//void __attribute__((interrupt(COMP_E_VECTOR))) Comp_A_ISR (void)
-//{
-//	CEINT &= ~(CEIFG + CEIE); // Clear Interrupt flag and disable interrupt
-//
-//	//check if button is still switched on.
-//	if((PORT_DIGITAL_IN & PIN_BUTTON) == 0)
-//	{
-//		wakeup_source = WAKEUP_FROM_COMPARATOR;
-//
-//		//restart previously stopped timer:
-//		timer0_A_start();
-//		LPM4_EXIT;
-//	}
-//}

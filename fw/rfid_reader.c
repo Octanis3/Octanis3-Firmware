@@ -8,18 +8,26 @@
 #include "rfid_reader.h"
 #include "ST95HF.h"
 
+extern int button_pressed;
+
 void rfid_Task()
 {
 	/* Initialize SPI structures*/
-	st95_init_spi();
-	st95_startup();
-
-	st95_echo();
 
 	/* Initialize ST95HF as reader by default*/
-
+	GPIO_enableInt(Board_button_lp);
+	int initialized = 0;
 
     while (1) {
+
+    		if(initialized == 0 && button_pressed == 1)
+    		{
+    			st95_init_spi();
+    			st95_startup();
+
+    			initialized = 1;
+    			st95_echo();
+    		}
     		/* Put ST95HF to deep sleep/low power mode */
 
     		/* Pend on reader semaphore (can be released either by light barrier interrupt,

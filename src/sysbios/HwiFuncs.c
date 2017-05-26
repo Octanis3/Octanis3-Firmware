@@ -368,7 +368,7 @@ Void ti_sysbios_family_msp430_Hwi32_p2(Void)
     prevThreadType = ti_sysbios_BIOS_setThreadType(ti_sysbios_BIOS_ThreadType_Hwi);
 
     /* run ISR function */
-    GPIO_hwiIntFxn(0);
+    GPIO_hwiIntFxn(4);
 
     /* run any posted Swis */
     ti_sysbios_knl_Swi_restoreHwi(swiKey);
@@ -418,7 +418,7 @@ Void ti_sysbios_family_msp430_Hwi33_p2(Void)
     prevThreadType = ti_sysbios_BIOS_setThreadType(ti_sysbios_BIOS_ThreadType_Hwi);
 
     /* run ISR function */
-    GPIO_hwiIntFxn(0);
+    GPIO_hwiIntFxn(4);
 
     /* run any posted Swis */
     ti_sysbios_knl_Swi_restoreHwi(swiKey);
@@ -548,7 +548,7 @@ Void ti_sysbios_family_msp430_Hwi42_p2(Void)
     prevThreadType = ti_sysbios_BIOS_setThreadType(ti_sysbios_BIOS_ThreadType_Hwi);
 
     /* run ISR function */
-    nbox_isrDMA(0);
+    nbox_isrDMA(4);
 
     /* run any posted Swis */
     ti_sysbios_knl_Swi_restoreHwi(swiKey);

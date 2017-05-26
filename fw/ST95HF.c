@@ -12,9 +12,11 @@
 // global handle, to be used to perform a spi_read/write action
 SPI_Handle  st95_spi;
 
+
+#define SPI_BUFFER_LENGTH 16
 // SPI data buffers
-UChar spi_transmitBuffer[16];
-UChar spi_receiveBuffer[16];
+UChar spi_transmitBuffer[SPI_BUFFER_LENGTH];
+UChar spi_receiveBuffer[SPI_BUFFER_LENGTH];
 
 
 void st95_init_spi()
@@ -97,16 +99,26 @@ UChar spi_send_byte(UChar command)
 	return spi_receiveBuffer[0];
 }
 
-void spi_poll()
+UChar spi_poll()
 {
+	char interruptpin = 0;
+
+	interruptpin = GPIO_read(Board_nfc_irq_n);
+
 	UChar answer = 0;
 	spi_sel();
-	while((answer && 0x08) == 0)
+	int i_loop = 0;
+	while((answer & 0x08)==0 && i_loop<100)
 	{
 		answer = spi_send_byte(0x03);
+		i_loop++;
+		interruptpin = GPIO_read(Board_nfc_irq_n);
 	}
 
 	spi_unsel();
+	answer = interruptpin;
+
+	return answer;
 }
 
 
@@ -114,29 +126,48 @@ void spi_poll()
 // inspired from http://blog.solutions-cubed.com/near-field-communication-nfc-with-the-arduino/
 int st95_startup()
 {
-	Task_sleep(11); // 10ms minimum, t4 datasheet (time to power up CR995HF)
+	Task_sleep(12); // 10ms minimum, t4 datasheet (time to power up CR995HF)
 						// + 100us min, t0 in datasheet
+
 
 	GPIO_write(Board_nfc_wakeup_n, 0);
 	Task_sleep(1); // 10us minumum, t1 in datasheet
 	GPIO_write(Board_nfc_wakeup_n, 1);
 
+	Task_sleep(11); //ready in <10ms, t3 in datasheet
+
+	//	//reset sequence:
+	spi_sel();
+	spi_send_byte(0x01);
+	spi_unsel();
+
+	Task_sleep(11); // 10ms minimum, t4 datasheet (time to power up CR995HF)
+						// + 100us min, t0 in datasheet
+	GPIO_write(Board_nfc_wakeup_n, 0);
+	Task_sleep(1); // 10us minumum, t1 in datasheet
+	GPIO_write(Board_nfc_wakeup_n, 1);
 	Task_sleep(10); //ready in <10ms, t3 in datasheet
+
 
 	spi_transmitBuffer[0] = 0x00; //send command
 	spi_transmitBuffer[1] = 0x01; //command = IDN
+	spi_transmitBuffer[2] = 0x00; //length of data is 0
+
 
 	spi_transfer(3, spi_transmitBuffer, spi_receiveBuffer, RELEASE_SEL);
 
-	Task_sleep(1);
 	spi_poll();
-	Task_sleep(1);
 
 	spi_transmitBuffer[0] = 0x02; // SPI control byte for read
+	spi_transmitBuffer[1] = 0x00; //dummy
+	spi_transmitBuffer[2] = 0x00; //dummy
+
 	spi_transfer(3, spi_transmitBuffer, spi_receiveBuffer, KEEP_SEL);
 
 	UChar response_code = spi_receiveBuffer[1];
 	UChar readlength = spi_receiveBuffer[2];
+
+	spi_transmitBuffer[0] = 0x00; //dummy
 
 	if ((response_code == 0) & (readlength == 15))
 	{
@@ -145,10 +176,35 @@ int st95_startup()
 		// received good ID response
 		GPIO_write(Board_led_green,1);
 	}
+	else if(response_code == 0)
+	{
+		//BAD readlength
+		int i_loop = 0; //to avoid infinite loops
+
+		while(readlength > 0 || i_loop>20)// clear up buffer.
+		{
+			if(readlength <= SPI_BUFFER_LENGTH)
+			{
+				spi_transfer(readlength, spi_transmitBuffer, spi_receiveBuffer, RELEASE_SEL);
+				readlength = 0;
+			}
+			else
+			{
+				spi_transfer(SPI_BUFFER_LENGTH, spi_transmitBuffer, spi_receiveBuffer, KEEP_SEL);
+				readlength = readlength - SPI_BUFFER_LENGTH;
+			}
+
+			i_loop++;
+		}
+		spi_unsel();
+	}
 	else
 	{
-	    //BAD RESPONSE TO IDN COMMAND
+		//bad response... STOP
+		spi_unsel();
+
 	}
+
 
 	return 0;
 }
@@ -193,5 +249,3 @@ int st95hf_comm_test()
 
 	return 0;
 }
-
-
