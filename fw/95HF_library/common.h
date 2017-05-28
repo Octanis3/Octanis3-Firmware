@@ -37,6 +37,9 @@
  * ******************************************************************************
  */
 
+void delay_ms											( uint16_t delay );
+void delay_us											( uint16_t delay );
+
 /* Exported define -----------------------------------------------------------*/
 #define BULK_MAX_PACKET_SIZE  0x00000040
 
@@ -71,6 +74,9 @@
 /******************  PICC  ******************/
 /* ISO14443A */
 #define PICC_TYPEA_ACConfigA 0x27  /* backscaterring */
+
+
+
 
 /************************************************************************************
  * ********************************** END COPY **************************************
@@ -141,8 +147,8 @@ typedef enum {UNDEFINED_TAG_TYPE=0,TT1,TT2,TT3,TT4A,TT4B,TT5}TagType_t;
 
 /* TT4 */
 #define NFCT4_MAX_CCMEMORY																16
-#define NFCT4A_MAX_NDEFMEMORY															8192
-#define NFCT4B_MAX_NDEFMEMORY															8192
+#define NFCT4A_MAX_NDEFMEMORY															256//8192
+#define NFCT4B_MAX_NDEFMEMORY															256//8192
 #define NFCT4_MAX_NDEFMEMORY															NFCT4A_MAX_NDEFMEMORY
 
 /* TT5 */

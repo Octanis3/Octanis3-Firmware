@@ -98,7 +98,7 @@ static void ConfigManager_Init( void)
 	/* initialize the structure of the Rf tranceiver */
 	drv95HF_InitConfigStructure ();
 	
-#ifdef SPI_INTERRUPT_MODE_ACTIVATED	
+#ifdef SPI_INTERRUPT_MODE_ACTIVATED	//commented out in drv_interrupt.h
 	/* inform driver to use interrupt mode */
 	drv95HF_EnableInterrupt ( );
 #endif /* SPI_INTERRUPT_MODE_ACTIVATED */

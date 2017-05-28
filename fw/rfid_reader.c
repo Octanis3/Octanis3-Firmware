@@ -7,8 +7,148 @@
 
 #include "rfid_reader.h"
 #include "ST95HF.h"
+#include "95HF_library/lib_ConfigManager.h"
 
 extern int button_pressed;
+
+
+
+/**** STUFF FROM EXAMPLE CODE ************/
+#include "NDEF/lib_NDEF_URI.h"
+#include "NDEF/lib_NDEF_SMS.h"
+#include "NDEF/lib_NDEF_Text.h"
+#include "NDEF/lib_NDEF_Email.h"
+#include "NDEF/lib_NDEF_Geo.h"
+#include "NDEF/lib_NDEF.h"
+
+extern uint8_t 					TagUID[10];
+extern ISO14443A_CARD 	ISO14443A_Card;
+extern ISO14443B_CARD 	ISO14443B_Card;
+extern FELICA_CARD 			FELICA_Card;
+extern uint8_t 					NDEF_Buffer [];
+//extern bool 						KEYPress;
+//extern bool							lockKEYUpDown;
+
+ sURI_Info 				url;
+ sSMSInfo 				sms;
+ sEmailInfo 			email;
+ sGeoInfo 				geo;
+
+ /* PCD/PICC global memory space */
+
+ /* TT1 (PCD only)*/
+ uint8_t TT1Tag[NFCT1_MAX_TAGMEMORY];
+
+ /* TT2 */
+ uint8_t TT2Tag[NFCT2_MAX_TAGMEMORY];
+
+ /* TT3 */
+ uint8_t TT3Tag[NFCT3_MAX_TAGMEMORY];
+ uint8_t *TT3AttribInfo = TT3Tag, *TT3NDEFfile = &TT3Tag[NFCT3_ATTRIB_INFO_SIZE];
+
+ /* TT4 */
+ uint8_t CardCCfile [NFCT4_MAX_CCMEMORY];
+ uint8_t CardNDEFfileT4A [NFCT4_MAX_NDEFMEMORY];
+ uint8_t CardNDEFfileT4B [NFCT4_MAX_NDEFMEMORY];
+
+ /* TT5 (PCD only)*/
+ uint8_t TT5Tag[NFCT5_MAX_TAGMEMORY];
+
+ /* USB */
+ bool 		USB_Control_Allowed = false;
+
+ extern bool refreshMenu;
+
+ /* Variables for the different modes */
+ extern DeviceMode_t 				devicemode;
+ extern TagType_t 			nfc_tagtype;
+
+uint8_t readNDEFfromTAG(void)
+{
+	uint8_t status;
+	sRecordInfo RecordStruct;
+
+	/* Init information fields */
+	memset(url.Information,'\0',400);
+	memset(sms.Information,'\0',400);
+	memset(email.Information,'\0',400);
+	memset(geo.Information,'\0',100);
+
+	if (nfc_tagtype == TT1)
+	{
+		errchk(PCDNFCT1_ReadNDEF());
+	}
+	else if (nfc_tagtype == TT2)
+	{
+		errchk(PCDNFCT2_ReadNDEF());
+	}
+	else if (nfc_tagtype == TT3)
+	{
+		errchk(PCDNFCT3_ReadNDEF());
+	}
+	else if (nfc_tagtype == TT4A || nfc_tagtype == TT4B)
+	{
+		errchk(PCDNFCT4_ReadNDEF());
+	}
+	else if (nfc_tagtype == TT5)
+	{
+		errchk(PCDNFCT5_ReadNDEF());
+	}
+	else
+		return ERRORCODE_GENERIC;
+
+	//DONE
+
+	memset(NDEF_Buffer,'\0',20);
+	status = NDEF_IdentifyNDEF( &RecordStruct, NDEF_Buffer);
+	if(status == RESULTOK && RecordStruct.TypeLength != 0)
+	{
+		if (NDEF_ReadURI(&RecordStruct, &url)==RESULTOK)
+		{
+			//    URI content:
+		}
+		else if (NDEF_ReadSMS(&RecordStruct, &sms)==RESULTOK)
+		{
+			//    SMS content:
+		}
+		else if(NDEF_ReadEmail(&RecordStruct, &email)==RESULTOK)
+		{
+			// EMAIL content:
+		}
+		else if(NDEF_ReadGeo(&RecordStruct, &geo)==RESULTOK)
+		{
+			//   GEO content:
+		}
+		// This part has to be improved, it is just in order to write a simple text NDEF for the M24LR discovery
+		else if(RecordStruct.NDEF_Type == TEXT_TYPE)
+		{
+			//  TEXT content:
+		}
+		else if(RecordStruct.NDEF_Type == VCARD_TYPE)
+		{
+			// VCARD detected
+		}
+		else
+		{
+			// Unknown NDEF type
+		}
+	}
+	else if (RecordStruct.TypeLength == 0)
+	{
+		//  No NDEF content
+	}
+	else
+	{
+		//Error parsing NDEF
+	}
+
+	return RESULTOK;
+Error:
+	return status;
+}
+
+
+
 
 void rfid_Task()
 {
@@ -23,11 +163,126 @@ void rfid_Task()
     		if(initialized == 0 && button_pressed == 1)
     		{
     			st95_init_spi();
-    			st95_startup();
+//    			st95_startup();
+
+    			ConfigManager_HWInit();
+
+    			button_pressed = 0;
 
     			initialized = 1;
     			st95_echo();
     		}
+    		else if(initialized == 1 && button_pressed == 1){
+
+    			button_pressed = 0;
+
+
+    			uint8_t status;
+			int8_t TagType = TRACK_NOTHING;
+			bool FirstTagFounded = true;
+			char LastUIDFound[20] = {' '};
+			bool NewTagDetected = false;
+
+    			/* Scan to find if there is a tag */
+			TagType = ConfigManager_TagHunting(TRACK_ALL);
+
+			/* Tag has been discovered, clear screen */
+			if( TagType != TRACK_NOTHING && FirstTagFounded == true)
+			{
+				FirstTagFounded = false;
+			}
+
+			switch(TagType)
+			{
+				case TRACK_NFCTYPE1:
+					if(memcmp (LastUIDFound, TagUID, 6))
+					{
+						memcpy(LastUIDFound,TagUID,6);
+						//Reading TT1...
+						NewTagDetected = true;
+					}
+					break;
+
+				case TRACK_NFCTYPE2:
+					if(memcmp (LastUIDFound, ISO14443A_Card.UID, ISO14443A_Card.UIDsize))
+					{
+						memcpy(LastUIDFound,ISO14443A_Card.UID,ISO14443A_Card.UIDsize);
+						//Reading TT2...      ");
+						NewTagDetected = true;
+					}
+					break;
+
+				case TRACK_NFCTYPE3:
+					if(memcmp (LastUIDFound, FELICA_Card.UID, 8))
+					{
+						memcpy(LastUIDFound,FELICA_Card.UID,8);
+						//"Reading TT3...      ");
+						NewTagDetected = true;
+					}
+					break;
+
+				case TRACK_NFCTYPE4A:
+					if(memcmp (LastUIDFound, ISO14443A_Card.UID, ISO14443A_Card.UIDsize))
+					{
+						memcpy(LastUIDFound,ISO14443A_Card.UID,ISO14443A_Card.UIDsize);
+						//Reading TT4A...     ");
+						NewTagDetected = true;
+					}
+					break;
+
+				case TRACK_NFCTYPE4B:
+					if(memcmp (LastUIDFound, ISO14443B_Card.PUPI, 4))
+					{
+						memcpy(LastUIDFound,ISO14443B_Card.PUPI, 4);
+						//"Reading TT4B...     ");
+						NewTagDetected = true;
+					}
+					break;
+
+				case TRACK_NFCTYPE5:
+					if(memcmp (LastUIDFound, TagUID, 8))
+					{
+						memcpy(LastUIDFound,TagUID, 8);
+						//Reading TT5...      ");
+						NewTagDetected = true;
+					}
+					break;
+
+				default:
+					GPIO_write(Board_led_IR,1);
+					break;
+
+    			}
+
+			/* Check the tag type found */
+			if (NewTagDetected == true)
+			{
+				NewTagDetected = false;
+				/* Try to read the NDEF message inside the tag */
+				status = readNDEFfromTAG();
+				if (status == PCDNFC_ERROR_MEMORY_INTERNAL)
+				{
+					//Cannot fill internal memory with NDEF message
+					GPIO_write(Board_led_IR,1);
+				}
+				else if (status == PCDNFC_ERROR_NOT_FORMATED)
+				{
+					// Empty tag      ");
+					GPIO_write(Board_led_IR,1);
+				}
+				else if (status != PCDNFC_OK)
+				{
+					//"Transmission Error
+
+					// In case of transmission error clear the LastUID
+					memset(LastUIDFound,'\0',20);
+				}
+			}
+
+
+			PCD_FieldOff();
+    		}
+
     		/* Put ST95HF to deep sleep/low power mode */
 
     		/* Pend on reader semaphore (can be released either by light barrier interrupt,

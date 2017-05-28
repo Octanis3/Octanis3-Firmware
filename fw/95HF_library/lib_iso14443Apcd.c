@@ -662,7 +662,7 @@ int8_t ISO14443A_Init ( void )
 	TechnoSelected = PCDPROTOCOL_14443A;
 	
 	/* GT min time to respect before sending REQ_A */
-	delay_us(5100);
+	Task_sleep(6); //5100us actually
  
  return ISO14443A_SUCCESSCODE;
 Error:

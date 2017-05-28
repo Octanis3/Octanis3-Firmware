@@ -405,26 +405,26 @@ int8_t drv95HF_GetIRQOutState ( void )
  *  @param  None
  *  @retval None
  */
-//void drv95HF_InitilizeSerialInterface ( void )
-//{
-//	/* -- Get interface pin state to select UART or SPI mode -- */
-//	if (drv95HF_GetInterfacePinState () != RFTRANS_95HF_INTERFACE_UART)
-//	{
-//		drv95HFConfig.uInterface = RFTRANS_95HF_INTERFACE_SPI;
-//		/* -- Initialize SPI Interface -- */
-//		drv95HF_InitializeSPI( );
-//		/* -- IRQout configuration PA2 to send pulse on USART_RX of 95HF device */
+void drv95HF_InitilizeSerialInterface ( void )
+{
+	/* -- Get interface pin state to select UART or SPI mode -- */
+	if (drv95HF_GetInterfacePinState () != RFTRANS_95HF_INTERFACE_UART)
+	{
+		drv95HFConfig.uInterface = RFTRANS_95HF_INTERFACE_SPI;
+		/* -- Initialize SPI Interface -- */
+//		drv95HF_InitializeSPI( ); --> done in ST95HF.h
+		/* -- IRQout configuration PA2 to send pulse on USART_RX of 95HF device */
 //		IRQOut_Config( );
-//	}
-//#ifdef CR95HF
-//	else
-//	{
-//		drv95HFConfig.uInterface = RFTRANS_95HF_INTERFACE_UART;
-//		/* -- Initialize UART Interface -- */
-//		drv95HF_InitializeUART(BAUDRATE_DATARATE_DEFAULT );
-//	}
-//#endif /* CR95HF */
-//}
+	}
+#ifdef CR95HF
+	else
+	{
+		drv95HFConfig.uInterface = RFTRANS_95HF_INTERFACE_UART;
+		/* -- Initialize UART Interface -- */
+		drv95HF_InitializeUART(BAUDRATE_DATARATE_DEFAULT );
+	}
+#endif /* CR95HF */
+}
 
 /**
  *	@brief  This function enable the interruption

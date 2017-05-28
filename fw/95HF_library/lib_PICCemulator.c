@@ -516,8 +516,9 @@ PICCEMULATOR_STATE PICCEmul_ManagePICCEmulation ( void )
 			}
 #else	
 			
-			/* Here we check if RF even occurs, so if GPO of RX95HF is low */
-			if(GPIO_ReadInputDataBit(EXTI_GPIO_PORT,EXTI_RFTRANS_95HF_LINE) == Bit_RESET)
+			/* Here we check if RF event occurs, so if GPO of RX95HF is low */
+//			if(GPIO_read(EXTI_GPIO_PORT,EXTI_RFTRANS_95HF_LINE) == Bit_RESET)
+			if(GPIO_read(Board_nfc_irq_n) == Bit_RESET)
 			{	
 				CardEmulator.State = PICCSTATE_DATA_EXCHANGED;
 			}

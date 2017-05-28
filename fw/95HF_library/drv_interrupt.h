@@ -33,7 +33,7 @@
 
 /* flags -------------------------------------------------------------------- */
 //#ifndef CR95HF 
-#define SPI_INTERRUPT_MODE_ACTIVATED
+//#define SPI_INTERRUPT_MODE_ACTIVATED
 //#endif
 
 /** 
