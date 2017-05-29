@@ -52,7 +52,7 @@ Task_Struct lb_task_Struct;
 Char lb_task_Stack[LB_TASKSTACKSIZE];
 
 // RFID reader task
-#define RFID_TASKSTACKSIZE   2048
+#define RFID_TASKSTACKSIZE   4096
 Task_Struct rfid_task_Struct;
 Char rfid_task_Stack[RFID_TASKSTACKSIZE];
 
@@ -67,7 +67,7 @@ void heartBeat_Task(UArg arg0, UArg arg1)
 {
     while (1) {
         Task_sleep((unsigned int)arg0);
-        GPIO_toggle(Board_led_green);
+        GPIO_toggle(Board_led_blue);
     }
 }
 

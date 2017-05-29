@@ -36,7 +36,12 @@ void st95_init_spi()
 	st95_spi = SPI_open(Board_SPI0, &spiParams);
 	if (st95_spi == NULL) {
 	   /* Error opening SPI */
-		GPIO_write(Board_led_IR,1);
+		GPIO_toggle(Board_led_blue);
+		Task_sleep(100);
+		GPIO_toggle(Board_led_blue);
+		Task_sleep(100);
+		GPIO_toggle(Board_led_blue);
+		Task_sleep(100);
 	}
 
 
@@ -174,6 +179,8 @@ int st95_startup()
 
 		// received good ID response
 		GPIO_write(Board_led_green,1);
+		Task_sleep(500);
+		GPIO_write(Board_led_green,0);
 	}
 	else if(response_code == 0)
 	{

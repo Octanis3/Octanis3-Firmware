@@ -63,10 +63,14 @@ extern "C" {
 
 
 #define Board_button           		nbox_button
-#define Board_button_lp          	lp_button
 
-#define Board_led_green          	nbox_led_green
 #define Board_led_blue          		nbox_led_blue
+#ifndef LAUNCHPAD_PINDEF
+	#define Board_led_green          nbox_led_green
+#else
+	#define Board_led_green     		nbox_led_ir
+#endif
+
 #define Board_LED_ON					nbox_LED_ON
 #define Board_LED_OFF				nbox_LED_OFF
 

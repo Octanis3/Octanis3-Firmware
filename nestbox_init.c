@@ -36,9 +36,6 @@
  *  nbox board.
  */
 
-#define LAUNCHPAD_PINDEF 1
-
-
 #include <xdc/std.h>
 #include <xdc/runtime/System.h>
 #include <xdc/runtime/Timestamp.h>
@@ -111,21 +108,25 @@ Void nbox_isrDMA(UArg arg)
 GPIO_PinConfig gpioPinConfigs[] = {
     /* Input pins */
     /* nestbox user button */
-    GPIOMSP430_P4_2 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
-    /* launchpad user button (TODO: remove this definition)*/
+#ifdef LAUNCHPAD_PINDEF
     GPIOMSP430_P4_5 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
+#else
+    GPIOMSP430_P4_2 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
+#endif
 	/* NESTBOX_SPI_NFC_IRQ_N */
 	GPIOMSP430_P3_6 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
 
     /* Output pins */
-    /* NESTBOX_LED_GREEN */
 #ifdef LAUNCHPAD_PINDEF
+	/* NESTBOX_LED_BLUE */
     GPIOMSP430_P4_6 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 #else
+	/* NESTBOX_LED_GREEN */
     GPIOMSP430_P4_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+	/* NESTBOX_LED_BLUE */
+	GPIOMSP430_P4_1 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 #endif
-    /* NESTBOX_LED_BLUE */
-    GPIOMSP430_P4_1 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+
 	/* NESTBOX_LED_INFRARED */
 	GPIOMSP430_P1_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 	/* NESTBOX_SPI_NFC_SEL_N */
