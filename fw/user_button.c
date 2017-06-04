@@ -12,12 +12,17 @@
 
 #include <ti/sysbios/hal/Hwi.h>
 
+#include <xdc/cfg/global.h> //needed for semaphore
+#include <ti/sysbios/knl/Semaphore.h>
+
 int button_pressed = 0;
 
 void user_button_isr(unsigned int index)
 {
-	button_pressed = 1;
+//	button_pressed = 1;
 	//check interrupt source
+	Semaphore_post((Semaphore_Handle)semReader);
+
 
 //	Hwi_enable(); //not sure if needed here??
 

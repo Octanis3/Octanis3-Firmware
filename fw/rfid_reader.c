@@ -7,11 +7,13 @@
 
 #include "rfid_reader.h"
 #include "ST95HF.h"
+
+#include <xdc/cfg/global.h> //needed for semaphore
+#include <ti/sysbios/knl/Semaphore.h>
+
 #include "95HF_library/lib_ConfigManager.h"
 
-extern int button_pressed;
-
-
+//extern int button_pressed;
 
 /**** STUFF FROM EXAMPLE CODE ************/
 #include "NDEF/lib_NDEF_URI.h"
@@ -157,8 +159,9 @@ void rfid_Task()
 	int initialized = 0;
 
     while (1) {
+		Semaphore_pend((Semaphore_Handle)semReader, BIOS_WAIT_FOREVER);
 
-    		if(initialized == 0 && button_pressed == 1)
+    		if(initialized == 0)
     		{
     			st95_init_spi();
     			st95_startup();
@@ -170,16 +173,14 @@ void rfid_Task()
 			GPIO_write(Board_led_green,0);
 
 
-    			button_pressed = 0;
+//    			button_pressed = 0;
 
 
     			initialized = 1;
 //    			st95_echo();
     		}
-    		else if(initialized == 1 && button_pressed == 3){
-
-    			button_pressed = 0;
-
+    		else if(initialized == 1){
+    			// WAIT TILL BUTTON IS PRESSED
 
     			uint8_t status;
 			int8_t TagType = TRACK_NOTHING;
