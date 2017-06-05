@@ -164,9 +164,9 @@ void rfid_Task()
     		if(initialized == 0)
     		{
     			st95_init_spi();
-    			st95_startup();
+//    			st95_startup();
 
-//    			ConfigManager_HWInit();
+    			ConfigManager_HWInit();
 
     			GPIO_write(Board_led_green,1);
 			Task_sleep(1500);

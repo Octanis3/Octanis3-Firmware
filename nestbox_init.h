@@ -50,7 +50,7 @@ extern "C" {
 #endif
 
 
-#define LAUNCHPAD_PINDEF 1
+//#define LAUNCHPAD_PINDEF 1
 
 
 /* LEDs on nestbox_board are active high. */
