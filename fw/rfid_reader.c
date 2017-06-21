@@ -7,6 +7,9 @@
 
 #include "rfid_reader.h"
 #include "ST95HF.h"
+#include "uart_helper.h"
+#include <time.h>
+#include <ti/sysbios/hal/Seconds.h>
 
 #include <xdc/cfg/global.h> //needed for semaphore
 #include <ti/sysbios/knl/Semaphore.h>
@@ -159,10 +162,11 @@ void rfid_Task()
 	int initialized = 0;
 
     while (1) {
-		Semaphore_pend((Semaphore_Handle)semReader, BIOS_WAIT_FOREVER);
+		Task_sleep(100); //Semaphore_pend((Semaphore_Handle)semReader, BIOS_WAIT_FOREVER);
 
     		if(initialized == 0)
     		{
+    			uart_debug_open();
     			st95_init_spi();
 //    			st95_startup();
 
@@ -171,6 +175,7 @@ void rfid_Task()
     			GPIO_write(Board_led_green,1);
 			Task_sleep(1500);
 			GPIO_write(Board_led_green,0);
+			GPIO_write(Board_led_blue,0);
 
 
 //    			button_pressed = 0;
@@ -180,7 +185,8 @@ void rfid_Task()
 //    			st95_echo();
     		}
     		else if(initialized == 1){
-    			// WAIT TILL BUTTON IS PRESSED
+    			Semaphore_pend((Semaphore_Handle)semReader, BIOS_WAIT_FOREVER); //just wait for the button once and then loop forever.
+    			Semaphore_post((Semaphore_Handle)semReader);
 
     			uint8_t status;
 			int8_t TagType = TRACK_NOTHING;
@@ -291,10 +297,27 @@ void rfid_Task()
 			/* Check the tag type found */
 			if (NewTagDetected == true)
 			{
+//				uart_serial_write(&debug_uart, (uint8_t*)LastUIDFound, UID_LENGTH);
+//
+//				uint32_t timestamp = Seconds_get();
+//				uart_serial_write(&debug_uart, (uint8_t*)timestamp, TIMESTAMP_LENGTH);
+
+				static uint8_t in_out = 0;
+				in_out = ~in_out;
+				uart_serial_write(&debug_uart, &in_out, 1);
+
 				GPIO_write(Board_led_green,1);
-				Task_sleep(500);
+				GPIO_toggle(Board_led_blue);
+				Task_sleep(100);
+				GPIO_toggle(Board_led_blue);
+
+
+			}
+			else
+			{
 				GPIO_write(Board_led_green,0);
 			}
+
 
     		}
 
@@ -349,7 +372,7 @@ void rfid_Task()
 		}
 
 		// TODO remove this:
-    		Task_sleep(100);
+//    		Task_sleep(100);
     }
 }
 

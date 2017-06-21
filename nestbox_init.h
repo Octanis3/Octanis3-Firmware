@@ -93,7 +93,8 @@ typedef enum nbox_SPIName {
  *  @brief  Enum of UART names on the nbox dev board
  */
 typedef enum nbox_UARTName {
-    nbox_UARTA1 = 0,
+//    nbox_UARTA0 = 0,
+	nbox_UARTA1,
 
     nbox_UARTCOUNT
 } nbox_UARTName;

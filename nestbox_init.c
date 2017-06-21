@@ -278,13 +278,20 @@ const UARTEUSCIA_BaudrateConfig uartEUSCIABaudrates[] = {
 };
 
 const UARTEUSCIA_HWAttrs uartEUSCIAHWAttrs[nbox_UARTCOUNT] = {
-    {
-        .baseAddr = EUSCI_A0_BASE,
-        .clockSource = EUSCI_A_UART_CLOCKSOURCE_SMCLK,
-        .bitOrder = EUSCI_A_UART_LSB_FIRST,
-        .numBaudrateEntries = sizeof(uartEUSCIABaudrates)/sizeof(UARTEUSCIA_BaudrateConfig),
-        .baudrateLUT = uartEUSCIABaudrates
-    },
+//    {
+//        .baseAddr = EUSCI_A0_BASE,
+//        .clockSource = EUSCI_A_UART_CLOCKSOURCE_SMCLK,
+//        .bitOrder = EUSCI_A_UART_LSB_FIRST,
+//        .numBaudrateEntries = sizeof(uartEUSCIABaudrates)/sizeof(UARTEUSCIA_BaudrateConfig),
+//        .baudrateLUT = uartEUSCIABaudrates
+//    },
+	{
+		.baseAddr = EUSCI_A1_BASE,
+		.clockSource = EUSCI_A_UART_CLOCKSOURCE_SMCLK,
+		.bitOrder = EUSCI_A_UART_LSB_FIRST,
+		.numBaudrateEntries = sizeof(uartEUSCIABaudrates)/sizeof(UARTEUSCIA_BaudrateConfig),
+		.baudrateLUT = uartEUSCIABaudrates
+	},
 };
 
 const UART_Config UART_config[] = {
@@ -293,6 +300,11 @@ const UART_Config UART_config[] = {
         .object = &uartEUSCIAObjects[0],
         .hwAttrs = &uartEUSCIAHWAttrs[0]
     },
+//	{
+//		.fxnTablePtr = &UARTEUSCIA_fxnTable,
+//		.object = &uartEUSCIAObjects[1],
+//		.hwAttrs = &uartEUSCIAHWAttrs[1]
+//	},
     {NULL, NULL, NULL}
 };
 
@@ -301,11 +313,17 @@ const UART_Config UART_config[] = {
  */
 void nbox_initUART(void)
 {
-    /* P4.4,5 = USCI_A1 TXD/RXD */
+    /* P4.0,1 = USCI_A0 TXD/RXD */
     GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2,
         GPIO_PIN0, GPIO_SECONDARY_MODULE_FUNCTION);
     GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P2,
         GPIO_PIN1, GPIO_SECONDARY_MODULE_FUNCTION);
+
+    /* P2.5,6 = USCI_A1 TXD/RXD */
+    GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2,
+        GPIO_PIN5, GPIO_SECONDARY_MODULE_FUNCTION);
+    GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P2,
+        GPIO_PIN6, GPIO_SECONDARY_MODULE_FUNCTION);
 
     /* Initialize the UART driver */
     UART_init();

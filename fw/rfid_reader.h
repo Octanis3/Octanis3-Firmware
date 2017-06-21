@@ -10,6 +10,8 @@
 
 #include "Board.h"
 
+#define UID_LENGTH 4
+#define TIMESTAMP_LENGTH 4
 
 void rfid_Task();
 

@@ -84,7 +84,9 @@ extern "C" {
 
 #define Board_USBDEVICE             0
 
-#define Board_UART0                 nbox_UARTA1
+//#define Board_UART_lora             nbox_UARTA0
+#define Board_UART_debug            nbox_UARTA1
+
 
 #define Board_WATCHDOG0             nbox_WATCHDOG
 

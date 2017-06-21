@@ -67,7 +67,7 @@ void heartBeat_Task(UArg arg0, UArg arg1)
 {
     while (1) {
         Task_sleep((unsigned int)arg0);
-        GPIO_toggle(Board_led_blue);
+//        GPIO_toggle(Board_led_blue);
     }
 }
 
@@ -84,12 +84,12 @@ int main(void)
     Board_initGeneral();
     Board_initGPIO();
     Board_initSPI();
-    // Board_initUART();
+    Board_initUART();
     // Board_initWatchdog();
 
     /* Construct heartBeat Task  thread */
     Task_Params_init(&hb_taskParams);
-    hb_taskParams.arg0 = 1000;
+    hb_taskParams.arg0 = 100;
     hb_taskParams.stackSize = HB_TASKSTACKSIZE;
     hb_taskParams.stack = &hb_task_Stack;
     Task_construct(&hb_task_Struct, (Task_FuncPtr)heartBeat_Task, &hb_taskParams, NULL);
