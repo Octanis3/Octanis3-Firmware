@@ -305,7 +305,7 @@ void rfid_Task()
 //				uart_serial_write(&debug_uart, (uint8_t*)timestamp, TIMESTAMP_LENGTH);
 
 				static uint8_t in_out = 0;
-				in_out = ~in_out;
+				in_out = !in_out;
 //				uart_serial_write(&debug_uart, &in_out, 1);
 
 				GPIO_write(Board_led_green,1);

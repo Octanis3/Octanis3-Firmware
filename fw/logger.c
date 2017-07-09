@@ -18,12 +18,13 @@
 /* Note: the allocated storage space is 8 kB large, which is enough for 819 entries */
 
 
-#define LOG_TIME_OFS			0x0 // 32 bit epoch timestamp
-#define LOG_UID_OFS			0x4 // 32 bit UID
-#define LOG_DIR_OFS			0x8 // 1 byte "I", "O" or "U" in/out/unknown
-#define LOG_CRC_OFS			0x9 // 1 byte CRC (for int16 alignment)
+#define LOG_TIME_32b_OFS			0x0 // 32 bit epoch timestamp
+#define LOG_UID_32b_OFS			0x1 // 32 bit UID
+#define LOG_DIR_8b_OFS			0x8 // 1 byte "I", "O" or "U" in/out/unknown
+#define LOG_CRC_8b_OFS			0x9 // 1 byte CRC (for int16 alignment)
 
-#define LOG_ENTRY_LEN		0xA
+#define LOG_ENTRY_8b_LEN		0xA
+#define LOG_ENTRY_16b_LEN	0x5
 
 
 #define OUTPUT_BUF_LEN		10 // to send a 32bit value as string
@@ -60,14 +61,14 @@ int log_write_new_entry(uint32_t timestamp, uint32_t uid, uint8_t inout)
 
 	// Make sure we are not going to exceeding the reserved memory region. If we do we
 	// will not write to the memory
-	if (FRAM_write_ptr > (unsigned int*)LOG_END_POS-LOG_ENTRY_LEN)
+	if (FRAM_write_ptr > (unsigned int*)LOG_END_POS-LOG_ENTRY_8b_LEN)
 	{
 		return 0; //no available space --> 0 bytes written!
 	}
 	// else, continue...
 
-	*((uint32_t*)FRAM_write_ptr+LOG_TIME_OFS) = timestamp;
-	*((uint32_t*)FRAM_write_ptr+LOG_UID_OFS) = uid;
+	*((uint32_t*)FRAM_write_ptr+LOG_TIME_32b_OFS) = timestamp;
+	*((uint32_t*)FRAM_write_ptr+LOG_UID_32b_OFS) = uid;
 
 	unsigned char inout_c = 'U';
 	if(inout == 1)
@@ -75,12 +76,12 @@ int log_write_new_entry(uint32_t timestamp, uint32_t uid, uint8_t inout)
 	else if(inout == 0)
 		inout_c = 'O';
 
-	*((unsigned char*)FRAM_write_ptr+LOG_DIR_OFS) = inout_c;
+	*((unsigned char*)FRAM_write_ptr+LOG_DIR_8b_OFS) = inout_c;
 	//TODO: calculate some sort of CRC.
 
-	*FRAM_offset_ptr += LOG_ENTRY_LEN;                 // Increment write index
+	*FRAM_offset_ptr += LOG_ENTRY_8b_LEN;                 // Increment write index
 
-	return LOG_ENTRY_LEN;
+	return LOG_ENTRY_8b_LEN;
 }
 
 void log_send_data_via_uart()
@@ -126,19 +127,19 @@ void log_send_data_via_uart()
 	while(FRAM_read_ptr < FRAM_read_end_ptr)
 	{
 		//send out time stamp:
-		int strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_TIME_OFS), 10, 1, outbuffer);
+		int strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_TIME_32b_OFS), 10, 1, outbuffer);
 		uart_serial_write(&debug_uart, outbuffer, strlen);
 		uart_serial_putc(&debug_uart, ',');
 
 		//send out UID and I/O:
-		strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_OFS), 16, 1, outbuffer);
+		strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_OFS), 16, 1, outbuffer);
 		outbuffer[strlen] = ',';
-		outbuffer[strlen+1] = *((uint8_t*)FRAM_read_ptr+LOG_DIR_OFS);
+		outbuffer[strlen+1] = *((uint8_t*)FRAM_read_ptr+LOG_DIR_8b_OFS);
 		uart_serial_write(&debug_uart, outbuffer, strlen+2);
 		uart_serial_putc(&debug_uart, '\n');
 
 		//increment pointer to next memory location
-		FRAM_read_ptr += LOG_ENTRY_LEN;
+		FRAM_read_ptr += LOG_ENTRY_16b_LEN;
 	}
 
 	//TODO: optional, reset the *LOG_NEXT_POS_OFS to zero.
