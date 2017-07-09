@@ -187,8 +187,8 @@ void rfid_Task()
 //    			st95_echo();
     		}
     		else if(initialized == 1){
-    			Semaphore_pend((Semaphore_Handle)semReader, BIOS_WAIT_FOREVER); //just wait for the button once and then loop forever.
-    			Semaphore_post((Semaphore_Handle)semReader);
+//    			Semaphore_pend((Semaphore_Handle)semReader, BIOS_WAIT_FOREVER); //just wait for the button once and then loop forever.
+//    			Semaphore_post((Semaphore_Handle)semReader);
 
     			uint8_t status;
 			int8_t TagType = TRACK_NOTHING;

@@ -149,7 +149,6 @@ GPIO_PinConfig gpioPinConfigs[] = {
  */
 GPIO_CallbackFxn gpioCallbackFunctions[] = {
 	user_button_isr,  /* nestbox user button */
-	user_button_isr,   /* launchpad user button  */
 	nfc_wakeup_isr
 };
 
@@ -278,13 +277,16 @@ const UARTEUSCIA_BaudrateConfig uartEUSCIABaudrates[] = {
 };
 
 const UARTEUSCIA_HWAttrs uartEUSCIAHWAttrs[nbox_UARTCOUNT] = {
-//    {
-//        .baseAddr = EUSCI_A0_BASE,
-//        .clockSource = EUSCI_A_UART_CLOCKSOURCE_SMCLK,
-//        .bitOrder = EUSCI_A_UART_LSB_FIRST,
-//        .numBaudrateEntries = sizeof(uartEUSCIABaudrates)/sizeof(UARTEUSCIA_BaudrateConfig),
-//        .baudrateLUT = uartEUSCIABaudrates
-//    },
+
+#ifdef LAUNCHPAD_PINDEF
+    {
+        .baseAddr = EUSCI_A0_BASE,
+        .clockSource = EUSCI_A_UART_CLOCKSOURCE_SMCLK,
+        .bitOrder = EUSCI_A_UART_LSB_FIRST,
+        .numBaudrateEntries = sizeof(uartEUSCIABaudrates)/sizeof(UARTEUSCIA_BaudrateConfig),
+        .baudrateLUT = uartEUSCIABaudrates
+    },
+#else
 	{
 		.baseAddr = EUSCI_A1_BASE,
 		.clockSource = EUSCI_A_UART_CLOCKSOURCE_SMCLK,
@@ -292,6 +294,7 @@ const UARTEUSCIA_HWAttrs uartEUSCIAHWAttrs[nbox_UARTCOUNT] = {
 		.numBaudrateEntries = sizeof(uartEUSCIABaudrates)/sizeof(UARTEUSCIA_BaudrateConfig),
 		.baudrateLUT = uartEUSCIABaudrates
 	},
+#endif
 };
 
 const UART_Config UART_config[] = {

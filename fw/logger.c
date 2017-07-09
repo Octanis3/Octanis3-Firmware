@@ -13,8 +13,8 @@
 
 #define LOG_NEXT_POS_VALID	0x11FFC // store the 16bit "password" (type unsigned int == uint16_t)
 #define LOG_NEXT_POS_OFS		0x11FFE // store the 16bit offset (type unsigned int == uint16_t)
-#define LOG_START_POS		0x12000
-#define LOG_END_POS			0x13FFE // this is the last byte position to write to
+#define LOG_START_POS		0x00012000
+#define LOG_END_POS			0x00013FFE // this is the last byte position to write to
 /* Note: the allocated storage space is 8 kB large, which is enough for 819 entries */
 
 
@@ -33,6 +33,8 @@ static int ui2a(unsigned long num, unsigned long base, int uc,uint8_t* buffer);
 int intToStr(unsigned long x, uint8_t* buffer, int d);
 
 unsigned int* FRAM_offset_ptr;
+unsigned int* FRAM_read_ptr;
+
 
 void log_startup()
 {
@@ -117,23 +119,22 @@ void log_send_data_via_uart()
 
 	uart_debug_open();
 
-
 	unsigned int* FRAM_read_end_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); //points to the end of the valid stored data
-	unsigned int* FRAM_read_ptr = (unsigned int*)(LOG_START_POS); // points to start of logged data.
+	FRAM_read_ptr = (unsigned int*)LOG_START_POS; // points to start of logged data.
 
 	uint8_t outbuffer[OUTPUT_BUF_LEN];
 	while(FRAM_read_ptr < FRAM_read_end_ptr)
 	{
 		//send out time stamp:
-		intToStr(*((uint32_t*)FRAM_read_ptr+LOG_TIME_OFS), outbuffer, OUTPUT_BUF_LEN);
-		uart_serial_write(&debug_uart, outbuffer, OUTPUT_BUF_LEN);
+		int strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_TIME_OFS), 10, 1, outbuffer);
+		uart_serial_write(&debug_uart, outbuffer, strlen);
 		uart_serial_putc(&debug_uart, ',');
 
 		//send out UID and I/O:
-		ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_OFS), 16, 'A', outbuffer);
-		outbuffer[OUTPUT_HEX_LEN] = ',';
-		outbuffer[OUTPUT_HEX_LEN] = *((uint8_t*)FRAM_read_ptr+LOG_DIR_OFS);
-		uart_serial_write(&debug_uart, outbuffer, OUTPUT_BUF_LEN);
+		strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_OFS), 16, 1, outbuffer);
+		outbuffer[strlen] = ',';
+		outbuffer[strlen+1] = *((uint8_t*)FRAM_read_ptr+LOG_DIR_OFS);
+		uart_serial_write(&debug_uart, outbuffer, strlen+2);
 		uart_serial_putc(&debug_uart, '\n');
 
 		//increment pointer to next memory location
@@ -148,11 +149,11 @@ void log_send_data_via_uart()
 static int ui2a(unsigned long num, unsigned long base, int uc,uint8_t* buffer)
 {
     int n=0;
-    unsigned int d=1;
+    unsigned long d=1;
     while (num/d >= base)
         d*=base;
     while (d!=0) {
-        int dgt = num / d;
+        unsigned long dgt = num / d;
         num%= d;
         d/=base;
         if (n || dgt>0 || d==0) {

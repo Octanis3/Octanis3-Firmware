@@ -13,9 +13,9 @@ UART_Handle debug_uart;
 int uart_debug_open(){
 	static UART_Params uartParams;
 
-	static int initialized = 0;
+	static int uart_initialized = 0;
 
-	if(initialized == 0)
+	if(uart_initialized == 0)
 	{
 		/* Create a UART with data processing off. */
 		UART_Params_init(&uartParams);
@@ -34,7 +34,11 @@ int uart_debug_open(){
 		if (debug_uart == NULL)
 			return 0;
 
-		initialized = 1;
+
+		const char test_string[] = "nestbox UART initialized\n";
+		uart_serial_write(&debug_uart, (uint8_t*)test_string, sizeof(test_string));
+
+		uart_initialized = 1;
 	}
 
 	return 1;
