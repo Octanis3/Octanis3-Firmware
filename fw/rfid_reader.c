@@ -8,6 +8,8 @@
 #include "rfid_reader.h"
 #include "ST95HF.h"
 #include "uart_helper.h"
+#include "logger.h"
+
 #include <time.h>
 #include <ti/sysbios/hal/Seconds.h>
 
@@ -155,10 +157,11 @@ extern uint8_t 					NDEF_Buffer [];
 
 void rfid_Task()
 {
-	/* Initialize SPI structures*/
+	uart_debug_open();
+	log_startup();
+
 
 	/* Initialize ST95HF as reader by default*/
-	GPIO_enableInt(Board_button);
 	int initialized = 0;
 
     while (1) {
@@ -166,7 +169,6 @@ void rfid_Task()
 
     		if(initialized == 0)
     		{
-    			uart_debug_open();
     			st95_init_spi();
 //    			st95_startup();
 
@@ -299,17 +301,20 @@ void rfid_Task()
 			{
 //				uart_serial_write(&debug_uart, (uint8_t*)LastUIDFound, UID_LENGTH);
 //
-//				uint32_t timestamp = Seconds_get();
+				uint32_t timestamp = Seconds_get();
 //				uart_serial_write(&debug_uart, (uint8_t*)timestamp, TIMESTAMP_LENGTH);
 
-//				static uint8_t in_out = 0;
-//				in_out = ~in_out;
+				static uint8_t in_out = 0;
+				in_out = ~in_out;
 //				uart_serial_write(&debug_uart, &in_out, 1);
 
 				GPIO_write(Board_led_green,1);
 				GPIO_toggle(Board_led_blue);
 				Task_sleep(100);
 				GPIO_toggle(Board_led_blue);
+
+				// log to flash
+				log_write_new_entry(timestamp, *(uint32_t*)LastUIDFound, in_out); //TODO: UID is an array casted into a uint32 --> wrong byte order!
 
 
 			}

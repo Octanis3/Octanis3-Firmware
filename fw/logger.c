@@ -81,7 +81,7 @@ int log_write_new_entry(uint32_t timestamp, uint32_t uid, uint8_t inout)
 	return LOG_ENTRY_LEN;
 }
 
-void send_data_via_uart()
+void log_send_data_via_uart()
 {
 
 	/********* possible example code for fast DMA transfer **********

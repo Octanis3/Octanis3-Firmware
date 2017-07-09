@@ -8,7 +8,8 @@
 #ifndef FW_USER_BUTTON_H_
 #define FW_USER_BUTTON_H_
 
-void user_button_isr(unsigned int index);
+void user_button_Task();
 
+void user_button_isr(unsigned int index);
 
 #endif /* FW_USER_BUTTON_H_ */
