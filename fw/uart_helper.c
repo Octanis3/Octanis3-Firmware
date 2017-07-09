@@ -13,24 +13,31 @@ UART_Handle debug_uart;
 int uart_debug_open(){
 	static UART_Params uartParams;
 
-	/* Create a UART with data processing off. */
-	UART_Params_init(&uartParams);
-	uartParams.writeDataMode = UART_DATA_BINARY;
-	uartParams.readDataMode = UART_DATA_BINARY;
-	uartParams.readReturnMode = UART_RETURN_FULL;
-	uartParams.readEcho = UART_ECHO_OFF;
-	uartParams.baudRate = 9600;
-	//uartParams.readMode = UART_MODE_BLOCKING;
-	//uartParams.readTimeout = 10;
-	//uartParams.dataLength = UART_LEN_8;
+	static int initialized = 0;
 
-	//Correct port for the mainboard
-	debug_uart = UART_open(Board_UART_debug, &uartParams);
+	if(initialized == 0)
+	{
+		/* Create a UART with data processing off. */
+		UART_Params_init(&uartParams);
+		uartParams.writeDataMode = UART_DATA_BINARY;
+		uartParams.readDataMode = UART_DATA_BINARY;
+		uartParams.readReturnMode = UART_RETURN_FULL;
+		uartParams.readEcho = UART_ECHO_OFF;
+		uartParams.baudRate = 9600;
+		//uartParams.readMode = UART_MODE_BLOCKING;
+		//uartParams.readTimeout = 10;
+		//uartParams.dataLength = UART_LEN_8;
 
-	if (debug_uart == NULL)
-		return 0;
-	else
-		return 1;
+		//Correct port for the mainboard
+		debug_uart = UART_open(Board_UART_debug, &uartParams);
+
+		if (debug_uart == NULL)
+			return 0;
+
+		initialized = 1;
+	}
+
+	return 1;
 }
 
 size_t uart_serial_write(UART_Handle *dev, const uint8_t *data, unsigned int n)
