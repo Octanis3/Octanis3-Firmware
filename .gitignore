@@ -40,6 +40,7 @@ Release/*
 src/makefile.libs
 src/sysbios/makefile
 src/sysbios/sysbios.am4fg
+src/*
 .launches/*
 /Release/*
 /.config/*

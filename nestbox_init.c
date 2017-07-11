@@ -108,24 +108,35 @@ Void nbox_isrDMA(UArg arg)
 GPIO_PinConfig gpioPinConfigs[] = {
     /* Input pins */
     /* nestbox user button */
-    GPIOMSP430_P4_2 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
-    /* launchpad user button (TODO: remove this definition)*/
+#ifdef LAUNCHPAD_PINDEF
     GPIOMSP430_P4_5 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
+#else
+    GPIOMSP430_P4_2 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
+#endif
 	/* NESTBOX_SPI_NFC_IRQ_N */
 	GPIOMSP430_P3_6 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
 
     /* Output pins */
-    /* NESTBOX_LED_GREEN */
+#ifdef LAUNCHPAD_PINDEF
+	/* NESTBOX_LED_BLUE */
+    GPIOMSP430_P4_6 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+#else
+	/* NESTBOX_LED_GREEN */
     GPIOMSP430_P4_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
-    /* NESTBOX_LED_BLUE */
-    GPIOMSP430_P4_1 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+	/* NESTBOX_LED_BLUE */
+	GPIOMSP430_P4_1 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+#endif
+
 	/* NESTBOX_LED_INFRARED */
 //	GPIOMSP430_P1_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 	/* NESTBOX_SPI_NFC_SEL_N */
 	GPIOMSP430_P3_4 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
 	/* NESTBOX_SPI_NFC_WAKEUP_N */
+#ifdef LAUNCHPAD_PINDEF
+	GPIOMSP430_P3_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
+#else
 	GPIOMSP430_P3_7 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
-
+#endif
 
 };
 
@@ -138,7 +149,6 @@ GPIO_PinConfig gpioPinConfigs[] = {
  */
 GPIO_CallbackFxn gpioCallbackFunctions[] = {
 	user_button_isr,  /* nestbox user button */
-	user_button_isr,   /* launchpad user button  */
 	nfc_wakeup_isr
 };
 
@@ -267,6 +277,8 @@ const UARTEUSCIA_BaudrateConfig uartEUSCIABaudrates[] = {
 };
 
 const UARTEUSCIA_HWAttrs uartEUSCIAHWAttrs[nbox_UARTCOUNT] = {
+
+#ifdef LAUNCHPAD_PINDEF
     {
         .baseAddr = EUSCI_A0_BASE,
         .clockSource = EUSCI_A_UART_CLOCKSOURCE_SMCLK,
@@ -274,6 +286,15 @@ const UARTEUSCIA_HWAttrs uartEUSCIAHWAttrs[nbox_UARTCOUNT] = {
         .numBaudrateEntries = sizeof(uartEUSCIABaudrates)/sizeof(UARTEUSCIA_BaudrateConfig),
         .baudrateLUT = uartEUSCIABaudrates
     },
+#else
+	{
+		.baseAddr = EUSCI_A1_BASE,
+		.clockSource = EUSCI_A_UART_CLOCKSOURCE_SMCLK,
+		.bitOrder = EUSCI_A_UART_LSB_FIRST,
+		.numBaudrateEntries = sizeof(uartEUSCIABaudrates)/sizeof(UARTEUSCIA_BaudrateConfig),
+		.baudrateLUT = uartEUSCIABaudrates
+	},
+#endif
 };
 
 const UART_Config UART_config[] = {
@@ -282,6 +303,11 @@ const UART_Config UART_config[] = {
         .object = &uartEUSCIAObjects[0],
         .hwAttrs = &uartEUSCIAHWAttrs[0]
     },
+//	{
+//		.fxnTablePtr = &UARTEUSCIA_fxnTable,
+//		.object = &uartEUSCIAObjects[1],
+//		.hwAttrs = &uartEUSCIAHWAttrs[1]
+//	},
     {NULL, NULL, NULL}
 };
 
@@ -290,11 +316,17 @@ const UART_Config UART_config[] = {
  */
 void nbox_initUART(void)
 {
-    /* P4.4,5 = USCI_A1 TXD/RXD */
+    /* P4.0,1 = USCI_A0 TXD/RXD */
     GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2,
         GPIO_PIN0, GPIO_SECONDARY_MODULE_FUNCTION);
     GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P2,
         GPIO_PIN1, GPIO_SECONDARY_MODULE_FUNCTION);
+
+    /* P2.5,6 = USCI_A1 TXD/RXD */
+    GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2,
+        GPIO_PIN5, GPIO_SECONDARY_MODULE_FUNCTION);
+    GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P2,
+        GPIO_PIN6, GPIO_SECONDARY_MODULE_FUNCTION);
 
     /* Initialize the UART driver */
     UART_init();

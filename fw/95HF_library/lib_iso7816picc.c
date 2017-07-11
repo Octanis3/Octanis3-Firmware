@@ -68,7 +68,7 @@ extern uint8_t					u95HFBuffer [RFTRANS_95HF_MAX_BUFFER_SIZE+3];
  * @brief  this function decodes and returns a response to Deselectcommand
  * @param  pData : RF command received by the PICC
  */
-void PICC7816_Deselect ( uc8 *pData )
+void PICC7816_Deselect ( unsigned char *pData )
 {
 	uint8_t Length =0,
 				*pDataToToEmit = &(u95HFBuffer [PICC_DATA_OFFSET]);
@@ -89,7 +89,7 @@ void PICC7816_Deselect ( uc8 *pData )
  * @brief  this function decodes and returns a response to Ack command
  * @param  pData : RF command received by the PICC
  */
-void PICC7816_ACK ( uc8 *pData )
+void PICC7816_ACK ( unsigned char *pData )
 {
 	uint8_t Length =0,
 				*pDataToToEmit = &(u95HFBuffer [PICC_DATA_OFFSET]);
@@ -118,7 +118,7 @@ void PICC7816_ACK ( uc8 *pData )
  * @param  pData : RF command received by the PICC
  * @param  statusCode : Status that must be send 
  */
-void PICC7816_SendAStatusCode ( uc8 *pData , uc16 statusCode )
+void PICC7816_SendAStatusCode ( unsigned char *pData , uint16_t statusCode )
 {
 	uint8_t Length =0,
 					*pDataToToEmit = &(u95HFBuffer [PICC_DATA_OFFSET]);
@@ -147,7 +147,7 @@ void PICC7816_SendAStatusCode ( uc8 *pData , uc16 statusCode )
  * @param  NbByte : number of byte to send
  * @param  statusCode : Status to provide to PCD
  */
-void PICC7816_SendBuffer ( uc8 *pData ,uc8 *pDataTosend,uc8 NbByte, uc16 statusCode )
+void PICC7816_SendBuffer ( unsigned char *pData ,unsigned char *pDataTosend,unsigned char NbByte, uint16_t statusCode )
 {
 	uint8_t Length =0,
 					*pDataToToEmit = &(u95HFBuffer [PICC_DATA_OFFSET]);
@@ -177,7 +177,7 @@ void PICC7816_SendBuffer ( uc8 *pData ,uc8 *pDataTosend,uc8 NbByte, uc16 statusC
  * @brief  This function decodes and returns a response to Nack command
  * @param  pData : RF command received by the PICC
  */
-void PICC7816_SendANotAck ( uc8 *pData  )
+void PICC7816_SendANotAck ( unsigned char *pData  )
 {
 	uint8_t Length =0,
 				*pDataToToEmit = &(u95HFBuffer [PICC_DATA_OFFSET]);

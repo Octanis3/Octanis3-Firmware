@@ -7,10 +7,9 @@
 
 #include "lightbarrier.h"
 #include "../Board.h"
-
 #include <ti/sysbios/hal/Hwi.h>
 #include <msp430.h>
-
+#include "user_button.h"
 
 void lightBarrier_init()
 {
@@ -55,9 +54,7 @@ void lightBarrier_init()
 
 void lightBarrier_Task()
 {
-//	Hwi_enable(); //not sure if needed here??
-//
-//	GPIO_enableInt(lp_button);
+
 
     lightBarrier_init();
 
@@ -86,3 +83,4 @@ void lightBarrier_Task()
 //		LPM4_EXIT;
 //	}
 //}
+

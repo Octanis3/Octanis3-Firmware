@@ -143,18 +143,18 @@ typedef struct{
 }PICCNFCDEP_TARGET_PROPERTIES;
 
 void PICCNFCDEP_Init ( uint8_t Protocol, bool LLCPModeSupported );
-int8_t PICCNFCDEP_ReplyCommand( uc8 *pData );
+int8_t PICCNFCDEP_ReplyCommand( unsigned char *pData );
 
-int8_t PICCNFCDEP_ReqC( uc8 *pData );
+int8_t PICCNFCDEP_ReqC( unsigned char *pData );
 
-int8_t PICCNFCDEP_Atr (uc8 *pData, u8 nbBytes);
-int8_t PICCNFCDEP_Psl ( uc8 *pData );
-int8_t PICCNFCDEP_Dep (uc8 *pData, u16 Length );
-int8_t PICCNFCDEP_Dsl ( uc8 *pData );
-int8_t PICCNFCDEP_Rls ( uc8 *pData );
+int8_t PICCNFCDEP_Atr (unsigned char *pData, uint8_t nbBytes);
+int8_t PICCNFCDEP_Psl ( unsigned char *pData );
+int8_t PICCNFCDEP_Dep (unsigned char *pData, uint16_t Length );
+int8_t PICCNFCDEP_Dsl ( unsigned char *pData );
+int8_t PICCNFCDEP_Rls ( unsigned char *pData );
 
-void PICCNFCDEP_CallBack(uc8 *pData, u16 *nbByte);
-void PICCNFCDEP_LLCPPaxCallBack(uc8 *pData, u16 *nbByte);
+void PICCNFCDEP_CallBack(unsigned char *pData, uint16_t *nbByte);
+void PICCNFCDEP_LLCPPaxCallBack(unsigned char *pData, uint16_t *nbByte);
 
 #endif /* _LIB_NFCDEPTARGET_H */
 /**

@@ -56,7 +56,7 @@ static int8_t 				PICCEmul_Init14443APicc							( void );
 static void						PICCEmul_Init												( void );
 static void						PICCEmul_RFField_CutOff							( void );
 static int8_t 				PICCEmul_CheckForPCD								( void );
-static __INLINE void 	PICCEmul_Listen											( void );
+static inline void 	PICCEmul_Listen											( void );
 
 
  /* extern variables ---------------------------------------------------------------- */
@@ -181,7 +181,7 @@ Error:
 }
 
 
-static __INLINE void PICCEmul_Listen( void)
+static inline void PICCEmul_Listen( void)
 {
 	
 	/* Before Enabling Listen mode and waiting for interruption */
@@ -208,7 +208,8 @@ static __INLINE void PICCEmul_Listen( void)
 	{			
 		/* In some case data is ready before IT was set */
 		/* Take care of this case here by checking GPIO state */
-		if(GPIO_ReadInputDataBit(EXTI_GPIO_PORT,EXTI_RFTRANS_95HF_LINE) == Bit_RESET )
+//		if(GPIO_ReadInputDataBit(EXTI_GPIO_PORT,EXTI_RFTRANS_95HF_LINE) == Bit_RESET )
+		if(GPIO_read(Board_nfc_irq_n) == Bit_RESET )
 		{		
 			CardEmulator.State = PICCSTATE_DATA_EXCHANGED;
 			RF_DataExpected = false;
@@ -515,8 +516,9 @@ PICCEMULATOR_STATE PICCEmul_ManagePICCEmulation ( void )
 			}
 #else	
 			
-			/* Here we check if RF even occurs, so if GPO of RX95HF is low */
-			if(GPIO_ReadInputDataBit(EXTI_GPIO_PORT,EXTI_RFTRANS_95HF_LINE) == Bit_RESET)
+			/* Here we check if RF event occurs, so if GPO of RX95HF is low */
+//			if(GPIO_read(EXTI_GPIO_PORT,EXTI_RFTRANS_95HF_LINE) == Bit_RESET)
+			if(GPIO_read(Board_nfc_irq_n) == Bit_RESET)
 			{	
 				CardEmulator.State = PICCSTATE_DATA_EXCHANGED;
 			}

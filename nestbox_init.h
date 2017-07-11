@@ -49,6 +49,10 @@
 extern "C" {
 #endif
 
+
+//#define LAUNCHPAD_PINDEF 1
+
+
 /* LEDs on nestbox_board are active high. */
 #define nbox_LED_OFF (0)
 #define nbox_LED_ON  (1)
@@ -60,11 +64,12 @@ extern "C" {
 typedef enum nbox_GPIOName {
     //inputs
 	nbox_button = 0,
-	lp_button, // bottom left button on launchpad
 	nbox_nfc_irq_n,
 
 	//outputs
+#ifndef LAUNCHPAD_PINDEF
     nbox_led_green,
+#endif
     nbox_led_blue,
 //	nbox_led_ir,
 	nbox_spi_nfc_sel_n,
@@ -88,7 +93,8 @@ typedef enum nbox_SPIName {
  *  @brief  Enum of UART names on the nbox dev board
  */
 typedef enum nbox_UARTName {
-    nbox_UARTA1 = 0,
+//    nbox_UARTA0 = 0,
+	nbox_UARTA1,
 
     nbox_UARTCOUNT
 } nbox_UARTName;

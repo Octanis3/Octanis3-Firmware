@@ -65,11 +65,11 @@
 #define ISO7816_ADPUOFFSET_DATA			ISO7816_ADPUOFFSET_BLOCK 		+ 6
 
 /* Public functions ------------------------------------------------------------------------*/
-void PICC7816_ACK 												( uc8 *pData );
-void PICC7816_Deselect 										( uc8 *pData );
-void PICC7816_SendAStatusCode							( uc8 *pData, uc16 StatusCode );
-void PICC7816_SendBuffer 									( uc8 *pData ,uc8 *pDataTosend,uc8 NbByte, uc16 statusCode );
-void PICC7816_SendANotAck 								( uc8 *pData );
+void PICC7816_ACK 												( unsigned char *pData );
+void PICC7816_Deselect 										( unsigned char *pData );
+void PICC7816_SendAStatusCode							( unsigned char *pData, uint16_t StatusCode );
+void PICC7816_SendBuffer 									( unsigned char *pData ,unsigned char *pDataTosend,unsigned char NbByte, uint16_t statusCode );
+void PICC7816_SendANotAck 								( unsigned char *pData );
 
 #endif
 

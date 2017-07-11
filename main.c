@@ -37,6 +37,7 @@
 /* Task Header files */
 #include "fw/lightbarrier.h"
 #include "fw/rfid_reader.h"
+#include "fw/user_button.h"
 
 /* Board Header file */
 #include "Board.h"
@@ -52,9 +53,14 @@ Task_Struct lb_task_Struct;
 Char lb_task_Stack[LB_TASKSTACKSIZE];
 
 // RFID reader task
-#define RFID_TASKSTACKSIZE   1024
+#define RFID_TASKSTACKSIZE   4096
 Task_Struct rfid_task_Struct;
 Char rfid_task_Stack[RFID_TASKSTACKSIZE];
+
+// user button task
+#define BUTTON_TASKSTACKSIZE   512
+Task_Struct button_task_Struct;
+Char button_task_Stack[BUTTON_TASKSTACKSIZE];
 
 /*
  *  ======== heartBeatFxn ========
@@ -65,7 +71,7 @@ void heartBeat_Task(UArg arg0, UArg arg1)
 {
     while (1) {
         Task_sleep((unsigned int)arg0);
-        GPIO_toggle(Board_led_green);
+//        GPIO_toggle(Board_led_blue);
     }
 }
 
@@ -77,17 +83,19 @@ int main(void)
     Task_Params hb_taskParams;
     Task_Params lb_taskParams;
     Task_Params rfid_taskParams;
+    Task_Params button_taskParams;
+
 
     /* Call board init functions */
     Board_initGeneral();
     Board_initGPIO();
     Board_initSPI();
-    // Board_initUART();
+    Board_initUART();
     // Board_initWatchdog();
 
     /* Construct heartBeat Task  thread */
     Task_Params_init(&hb_taskParams);
-    hb_taskParams.arg0 = 1000;
+    hb_taskParams.arg0 = 100;
     hb_taskParams.stackSize = HB_TASKSTACKSIZE;
     hb_taskParams.stack = &hb_task_Stack;
     Task_construct(&hb_task_Struct, (Task_FuncPtr)heartBeat_Task, &hb_taskParams, NULL);
@@ -100,13 +108,19 @@ int main(void)
 	lb_taskParams.priority = 2;
 	Task_construct(&lb_task_Struct, (Task_FuncPtr)lightBarrier_Task, &lb_taskParams, NULL);
 
-	/* Construct rfidBarrier Task  thread */
+	/* Construct rfidReader Task  thread */
 	Task_Params_init(&rfid_taskParams);
 	rfid_taskParams.stackSize = RFID_TASKSTACKSIZE;
 	rfid_taskParams.stack = &rfid_task_Stack;
-	lb_taskParams.priority = 1; // <--- MUST HAVE LOWER PRIORITY, OTHERWISE THE SPI POLLING MAY GET IT STUCK AND HANG OTHER TASKS.
+	rfid_taskParams.priority = 1; // <--- MUST HAVE LOWER PRIORITY, OTHERWISE THE SPI POLLING MAY GET IT STUCK AND HANG OTHER TASKS.
 	Task_construct(&rfid_task_Struct, (Task_FuncPtr)rfid_Task, &rfid_taskParams, NULL);
 
+	/* Construct userButton Task  thread */
+	Task_Params_init(&button_taskParams);
+	button_taskParams.stackSize = BUTTON_TASKSTACKSIZE;
+	button_taskParams.stack = &button_task_Stack;
+	button_taskParams.priority = 1; // <--- MUST HAVE LOWER PRIORITY, OTHERWISE THE SPI POLLING MAY GET IT STUCK AND HANG OTHER TASKS.
+	Task_construct(&button_task_Struct, (Task_FuncPtr)user_button_Task, &button_taskParams, NULL);
 
 
     /* Turn on user LED  */

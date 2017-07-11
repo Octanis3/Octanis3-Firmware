@@ -63,10 +63,14 @@ extern "C" {
 
 
 #define Board_button           		nbox_button
-#define Board_button_lp          	lp_button
 
-#define Board_led_green          	nbox_led_green
 #define Board_led_blue          		nbox_led_blue
+#ifndef LAUNCHPAD_PINDEF
+	#define Board_led_green          nbox_led_green
+#else
+	#define Board_led_green     		nbox_led_ir
+#endif
+
 #define Board_LED_ON					nbox_LED_ON
 #define Board_LED_OFF				nbox_LED_OFF
 
@@ -80,7 +84,9 @@ extern "C" {
 
 #define Board_USBDEVICE             0
 
-#define Board_UART0                 nbox_UARTA1
+//#define Board_UART_lora             nbox_UARTA0
+#define Board_UART_debug            nbox_UARTA1
+
 
 #define Board_WATCHDOG0             nbox_WATCHDOG
 

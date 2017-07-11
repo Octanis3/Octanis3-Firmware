@@ -141,14 +141,14 @@ typedef struct{
 }PCDNFCDEP_PCD_TARGET;
 
 void PCDNFCDEP_Init ( uint8_t Protocol, bool LLCPModeSupported );
-int8_t PCDNFCDEP_ReplyCommand( uc8 *pData );
+int8_t PCDNFCDEP_ReplyCommand( unsigned char *pData );
 
 int8_t PCDNFCDEP_IsPresentNFCA( void);
 int8_t PCDNFCDEP_IsPresentNFCF( void);
 
 int8_t PCDNFCDEP_Atr ( void );
 int8_t PCDNFCDEP_Psl ( PCDNFCDEP_BRS BRS );
-int8_t PCDNFCDEP_Dep (uc8 PFB, u8 *pData, u16 *nbByte );
+int8_t PCDNFCDEP_Dep (unsigned char PFB, uint8_t *pData, uint16_t *nbByte );
 int8_t PCDNFCDEP_Dsl ( void );
 int8_t PCDNFCDEP_Rls ( void );
 

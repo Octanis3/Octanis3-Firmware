@@ -112,7 +112,7 @@ void PICCNFCT2_Init ( void )
  * @retval PICCNFCT2_SUCCESSCODE : Command success
  * @retval PICCEMUL_ERRORCODE_UNKNOWNCOMMAND : Error if command sent by reader was not appropriate
  */
-int8_t PICCNFCT2_ReplyCommand( uc8 *pData )
+int8_t PICCNFCT2_ReplyCommand( unsigned char *pData )
 {
 	uint8_t	InsCode = pData[PICC_DATA_OFFSET];
 	
@@ -146,7 +146,7 @@ int8_t PICCNFCT2_ReplyCommand( uc8 *pData )
  * @param  pData : RF command received by the PICC
  * @retval 	PICCNFCT2_SUCCESSCODE : command succesfully executed
  */
-int8_t PICCNFCT2_SelectSector (uc8 *pData)
+int8_t PICCNFCT2_SelectSector (unsigned char *pData)
 {	
 	/* SelectSector packet 1 [0xC2 0xFF] */
 	if (pData[PICC_DATA_OFFSET] == PICCNFCT2_SECTOR_SELECT && pData[PICC_DATA_OFFSET+1] == 0xFF && flag_sector_select == 0)
@@ -179,7 +179,7 @@ int8_t PICCNFCT2_SelectSector (uc8 *pData)
  * @retval 	PICCNFCT2_SUCCESSCODE : command succesfully executed
  * @retval 	PICCNFCT2_ERRORCODE_COMMANDUNKNOWN : the command byte is unknown
  */
-int8_t PICCNFCT2_Read (uc8 *pData)
+int8_t PICCNFCT2_Read (unsigned char *pData)
 {	
 	uint16_t addr;
 	uint8_t PageNumber;
@@ -235,7 +235,7 @@ int8_t PICCNFCT2_Read (uc8 *pData)
  * @retval 	PICCNFCT2_SUCCESSCODE : command succesfully executed
  * @retval 	PICCNFCT2_ERRORCODE_COMMANDUNKNOWN : the command byte is unknown
   */
-int8_t PICCNFCT2_Write (uc8 *pData )
+int8_t PICCNFCT2_Write (unsigned char *pData )
 {
 	uint16_t addr=0;
 	
@@ -273,7 +273,7 @@ int8_t PICCNFCT2_Write (uc8 *pData )
   */
 void PICCNFCT2_ACK (void)
 {
-	uc8 pDataToEmit[2] = {0xAA,0x14};
+	unsigned char pDataToEmit[2] = {0xAA,0x14};
 	PICC_Send(2,pDataToEmit);
 }
 
@@ -282,7 +282,7 @@ void PICCNFCT2_ACK (void)
   */
 void PICCNFCT2_NACK (void)
 {
-	uc8 pDataToEmit[2] = {0x00,0x14};
+	unsigned char pDataToEmit[2] = {0x00,0x14};
 	PICC_Send(2,pDataToEmit);
 }
 

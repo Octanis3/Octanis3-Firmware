@@ -38,33 +38,33 @@ extern TagType_t nfc_tagtype;
 extern PCD_PROTOCOL TechnoSelected;
 
 /* Get functions --- */
-static int8_t ISO15693_GetSelectOrAFIFlag (uc8 FlagsByte);
-static int8_t ISO15693_GetAddressOrNbSlotsFlag (uc8 FlagsByte);
-static int8_t ISO15693_GetOptionFlag (uc8 FlagsByte);
-static int8_t ISO15693_GetProtocolExtensionFlag (uc8 FlagsByte);
+static int8_t ISO15693_GetSelectOrAFIFlag (unsigned char FlagsByte);
+static int8_t ISO15693_GetAddressOrNbSlotsFlag (unsigned char FlagsByte);
+static int8_t ISO15693_GetOptionFlag (unsigned char FlagsByte);
+static int8_t ISO15693_GetProtocolExtensionFlag (unsigned char FlagsByte);
 //static int8_t ISO15693_GetIcRef (uint8_t *IcRefOut);
 /* Invotory functions --- */
-static int8_t ISO15693_Inventory ( uc8 Flags , uc8 AFI, uc8 MaskLength, uc8 *MaskValue, uint8_t *pResponse);
-static int8_t ISO15693_InventoryOneSlot	( uc8 Flags , uc8 AFI, uc8 MaskLength, uc8 *MaskValue, uint8_t *pResponse  );
-static int16_t ISO15693_Inventory16Slots ( uc8 Flags , uc8 AFI, uc8 MaskLength, uc8 *MaskValue, uint8_t *NbTag, uint8_t *pResponse  );
+static int8_t ISO15693_Inventory ( unsigned char Flags , unsigned char AFI, unsigned char MaskLength, unsigned char *MaskValue, uint8_t *pResponse);
+static int8_t ISO15693_InventoryOneSlot	( unsigned char Flags , unsigned char AFI, unsigned char MaskLength, unsigned char *MaskValue, uint8_t *pResponse  );
+static int16_t ISO15693_Inventory16Slots ( unsigned char Flags , unsigned char AFI, unsigned char MaskLength, unsigned char *MaskValue, uint8_t *NbTag, uint8_t *pResponse  );
 /* Command functions --- */
-static int8_t ISO15693_CreateRequestFlag (uc8 SubCarrierFlag,uc8 DataRateFlag,uc8 InventoryFlag,uc8 ProtExtFlag,uc8 SelectOrAFIFlag,uc8 AddrOrNbSlotFlag,uc8 OptionFlag,uc8 RFUFlag);
-static int8_t ISO15693_StayQuiet(uc8 Flags,uc8 *UIDin);
-static int8_t ISO15693_ReadSingleBlock ( uc8 Flags, uc8 *UID, uc16 BlockNumber,uint8_t *pResponse );
-static int8_t ISO15693_WriteSingleBlock ( uc8 Flags, uc8 *UIDin, uc16 BlockNumber,uc8 *DataToWrite,uint8_t *pResponse );
-static int8_t ISO15693_ReadMultipleBlock (uc8 Flags, uc8 *UIDin, uint16_t BlockNumber, uc8 NbBlock, uint8_t *pResponse );
-static int8_t ISO15693_ExtendedReadSingleBlock (uc8 Flags, uc8 *UIDin, uc16 BlockNumber,uint8_t *pResponse );
-static int8_t ISO15693_ExtendedWriteSingleBlock ( uc8 Flags, uc8 *UIDin, uc16 BlockNumber,uc8 *DataToWrite,uint8_t *pResponse );
-static int8_t ISO15693_ExtendedReadMultipleBlock (uc8 Flags, uc8 *UIDin, uint16_t BlockNumber, uint16_t NbBlock, uint8_t *pResponse );
+static int8_t ISO15693_CreateRequestFlag (unsigned char SubCarrierFlag,unsigned char DataRateFlag,unsigned char InventoryFlag,unsigned char ProtExtFlag,unsigned char SelectOrAFIFlag,unsigned char AddrOrNbSlotFlag,unsigned char OptionFlag,unsigned char RFUFlag);
+static int8_t ISO15693_StayQuiet(unsigned char Flags,unsigned char *UIDin);
+static int8_t ISO15693_ReadSingleBlock ( unsigned char Flags, unsigned char *UID, uint16_t BlockNumber,uint8_t *pResponse );
+static int8_t ISO15693_WriteSingleBlock ( unsigned char Flags, unsigned char *UIDin, uint16_t BlockNumber,unsigned char *DataToWrite,uint8_t *pResponse );
+static int8_t ISO15693_ReadMultipleBlock (unsigned char Flags, unsigned char *UIDin, uint16_t BlockNumber, unsigned char NbBlock, uint8_t *pResponse );
+static int8_t ISO15693_ExtendedReadSingleBlock (unsigned char Flags, unsigned char *UIDin, uint16_t BlockNumber,uint8_t *pResponse );
+static int8_t ISO15693_ExtendedWriteSingleBlock ( unsigned char Flags, unsigned char *UIDin, uint16_t BlockNumber,unsigned char *DataToWrite,uint8_t *pResponse );
+static int8_t ISO15693_ExtendedReadMultipleBlock (unsigned char Flags, unsigned char *UIDin, uint16_t BlockNumber, uint16_t NbBlock, uint8_t *pResponse );
 static int8_t ISO15693_SendEOF ( uint8_t *pResponse );
 /* Is functions --- */
-static int8_t ISO15693_IsInventoryFlag (uc8 FlagsByte);
-static int8_t ISO15693_IsAddressOrNbSlotsFlag (uc8 FlagsByte);
-static int8_t ISO15693_IsATagInTheField (uc8 *pTagReply);
-static int8_t ISO15693_IsCollisionDetected (uc8 *pTagReply);
+static int8_t ISO15693_IsInventoryFlag (unsigned char FlagsByte);
+static int8_t ISO15693_IsAddressOrNbSlotsFlag (unsigned char FlagsByte);
+static int8_t ISO15693_IsATagInTheField (unsigned char *pTagReply);
+static int8_t ISO15693_IsCollisionDetected (unsigned char *pTagReply);
 /* CRC16 commands --- */
-static int16_t ISO15693_CRC16 (uc8 *DataIn,uc8 Length);
-static int8_t ISO15693_IsCorrectCRC16Residue (uc8 *DataIn,uc8 Length);
+static int16_t ISO15693_CRC16 (unsigned char *DataIn,unsigned char Length);
+static int8_t ISO15693_IsCorrectCRC16Residue (unsigned char *DataIn,unsigned char Length);
 /* Tag functions --- */
 static uint8_t ISO15693_ReadSingleTagData(uint8_t Tag_Density, uint8_t *Data_To_Read, uint16_t NbBlock_To_Read, uint16_t FirstBlock_To_Read);
 static uint8_t ISO15693_TagSave(uint8_t Tag_Density, uint16_t NbByte_To_Write, uint16_t FirstByte_To_Write, uint8_t *Data_To_Save, uint8_t *Length_Low_Limit, uint8_t *Length_High_Limit);
@@ -102,7 +102,7 @@ static uint8_t ISO15693_WriteTagData(uint8_t Tag_Density, uint8_t *Data_To_Write
 * @param  	FlagsByte	: Request flags on one byte	
 * @retval 	Select Or AFI
 */
-static int8_t ISO15693_GetSelectOrAFIFlag (uc8 FlagsByte)
+static int8_t ISO15693_GetSelectOrAFIFlag (unsigned char FlagsByte)
 {
 
 	if ((FlagsByte & ISO15693_MASK_SELECTORAFIFLAG) != 0x00)
@@ -116,7 +116,7 @@ static int8_t ISO15693_GetSelectOrAFIFlag (uc8 FlagsByte)
 * @param  	FlagsByte	: Request flags on one byte	
 * @retval 	address Or Number of slots
 */
-static int8_t ISO15693_GetAddressOrNbSlotsFlag (uc8 FlagsByte)
+static int8_t ISO15693_GetAddressOrNbSlotsFlag (unsigned char FlagsByte)
 {
 
 	if ((FlagsByte & ISO15693_MASK_ADDRORNBSLOTSFLAG) != 0x00)
@@ -130,7 +130,7 @@ static int8_t ISO15693_GetAddressOrNbSlotsFlag (uc8 FlagsByte)
 * @param  	FlagsByte	: the byts cantaining the eight flags  	
 * @retval 	Option flag
 */
-static int8_t ISO15693_GetOptionFlag (uc8 FlagsByte)
+static int8_t ISO15693_GetOptionFlag (unsigned char FlagsByte)
 {
 
 	if ((FlagsByte & ISO15693_MASK_OPTIONFLAG) != 0x00)
@@ -145,7 +145,7 @@ static int8_t ISO15693_GetOptionFlag (uc8 FlagsByte)
 * @param  	FlagsByte	: the byts cantaining the eight flags  	
 * @retval 	Option flag
 */
-static int8_t ISO15693_GetProtocolExtensionFlag (uc8 FlagsByte)
+static int8_t ISO15693_GetProtocolExtensionFlag (unsigned char FlagsByte)
 {
 
 	if ((FlagsByte & ISO15693_MASK_PROTEXTFLAG) != 0x00)
@@ -168,7 +168,7 @@ static int8_t ISO15693_GetProtocolExtensionFlag (uc8 FlagsByte)
 * @param	RFUFlag
 * @retval 	Flags byte
 */
-static int8_t ISO15693_CreateRequestFlag (uc8 SubCarrierFlag,uc8 DataRateFlag,uc8 InventoryFlag,uc8 ProtExtFlag,uc8 SelectOrAFIFlag,uc8 AddrOrNbSlotFlag,uc8 OptionFlag,uc8 RFUFlag)
+static int8_t ISO15693_CreateRequestFlag (unsigned char SubCarrierFlag,unsigned char DataRateFlag,unsigned char InventoryFlag,unsigned char ProtExtFlag,unsigned char SelectOrAFIFlag,unsigned char AddrOrNbSlotFlag,unsigned char OptionFlag,unsigned char RFUFlag)
 {
 int32_t FlagsByteBuf=0;
 
@@ -235,7 +235,7 @@ int32_t FlagsByteBuf=0;
 * @retval 	ISO15693_ERRORCODE_PARAMETERLENGTH	: 	MaskLength value is erroneous
 * @retval 	ISO15693_ERRORCODE_DEFAULT	: 	 PCD  returns an error code
 */
-static int8_t ISO15693_Inventory( uc8 Flags , uc8 AFI, uc8 MaskLength, uc8 *MaskValue, uint8_t *pResponse  )
+static int8_t ISO15693_Inventory( unsigned char Flags , unsigned char AFI, unsigned char MaskLength, unsigned char *MaskValue, uint8_t *pResponse  )
 {
 uint8_t 	NthByte = 0,
 					InventoryBuf [ISO15693_MAXLENGTH_INVENTORY],
@@ -311,7 +311,7 @@ Error:
 * @retval 	ISO15693_ERRORCODE_PARAMETERLENGTH	: 	MaskLength value is erroneous
 * @retval 	ISO15693_ERRORCODE_DEFAULT	: 	 PCD  returns an error code
 */
-static int8_t ISO15693_InventoryOneSlot( uc8 Flags , uc8 AFI, uc8 MaskLength, uc8 *MaskValue, uint8_t *pResponse  )
+static int8_t ISO15693_InventoryOneSlot( unsigned char Flags , unsigned char AFI, unsigned char MaskLength, unsigned char *MaskValue, uint8_t *pResponse  )
 {
 int8_t 	NewFlags,
 		status;
@@ -342,7 +342,7 @@ int8_t 	NewFlags,
 * @retval 	ISO15693_ERRORCODE_PARAMETERLENGTH	: 	MaskLength value is erroneous
 * @retval 	ISO15693_ERRORCODE_DEFAULT	: 	 PCD  returns an error code
 */
-static int16_t ISO15693_Inventory16Slots( uc8 Flags , uc8 AFI, uc8 MaskLength, uc8 *MaskValue, uint8_t *NbTag, uint8_t *pResponse  )
+static int16_t ISO15693_Inventory16Slots( unsigned char Flags , unsigned char AFI, unsigned char MaskLength, unsigned char *MaskValue, uint8_t *NbTag, uint8_t *pResponse  )
 {
 int8_t 		NthSlot = 0,
 			status,
@@ -374,7 +374,7 @@ uint8_t		pOneTagResponse [ISO15693_NBBYTE_UID+3+2];
 		
 	while (NthSlot++ <15 )
 	{
-		delayHighPriority_ms(5);
+		Task_sleep(5);
 
 		status = ISO15693_SendEOF(pOneTagResponse  );
 
@@ -400,7 +400,7 @@ uint8_t		pOneTagResponse [ISO15693_NBBYTE_UID+3+2];
 * @retval 	ISO15693_SUCCESSCODE	: 	PCD  returns a succesful code
 * @retval 	ISO15693_ERRORCODE_DEFAULT	: 	 PCD  returns an error code
 */
-static int8_t ISO15693_StayQuiet(uc8 Flags,uc8 *UIDin)
+static int8_t ISO15693_StayQuiet(unsigned char Flags,unsigned char *UIDin)
 {
 uint8_t DataToSend[ISO15693_MAXLENGTH_STAYQUIET],
 	 	NthByte = 0,
@@ -437,7 +437,7 @@ Error:
 * @retval 	ISO15693_SUCCESSCODE	: 	PCD  returns a succesful code
 * @retval 	ISO15693_ERRORCODE_DEFAULT	: 	 PCD  returns an error code
 */
-static int8_t ISO15693_ReadSingleBlock (uc8 Flags, uc8 *UIDin, uc16 BlockNumber,uint8_t *pResponse )
+static int8_t ISO15693_ReadSingleBlock (unsigned char Flags, unsigned char *UIDin, uint16_t BlockNumber,uint8_t *pResponse )
 {
 uint8_t DataToSend[ISO15693_MAXLENGTH_READSINGLEBLOCK],
 		NthByte=0;
@@ -479,7 +479,7 @@ uint8_t DataToSend[ISO15693_MAXLENGTH_READSINGLEBLOCK],
 * @retval 	ISO15693_SUCCESSCODE	: 	PCD  returns a succesful code
 * @retval 	ISO15693_ERRORCODE_DEFAULT	: 	 PCD  returns an error code
 */
-static int8_t ISO15693_WriteSingleBlock(uc8 Flags, uc8 *UIDin, uc16 BlockNumber,uc8 *DataToWrite,uint8_t *pResponse )
+static int8_t ISO15693_WriteSingleBlock(unsigned char Flags, unsigned char *UIDin, uint16_t BlockNumber,unsigned char *DataToWrite,uint8_t *pResponse )
 {
 uint8_t DataToSend[MAX_BUFFER_SIZE],
 		NthByte=0,
@@ -530,7 +530,7 @@ uint8_t DataToSend[MAX_BUFFER_SIZE],
 * @retval 	ISO15693_SUCCESSCODE	: 	PCD  returns a succesful code
 * @retval 	ISO15693_ERRORCODE_DEFAULT	: 	 PCD  returns an error code
 */
-static int8_t ISO15693_ReadMultipleBlock (uc8 Flags, uc8 *UIDin, uint16_t BlockNumber, uc8 NbBlock, uint8_t *pResponse )
+static int8_t ISO15693_ReadMultipleBlock (unsigned char Flags, unsigned char *UIDin, uint16_t BlockNumber, unsigned char NbBlock, uint8_t *pResponse )
 {
 uint8_t DataToSend[ISO15693_MAXLENGTH_READMULBLOCK],
 		NthByte=0;
@@ -577,7 +577,7 @@ uint8_t DataToSend[ISO15693_MAXLENGTH_READMULBLOCK],
 * @retval 	ISO15693_SUCCESSCODE	: 	PCD  returns a succesful code
 * @retval 	ISO15693_ERRORCODE_DEFAULT	: 	 PCD  returns an error code
 */
-static int8_t ISO15693_ExtendedReadSingleBlock (uc8 Flags, uc8 *UIDin, uc16 BlockNumber,uint8_t *pResponse )
+static int8_t ISO15693_ExtendedReadSingleBlock (unsigned char Flags, unsigned char *UIDin, uint16_t BlockNumber,uint8_t *pResponse )
 {
   uint8_t DataToSend[ISO15693_MAXLENGTH_EXTREADSINGLEBLOCK],
 		NthByte=0;
@@ -613,7 +613,7 @@ static int8_t ISO15693_ExtendedReadSingleBlock (uc8 Flags, uc8 *UIDin, uc16 Bloc
 * @retval 	ISO15693_SUCCESSCODE	: 	PCD  returns a succesful code
 * @retval 	ISO15693_ERRORCODE_DEFAULT	: 	 PCD  returns an error code
 */
-static int8_t ISO15693_ExtendedWriteSingleBlock(uc8 Flags, uc8 *UIDin, uc16 BlockNumber,uc8 *DataToWrite,uint8_t *pResponse )
+static int8_t ISO15693_ExtendedWriteSingleBlock(unsigned char Flags, unsigned char *UIDin, uint16_t BlockNumber,unsigned char *DataToWrite,uint8_t *pResponse )
 {
   uint8_t DataToSend[MAX_BUFFER_SIZE],
 		NthByte=0,
@@ -658,7 +658,7 @@ static int8_t ISO15693_ExtendedWriteSingleBlock(uc8 Flags, uc8 *UIDin, uc16 Bloc
 * @retval 	ISO15693_SUCCESSCODE	: 	PCD  returns a succesful code
 * @retval 	ISO15693_ERRORCODE_DEFAULT	: 	 PCD  returns an error code
 */
-static int8_t ISO15693_ExtendedReadMultipleBlock (uc8 Flags, uc8 *UIDin, uint16_t BlockNumber, uint16_t NbBlock, uint8_t *pResponse )
+static int8_t ISO15693_ExtendedReadMultipleBlock (unsigned char Flags, unsigned char *UIDin, uint16_t BlockNumber, uint16_t NbBlock, uint8_t *pResponse )
 {
 uint8_t DataToSend[ISO15693_MAXLENGTH_EXTREADMULBLOCK],
 		NthByte=0;
@@ -716,7 +716,7 @@ static int8_t ISO15693_SendEOF(uint8_t *pResponse  )
 * @param  	FlagsByte	: the byts cantaining the eight flags  	
 * @retval 	Inventory flag
 */
-static int8_t ISO15693_IsInventoryFlag (uc8 FlagsByte)
+static int8_t ISO15693_IsInventoryFlag (unsigned char FlagsByte)
 {
 	if ((FlagsByte & ISO15693_MASK_INVENTORYFLAG) != 0x00)
 		return ISO15693_SUCCESSCODE ;
@@ -730,7 +730,7 @@ static int8_t ISO15693_IsInventoryFlag (uc8 FlagsByte)
 * @retval 	ISO15693_SUCCESSCODE : address or Number of slots flag is set
 * @retval 	ISO15693_ERRORCODE_DEFAULT : address Or Number of slots flag is reset
 */
-static int8_t ISO15693_IsAddressOrNbSlotsFlag (uc8 FlagsByte)
+static int8_t ISO15693_IsAddressOrNbSlotsFlag (unsigned char FlagsByte)
 {
 
 	if ((FlagsByte & ISO15693_MASK_ADDRORNBSLOTSFLAG) != 0x00)
@@ -746,7 +746,7 @@ static int8_t ISO15693_IsAddressOrNbSlotsFlag (uc8 FlagsByte)
 * @retval 	ISO15693_SUCCESSCODE	: 	PCD  returns a succesful code
 * @retval 	ISO15693_ERRORCODE_DEFAULT	: 	 PCD  returns an error code
 */
-static int8_t ISO15693_IsATagInTheField (uc8 *pResponse)
+static int8_t ISO15693_IsATagInTheField (unsigned char *pResponse)
 {
 	
 	if ( pResponse[READERREPLY_STATUSOFFSET] == SENDRECV_RESULTSCODE_OK)
@@ -768,7 +768,7 @@ static int8_t ISO15693_IsATagInTheField (uc8 *pResponse)
 * @retval 	ISO15693_SUCCESSCODE	: 	collision detected
 * @retval 	ISO15693_ERRORCODE_DEFAULT	: 	 no collision detected
 */
-static int8_t ISO15693_IsCollisionDetected (uc8 *pResponse)
+static int8_t ISO15693_IsCollisionDetected (unsigned char *pResponse)
 {
 	int8_t tmp=pResponse[PCD_LENGTH_OFFSET+pResponse[PCD_LENGTH_OFFSET]]& (CONTROL_15693_CRCMASK | CONTROL_15693_COLISIONMASK);
 
@@ -799,7 +799,7 @@ static int8_t ISO15693_IsCollisionDetected (uc8 *pResponse)
 * @param	NbByte 		: 	Number of byte of DataIn
 * @retval	ResCrc		: 	CRC16 computed
 */
-static int16_t ISO15693_CRC16 (uc8 *DataIn,uc8 NbByte) 
+static int16_t ISO15693_CRC16 (unsigned char *DataIn,unsigned char NbByte) 
 { 
 int8_t 	i,
 		j; 
@@ -825,7 +825,7 @@ int32_t ResCrc = ISO15693_PRELOADCRC16;
 * @retval 	ISO15693_SUCCESSCODE  	:   CRC16 residue is correct	
 * @retval 	ISO15693_ERRORCODE_DEFAULT  	:  CRC16 residue is false
 */
-static int8_t ISO15693_IsCorrectCRC16Residue (uc8 *DataIn,uc8 Length)
+static int8_t ISO15693_IsCorrectCRC16Residue (unsigned char *DataIn,unsigned char Length)
 {
 int16_t ResCRC=0;
 
@@ -1087,7 +1087,7 @@ int8_t ISO15693_Init	( void )
 	uint8_t 	ParametersByte=0,
 					  pResponse[PROTOCOLSELECT_LENGTH];
 	int8_t		status;
-	u8 DemoGainParameters []  = {PCD_TYPEV_ARConfigA, PCD_TYPEV_ARConfigB}; 
+	uint8_t DemoGainParameters []  = {PCD_TYPEV_ARConfigA, PCD_TYPEV_ARConfigB};
 
 	ParametersByte =  	((ISO15693_APPENDCRC << ISO15693_OFFSET_APPENDCRC ) 	&  ISO15693_MASK_APPENDCRC) |
 											((ISO15693_SINGLE_SUBCARRIER << ISO15693_OFFSET_SUBCARRIER)	& ISO15693_MASK_SUBCARRIER)	|
@@ -1165,7 +1165,7 @@ Error:
 * @retval ISO15693_SUCCESSCODE : the function is successful
 * @retval ISO15693_ERRORCODE_DEFAULT : an error occured
 */
-int8_t ISO15693_GetSystemInfo ( uc8 Flags, uc8 *UIDin, uint8_t *pResponse)
+int8_t ISO15693_GetSystemInfo ( unsigned char Flags, unsigned char *UIDin, uint8_t *pResponse)
 {
 uint8_t DataToSend[ISO15693_MAXLENGTH_GETSYSTEMINFO],
 		NthByte=0;
@@ -1198,7 +1198,7 @@ Error:
 * @retval ISO15693_SUCCESSCODE : the function is successful
 * @retval ISO15693_ERRORCODE_DEFAULT : an error occured
 */
-int8_t ISO15693_ExtendedGetSystemInfo ( uc8 Flags, uc8 Parameters, uc8 *UIDin, uint8_t *pResponse)
+int8_t ISO15693_ExtendedGetSystemInfo ( unsigned char Flags, unsigned char Parameters, unsigned char *UIDin, uint8_t *pResponse)
 {
   uint8_t DataToSend[ISO15693_MAXLENGTH_EXTGETSYSTEMINFO],
 		NthByte=0;
@@ -1235,7 +1235,7 @@ Error:
 * @retval CR95HF_ERROR_CODE : PCD  teturned an error code
 * @retval ISO15693_ERRORCODE_CRCRESIDUE : CRC16 residue is erroneous
 */
-int8_t ISO15693_SplitInventoryResponse( uc8 *ReaderResponse,uc8 Length,uint8_t *Flags , uint8_t *DSFIDextract, uint8_t *UIDoutIndex)
+int8_t ISO15693_SplitInventoryResponse( unsigned char *ReaderResponse,unsigned char Length,uint8_t *Flags , uint8_t *DSFIDextract, uint8_t *UIDoutIndex)
 {
 	int8_t status;
 	
@@ -1272,7 +1272,7 @@ Error:
 * @retval 	ISO15693_SUCCESSCODE	: 	function succesful executed  
 * @retval 	ISO15693_ERRORCODE_DEFAULT	: 	
 */
-int8_t ISO15693_RunAntiCollision (uc8 Flags , uc8 AFI,uint8_t *NbTag,uint8_t *pUIDout)
+int8_t ISO15693_RunAntiCollision (unsigned char Flags , unsigned char AFI,uint8_t *NbTag,uint8_t *pUIDout)
 {
 	int8_t		status;
 	uint8_t		MaskValue[ISO15693_NBBYTE_UID],
@@ -1330,7 +1330,7 @@ int8_t ISO15693_RunAntiCollision (uc8 Flags , uc8 AFI,uint8_t *NbTag,uint8_t *pU
 		return ISO15693_SUCCESSCODE;
 	}
 
-	delayHighPriority_ms(10);
+	Task_sleep(10);
 
 	(*NbTag)=0;	
 
@@ -1427,7 +1427,7 @@ int8_t ISO15693_RunAntiCollision (uc8 Flags , uc8 AFI,uint8_t *NbTag,uint8_t *pU
 * @retval 	ISO15693_SUCCESSCODE	: 	function succesful executed  
 * @retval 	ISO15693_ERRORCODE_DEFAULT	: 	
 */
-int8_t ISO15693_RunInventory16slots (uc8 Flags , uc8 AFI,uint8_t *NbTag,uint8_t *pUIDout)
+int8_t ISO15693_RunInventory16slots (unsigned char Flags , unsigned char AFI,uint8_t *NbTag,uint8_t *pUIDout)
 {
 	int8_t		status;
 	uint8_t		MaskValue[ISO15693_NBBYTE_UID],
@@ -1668,7 +1668,7 @@ uint8_t ISO15693_WriteBytes_TagData(uint8_t Tag_Density, uint8_t *Data_To_Write,
 * @retval 	RESULTOK	: 	PCD  returns a succesful code
 * @retval 	ERRORCODE_GENERIC	: 	 PCD  returns an error code
 */
-int8_t ISO15693_LockSingleBlock ( uc8 Flags, uc8 *UIDin, uc8 BlockNumber,uint8_t *pResponse)
+int8_t ISO15693_LockSingleBlock ( unsigned char Flags, unsigned char *UIDin, unsigned char BlockNumber,uint8_t *pResponse)
 {
 	uint8_t DataToSend[ISO15693_MAXLENGTH_LOCKSINGLEBLOCK],
 		NthByte=0;
@@ -1701,7 +1701,7 @@ int8_t ISO15693_LockSingleBlock ( uc8 Flags, uc8 *UIDin, uc8 BlockNumber,uint8_t
 * @retval 	RESULTOK	: 	PCD  returns a succesful code
 * @retval 	ERRORCODE_GENERIC	: 	 PCD  returns an error code
 */
-int8_t ISO15693_ExtendedLockSingleBlock ( uc8 Flags, uc8 *UIDin, uint16_t BlockNumber,uint8_t *pResponse)
+int8_t ISO15693_ExtendedLockSingleBlock ( unsigned char Flags, unsigned char *UIDin, uint16_t BlockNumber,uint8_t *pResponse)
 {
 	uint8_t DataToSend[ISO15693_MAXLENGTH_EXTLOCKSINGLEBLOCK],
 		NthByte=0;
@@ -1734,7 +1734,7 @@ int8_t ISO15693_ExtendedLockSingleBlock ( uc8 Flags, uc8 *UIDin, uint16_t BlockN
 * @retval 	RESULTOK	: 	PCD  returns a succesful code
 * @retval 	ERRORCODE_GENERIC	: 	 PCD  returns an error code
 */
-int8_t ISO15693_LockAFI ( uc8 Flags, uc8 *UIDin,uint8_t *pResponse )
+int8_t ISO15693_LockAFI ( unsigned char Flags, unsigned char *UIDin,uint8_t *pResponse )
 {
 	uint8_t DataToSend[ISO15693_MAXLENGTH_LOCKAFI],
 				NthByte=0;
@@ -1764,7 +1764,7 @@ int8_t ISO15693_LockAFI ( uc8 Flags, uc8 *UIDin,uint8_t *pResponse )
 * @retval 	RESULTOK	: 	PCD  returns a succesful code
 * @retval 	ERRORCODE_GENERIC	: 	 PCD  returns an error code
 */
-int8_t ISO15693_LockDSFID ( uc8 Flags, uc8 *UIDin,uint8_t *pResponse)
+int8_t ISO15693_LockDSFID ( unsigned char Flags, unsigned char *UIDin,uint8_t *pResponse)
 {
 	uint8_t 	DataToSend[ISO15693_MAXLENGTH_LOCKDSFID],
 					NthByte=0;
@@ -1799,7 +1799,7 @@ int8_t ISO15693_LockDSFID ( uc8 Flags, uc8 *UIDin,uint8_t *pResponse)
 * @retval 	RESULTOK	: 	PCD  returns a succesful code
 * @retval 	ERRORCODE_GENERIC	: 	 PCD  returns an error code
 */
-int8_t ISO15693_GetMultipleBlockSecutityStatus (uc8 Flags, uc8 *UIDin, uc8 BlockNumber, uc8 NbBlocks,uint8_t *pResponse)
+int8_t ISO15693_GetMultipleBlockSecutityStatus (unsigned char Flags, unsigned char *UIDin, unsigned char BlockNumber, unsigned char NbBlocks,uint8_t *pResponse)
 {
 	uint8_t DataToSend[ISO15693_MAXLENGTH_GETMULSECURITY],
 					NthByte=0;
@@ -1841,7 +1841,7 @@ Error:
 * @retval 	RESULTOK	: 	PCD  returns a succesful code
 * @retval 	ERRORCODE_GENERIC	: 	 PCD  returns an error code
 */
-int8_t ISO15693_ExtendedGetMultipleBlockSecutityStatus (uc8 Flags, uc8 *UIDin, uint16_t BlockNumber, uint16_t NbBlocks,uint8_t *pResponse)
+int8_t ISO15693_ExtendedGetMultipleBlockSecutityStatus (unsigned char Flags, unsigned char *UIDin, uint16_t BlockNumber, uint16_t NbBlocks,uint8_t *pResponse)
 {
 	uint8_t DataToSend[ISO15693_MAXLENGTH_EXTWRTITEDSFID],
 					NthByte=0;

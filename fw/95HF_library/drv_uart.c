@@ -97,7 +97,7 @@ uint8_t UART_ReceiveByte( USART_TypeDef* USARTx )
  * @param  pData  : buffer to send
  * @param  length : number of bytes to send
  */
-void UART_SendBuffer(USART_TypeDef* USARTx, uc8 *pCommand, uint16_t length) 
+void UART_SendBuffer(USART_TypeDef* USARTx, unsigned char *pCommand, uint16_t length) 
 {
 	uint16_t i;
 

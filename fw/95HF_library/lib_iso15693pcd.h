@@ -277,14 +277,14 @@ int8_t 		DataRate		,	// 0 => 26k 	1 => 52 k 	2 => 6k	3=>RFU
 int8_t ISO15693_Init										( void );
 
 /* ISO15693 commands --- */
-int8_t ISO15693_RunInventory16slots 		( uc8 Flags , uc8 AFI,uint8_t *NbTag,uint8_t *pUIDout);
-int8_t ISO15693_RunAntiCollision 				( uc8 Flags , uc8 AFI,uint8_t *NbTag,uint8_t *pUIDout);
+int8_t ISO15693_RunInventory16slots 		( unsigned char Flags , unsigned char AFI,uint8_t *NbTag,uint8_t *pUIDout);
+int8_t ISO15693_RunAntiCollision 				( unsigned char Flags , unsigned char AFI,uint8_t *NbTag,uint8_t *pUIDout);
 
 // Get functions
 int8_t ISO15693_GetUID 									(uint8_t *UIDout);
 int8_t ISO15693_GetTagIdentification  	(uint16_t *Length_Memory_TAG, uint8_t *Tag_Density, uint8_t *IC_Ref_TAG);
-int8_t ISO15693_GetSystemInfo 					( uc8 Flags, uc8 *UIDin ,uint8_t *pResponse);
-int8_t ISO15693_ExtendedGetSystemInfo ( uc8 Flags, uc8 Parameters, uc8 *UIDin, uint8_t *pResponse);
+int8_t ISO15693_GetSystemInfo 					( unsigned char Flags, unsigned char *UIDin ,uint8_t *pResponse);
+int8_t ISO15693_ExtendedGetSystemInfo ( unsigned char Flags, unsigned char Parameters, unsigned char *UIDin, uint8_t *pResponse);
 
 // Tag functions
 uint8_t ISO15693_ReadBytesTagData				(uint8_t Tag_Density, uint8_t IC_Ref_Tag, uint8_t *Data_To_Read, uint16_t NbBytes_To_Read, uint16_t FirstBytes_To_Read);
@@ -292,16 +292,16 @@ uint8_t ISO15693_WriteBytes_TagData			(uint8_t Tag_Density, uint8_t *Data_To_Wri
 
 #ifdef ISO15693_ALLCOMMANDS 
 
-int8_t ISO15693_LockSingleBlock 				( uc8 Flags, uc8 *UIDin, uc8 BlockNumber,uint8_t *pResponse);
-int8_t ISO15693_ExtendedLockSingleBlock ( uc8 Flags, uc8 *UIDin, uint16_t BlockNumber,uint8_t *pResponse);
+int8_t ISO15693_LockSingleBlock 				( unsigned char Flags, unsigned char *UIDin, unsigned char BlockNumber,uint8_t *pResponse);
+int8_t ISO15693_ExtendedLockSingleBlock ( unsigned char Flags, unsigned char *UIDin, uint16_t BlockNumber,uint8_t *pResponse);
 
-int8_t ISO15693_Select 									( uc8 Flags, uc8 *UIDin, uc8 AppendCRC,uc8 *CRC16,uint8_t *pResponse);
-int8_t ISO15693_WriteAFI								( uc8 Flags, uc8 *UIDin,uc8 AFIToWrite,uint8_t *pResponse );
-int8_t ISO15693_LockAFI 								( uc8 Flags, uc8 *UIDin, uint8_t *pResponse);
-int8_t ISO15693_WriteDSFID							( uc8 Flags, uc8 *UIDin,uc8 DSFIDToWrite,uint8_t *pResponse );
-int8_t ISO15693_LockDSFID 							( uc8 Flags, uc8 *UIDin, uint8_t *pResponse);
-int8_t ISO15693_GetMultipleBlockSecutityStatus 	(uc8 Flags, uc8 *UIDin, uc8 BlockNumber, uc8 NbBlocks,uint8_t *pResponse);
-int8_t ISO15693_ExtendedGetMultipleBlockSecutityStatus (uc8 Flags, uc8 *UIDin, uint16_t BlockNumber, uint16_t NbBlocks,uint8_t *pResponse);
+int8_t ISO15693_Select 									( unsigned char Flags, unsigned char *UIDin, unsigned char AppendCRC,unsigned char *CRC16,uint8_t *pResponse);
+int8_t ISO15693_WriteAFI								( unsigned char Flags, unsigned char *UIDin,unsigned char AFIToWrite,uint8_t *pResponse );
+int8_t ISO15693_LockAFI 								( unsigned char Flags, unsigned char *UIDin, uint8_t *pResponse);
+int8_t ISO15693_WriteDSFID							( unsigned char Flags, unsigned char *UIDin,unsigned char DSFIDToWrite,uint8_t *pResponse );
+int8_t ISO15693_LockDSFID 							( unsigned char Flags, unsigned char *UIDin, uint8_t *pResponse);
+int8_t ISO15693_GetMultipleBlockSecutityStatus 	(unsigned char Flags, unsigned char *UIDin, unsigned char BlockNumber, unsigned char NbBlocks,uint8_t *pResponse);
+int8_t ISO15693_ExtendedGetMultipleBlockSecutityStatus (unsigned char Flags, unsigned char *UIDin, uint16_t BlockNumber, uint16_t NbBlocks,uint8_t *pResponse);
 #endif /* ISO15693_ALLCOMMANDS*/
 
 

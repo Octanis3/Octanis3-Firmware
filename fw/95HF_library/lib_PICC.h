@@ -194,26 +194,26 @@
 /* Functions ---------------------------------------------------------------- */
 int8_t PICC_PORsequence( void );
 
-int8_t PICC_IsResultCodeOk 					( uint8_t CmdCode,uc8 *ReaderReply);
+int8_t PICC_IsResultCodeOk 					( uint8_t CmdCode,unsigned char *ReaderReply);
 int8_t PICC_IsCommandExists					( uint8_t CmdCode);
 
-int8_t 	PICC_CheckSendReceive				( uc8 *pCommand, uint8_t *pResponse);
+int8_t 	PICC_CheckSendReceive				( unsigned char *pCommand, uint8_t *pResponse);
 
 
 int8_t PICC_Echo										( uint8_t *pResponse);
 int8_t PICC_SendEOF									( uint8_t *pResponse);
-int8_t PICC_ProtocolSelect					( uc8 Length,uc8 Protocol,uc8 *Parameters,uint8_t *pResponse);
-int8_t PICC_Idle										( uc8 Length,uc8 *Data );
-int8_t PICC_ReadRegister						( uc8 Length,uc8 Address,uc8 RegCount,uc8 Flags,uint8_t *pResponse);
-int8_t PICC_WriteRegister						( uc8 Length,uc8 Address,uc8 Flags,uc8 *pData,uint8_t *pResponse);
+int8_t PICC_ProtocolSelect					( unsigned char Length,unsigned char Protocol,unsigned char *Parameters,uint8_t *pResponse);
+int8_t PICC_Idle										( unsigned char Length,unsigned char *Data );
+int8_t PICC_ReadRegister						( unsigned char Length,unsigned char Address,unsigned char RegCount,unsigned char Flags,uint8_t *pResponse);
+int8_t PICC_WriteRegister						( unsigned char Length,unsigned char Address,unsigned char Flags,unsigned char *pData,uint8_t *pResponse);
 int8_t PICC_PollData								( uint8_t *pData);
-int8_t PICC_Send										( uc8 Length,uc8 *Parameters);
+int8_t PICC_Send										( unsigned char Length,unsigned char *Parameters);
 int8_t PICC_Listen 									( uint8_t *pResponse );
-int8_t PICC_AcFilter 								( uc8 Length,uc8 ATQAParam[2], uc8 SAKParam,uc8 *pUIDData	,uint8_t *pResponse);
+int8_t PICC_AcFilter 								( unsigned char Length,unsigned char ATQAParam[2], unsigned char SAKParam,unsigned char *pUIDData	,uint8_t *pResponse);
 
 int8_t PICC_GetBackscatteringLoad 	( void );
-int8_t PICC_SetBackscatteringLoad 	( uc8 bLoad );
-void PICC_SendCustomCommand		( uc8 *pCommand, uint8_t *pResponse);
+int8_t PICC_SetBackscatteringLoad 	( unsigned char bLoad );
+void PICC_SendCustomCommand		( unsigned char *pCommand, uint8_t *pResponse);
 void PICC_GetMCUversion				( uint8_t *pResponse );
 void PICC_GetHardwareVersion	( uint8_t *pResponse );
 void PICC_SetUSBDisconnectPin ( void );
@@ -221,8 +221,8 @@ void PICC_SetUSBDisconnectPin ( void );
 
 void 	 PICC_Receive_SPI_Response		( uint8_t *pData );
 
-int8_t PICC_ChangeUARTBaudRate 			( uc8 *pCommand, uint8_t *pResponse );
-int8_t PICC_CalibrateTagDetection		( uc8 *pCommand, uint8_t *pResponse );
+int8_t PICC_ChangeUARTBaudRate 			( unsigned char *pCommand, uint8_t *pResponse );
+int8_t PICC_CalibrateTagDetection		( unsigned char *pCommand, uint8_t *pResponse );
 
 void PICC_Enable_Interrupt( void);
 void PICC_Disable_Interrupt( void);

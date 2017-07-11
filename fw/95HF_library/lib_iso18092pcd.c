@@ -34,7 +34,7 @@ extern PCD_PROTOCOL TechnoSelected;
 
 FELICA_CARD 	FELICA_Card;
 
-static uc8 REQC[] = {SEND_RECEIVE ,0x05,0x00,0x12,0xFC,0x01,0x03};
+static unsigned char REQC[] = {SEND_RECEIVE ,0x05,0x00,0x12,0xFC,0x01,0x03};
 
 static int8_t FELICA_Init( uint8_t *pDataRead );
 static int8_t FELICA_REQC( uint8_t *pDataRead );
@@ -71,9 +71,9 @@ static int8_t FELICA_REQC( uint8_t *pDataRead );
 static int8_t FELICA_Init( uint8_t *pDataRead )
 {
 	int8_t  status;
-	u8     ProtocolSelectParameters [4]  = {0x51, 0x13, 0x01,0x0D};
-	u8     WriteAmpliGain [2]  = {PCD_TYPEF_ARConfigA, PCD_TYPEF_ARConfigB};
-	u8     AutoFDet [2]  = {0x02,0xA1};
+	uint8_t     ProtocolSelectParameters [4]  = {0x51, 0x13, 0x01,0x0D};
+	uint8_t     WriteAmpliGain [2]  = {PCD_TYPEF_ARConfigA, PCD_TYPEF_ARConfigB};
+	uint8_t     AutoFDet [2]  = {0x02,0xA1};
 
 	
 	/* sends a protocol Select command to the pcd to configure it */

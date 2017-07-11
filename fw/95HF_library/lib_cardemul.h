@@ -43,9 +43,9 @@ typedef enum
 }RFT_FILESTATUS;
 	 
 	 
-void   RFT_SelectApplication 		( uc8 *pData );
+void   RFT_SelectApplication 		(unsigned char *pData );
 int8_t RFT_ReceiveFile 					( void );
-void RFT_OperationFeedback 		  (uc8 *pData );
+void RFT_OperationFeedback 		  (unsigned char *pData );
 
 #ifdef __cplusplus
 }

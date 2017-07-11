@@ -23,7 +23,6 @@
 
 #include "lib_PCD.h"
 
-
 /* 	-------------------------------------------------------------------------- */
 #define ATQC_SIZE																				0x20
 #define UID_SIZE_FELICA																	8

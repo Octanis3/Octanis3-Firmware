@@ -98,7 +98,7 @@ static void ConfigManager_Init( void)
 	/* initialize the structure of the Rf tranceiver */
 	drv95HF_InitConfigStructure ();
 	
-#ifdef SPI_INTERRUPT_MODE_ACTIVATED	
+#ifdef SPI_INTERRUPT_MODE_ACTIVATED	//commented out in drv_interrupt.h
 	/* inform driver to use interrupt mode */
 	drv95HF_EnableInterrupt ( );
 #endif /* SPI_INTERRUPT_MODE_ACTIVATED */
@@ -114,7 +114,7 @@ static void ConfigManager_Init( void)
  */
 static int8_t ConfigManager_IDN(uint8_t *pResponse)
 {
-	uc8 DataToSend[] = {IDN	,0x00};
+	unsigned char DataToSend[] = {IDN	,0x00};
 
 	/* send the command to the PICC and retrieve its response */
 	drv95HF_SendReceive(DataToSend, pResponse);
@@ -145,7 +145,7 @@ static void ConfigManager_Start( void )
 static int8_t ConfigManager_PORsequence( void )
 {
 	uint16_t NthAttempt=0;
-	uc8 command[]= {ECHO};
+	unsigned char command[]= {ECHO};
 
 	/* Power up sequence: Pulse on IRQ_IN to select UART or SPI mode */
 	drv95HF_SendIRQINPulse();

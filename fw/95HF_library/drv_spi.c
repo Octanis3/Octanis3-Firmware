@@ -27,6 +27,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "drv_spi.h"
+#include "../ST95HF.h"
 
 /** @addtogroup _95HF_Libraries
  * 	@{
@@ -54,14 +55,14 @@
  
 #ifdef USE_DMA
 
-static void RFTRANS_InitializeDMA(uint16_t length, uint8_t *pResponse, uc8 *pCommand);
+static void RFTRANS_InitializeDMA(uint16_t length, uint8_t *pResponse, unsigned char *pCommand);
 
 /**
  *	@brief  this functions initializes the DMA in order to Transfert data from the CR95HF by SPI
  *  @param  void
  *  @retval void 
  */
-static void RFTRANS_InitializeDMA(uint16_t length, uint8_t *pResponse, uc8 *pCommand)
+static void RFTRANS_InitializeDMA(uint16_t length, uint8_t *pResponse, unsigned char *pCommand)
 {
 	
 	DMA_InitTypeDef    DMA_InitStructure;
@@ -102,83 +103,101 @@ static void RFTRANS_InitializeDMA(uint16_t length, uint8_t *pResponse, uc8 *pCom
 
 /**
  *	@brief  Sends one byte over SPI
- *  @param  SPIx : where x can be 1, 2 or 3 to select the SPI peripheral
+ *  @param  st95_spi_handle : where x can be 1, 2 or 3 to select the SPI peripheral
  *  @param  data : data to send	(8 bit)
  *  @retval None 
  */
-void SPI_SendByte(SPI_TypeDef* SPIx, uint8_t data) 
+void SPI_SendByte(SPI_Handle st95_spi_handle, uint8_t data)
 {	
-	/* Wait for SPIx Tx buffer empty */
-	while(SPI_I2S_GetFlagStatus(SPIx, SPI_I2S_FLAG_TXE) == RESET);
-
-	/* Send byte through the SPIx peripheral */
-	SPI_I2S_SendData(SPIx, data);
+//	/* Wait for st95_spi_handle Tx buffer empty */
+//	while(SPI_I2S_GetFlagStatus(st95_spi_handle, SPI_I2S_FLAG_TXE) == RESET);
+//
+//	/* Send byte through the st95_spi_handle peripheral */
+//	SPI_I2S_SendData(st95_spi_handle, data);
+	spi_sel();
+	spi_send_byte(data);
+	spi_sel();
 }
 
 /**  
  *	@brief  Sends one word over SPI
- *  @param  SPIx : where x can be 1, 2 or 3 to select the SPI peripheral
+ *  @param  st95_spi_handle : where x can be 1, 2 or 3 to select the SPI peripheral
  *  @param  data : data to send	(16 bit)
  *  @retval None 
  */
-void SPI_SendWord(SPI_TypeDef* SPIx, uint16_t data) 
+void SPI_SendWord(SPI_Handle st95_spi_handle, uint16_t data)
 {	
-	/* Wait for SPIx Tx buffer empty */	
-	while(SPI_I2S_GetFlagStatus(SPIx, SPI_I2S_FLAG_TXE) == RESET);
+	/* Wait for st95_spi_handle Tx buffer empty */	
+//	while(SPI_I2S_GetFlagStatus(st95_spi_handle, SPI_I2S_FLAG_TXE) == RESET);
+//
+//	/* Send byte through the st95_spi_handle peripheral */
+//	SPI_I2S_SendData(st95_spi_handle, data);
 
-	/* Send byte through the SPIx peripheral */
-	SPI_I2S_SendData(SPIx, data);
+	uint16_t msb_data = data >> 8;
+
+	spi_sel();
+	spi_send_byte(msb_data);
+	spi_send_byte(0x00FF & data);
+	spi_unsel();
+
 }
 
 /**  
  *	@brief  Sends one byte over SPI and recovers a response
- *  @param  SPIx : where x can be 1, 2 or 3 to select the SPI peripheral
+ *  @param  st95_spi_handle : where x can be 1, 2 or 3 to select the SPI peripheral
  *  @param  data : data to send
- *  @retval data response from SPIx 
+ *  @retval data response from st95_spi_handle 
  */
-uint8_t SPI_SendReceiveByte(SPI_TypeDef* SPIx, uint8_t data) 
+uint8_t SPI_SendReceiveByte(SPI_Handle st95_spi_handle, uint8_t data)
 {	
-	/* Wait for SPI1 Tx buffer empty */
-	while(SPI_I2S_GetFlagStatus(SPIx, SPI_I2S_FLAG_TXE) == RESET);
+//	/* Wait for SPI1 Tx buffer empty */
+//	while(SPI_I2S_GetFlagStatus(st95_spi_handle, SPI_I2S_FLAG_TXE) == RESET);
+//
+//	/* Send byte through the SPI1 peripheral */
+//	SPI_I2S_SendData(st95_spi_handle, data);
+//
+//	/* Wait for SPI1 data reception	*/
+//	while(SPI_I2S_GetFlagStatus(st95_spi_handle, SPI_I2S_FLAG_RXNE) == RESET);
+//
+//	/* Read & return SPI1 received data	*/
+//	return SPI_I2S_ReceiveData(st95_spi_handle);
+	uint8_t answer;
 
-	/* Send byte through the SPI1 peripheral */
-	SPI_I2S_SendData(SPIx, data);	
+//	spi_sel();
+	answer= spi_send_byte(data);
+//	spi_unsel();
 
-	/* Wait for SPI1 data reception	*/
-	while(SPI_I2S_GetFlagStatus(SPIx, SPI_I2S_FLAG_RXNE) == RESET);
-
-	/* Read & return SPI1 received data	*/
-	return SPI_I2S_ReceiveData(SPIx);
+	return answer;
 }
 
 
 /**
  *	@brief  reveive a byte array over SPI
- *  @param  SPIx	 	: where x can be 1, 2 or 3 to select the SPI peripheral
+ *  @param  st95_spi_handle	 	: where x can be 1, 2 or 3 to select the SPI peripheral
  *  @param  pCommand  	: pointer on the buffer to send
  *  @param  length	 	: length of the buffer to send
  *  @param  pResponse 	: pointer on the buffer response
  *  @retval None 
  */
-void SPI_SendReceiveBuffer(SPI_TypeDef* SPIx, uc8 *pCommand, uint16_t length, uint8_t *pResponse) 
+void SPI_SendReceiveBuffer(SPI_Handle st95_spi_handle, unsigned char *pCommand, uint16_t length, uint8_t *pResponse)
 {
 	uint16_t i;
 	
 	/* the buffer size is limited to SPI_RESPONSEBUFFER_SIZE */
 	length = MIN (SPI_RESPONSEBUFFER_SIZE,length);
 	for(i=0; i<length; i++)
-		pResponse[i] = SPI_SendReceiveByte(SPIx, pCommand[i]);
+		pResponse[i] = SPI_SendReceiveByte(st95_spi_handle, pCommand[i]);
 }
 
 #ifdef USE_DMA
 /**
  *	@brief  reveive a byte array over SPI
- *  @param  SPIx	 	: where x can be 1, 2 or 3 to select the SPI peripheral
+ *  @param  st95_spi_handle	 	: where x can be 1, 2 or 3 to select the SPI peripheral
  *  @param  pCommand  	: pointer on the buffer to send
  *  @param  length	 	: length of the buffer to send
  *  @param  pResponse 	: pointer on the buffer response
  */
-void SPI_SendReceiveBufferDMA(SPI_TypeDef* SPIx, uc8 *pCommand, uint16_t length, uint8_t *pResponse) 
+void SPI_SendReceiveBufferDMA(SPI_Handle st95_spi_handle, unsigned char *pCommand, uint16_t length, uint8_t *pResponse)
 {
 	
 	/* the buffer size is limited to SPI_RESPONSEBUFFER_SIZE */

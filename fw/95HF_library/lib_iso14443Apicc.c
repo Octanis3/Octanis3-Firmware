@@ -75,7 +75,7 @@ extern uint8_t								u95HFBuffer [RFTRANS_95HF_MAX_BUFFER_SIZE+3];
  * @retval 	LIB14443APICC_ERRORCODE_CODECOMMAND : the command code doesn't match with this function
  * @retval 	LIB14443APICC_ERRORCODE_RATSCOMMAND	: 95HF device returns an error code
  */
-int8_t PICC14A_RATS( uc8 *pData )
+int8_t PICC14A_RATS( unsigned char *pData )
 {
 	uint8_t 	Length =0,
 						*pDataToToEmit = &(u95HFBuffer [PICC_DATA_OFFSET]);
@@ -120,7 +120,7 @@ Error:
  * @retval 	LIB14443APICC_ERRORCODE_RATSCOMMAND	: 95HF device returns an error code
  */
  
-int8_t PICC14A_PPS( uc8 *pData )
+int8_t PICC14A_PPS( unsigned char *pData )
 {
 	uint8_t Length =0, ParametersByte =0,
 					*pDataToToEmit = &(u95HFBuffer [PICC_DATA_OFFSET]);

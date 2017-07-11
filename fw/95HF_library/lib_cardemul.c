@@ -91,7 +91,7 @@ uint16_t 											Offset;
  * @param  pData : RF command received by the PICC
  * @retval 	none
  */
-void RFT_SelectApplication ( uc8 *pData )
+void RFT_SelectApplication (unsigned char *pData )
 {
 	uint8_t Length =0,
 	
@@ -200,7 +200,7 @@ int8_t RFT_ReceiveFile (void)
  * @retval RFT_SUCCESSCODE  : the function is succcesful 
  * @retval RFT_ERROR_DEFAULT  : the function is not succcesful 
 */
-void RFT_OperationFeedback (uc8 *pData )
+void RFT_OperationFeedback (unsigned char *pData )
 {
 	uint8_t Length =0,
 	
