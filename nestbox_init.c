@@ -54,6 +54,7 @@
 #include <ti/drivers/SPI.h>
 
 #include "fw/user_button.h"
+#include "fw/lightbarrier.h"
 #include "fw/rfid_reader.h"
 
 const SPI_Config SPI_config[];
@@ -115,6 +116,9 @@ GPIO_PinConfig gpioPinConfigs[] = {
 #endif
 	/* NESTBOX_SPI_NFC_IRQ_N */
 	GPIOMSP430_P3_6 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
+	/* NESTBOX_LIGHTBARRIER_IN */
+	GPIOMSP430_P1_4 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
+
 
     /* Output pins */
 #ifdef LAUNCHPAD_PINDEF
@@ -149,7 +153,8 @@ GPIO_PinConfig gpioPinConfigs[] = {
  */
 GPIO_CallbackFxn gpioCallbackFunctions[] = {
 	user_button_isr,  /* nestbox user button */
-	nfc_wakeup_isr
+	nfc_wakeup_isr, /* lightbarrier interrupt pin */
+	lightbarrier_input_isr /* lightbarrier detection routine */
 };
 
 /* The device-specific GPIO_config structure */

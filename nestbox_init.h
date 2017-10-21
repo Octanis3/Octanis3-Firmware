@@ -65,6 +65,7 @@ typedef enum nbox_GPIOName {
     //inputs
 	nbox_button = 0,
 	nbox_nfc_irq_n,
+	nbox_lightbarrier_irq_n,
 
 	//outputs
 #ifndef LAUNCHPAD_PINDEF
