@@ -118,7 +118,10 @@ GPIO_PinConfig gpioPinConfigs[] = {
 	GPIOMSP430_P3_6 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
 	/* NESTBOX_LIGHTBARRIER_IN */
 	GPIOMSP430_P1_4 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
-
+	/* NESTBOX_LF_CLK */
+	GPIOMSP430_P2_4 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
+	/* NESTBOX_LF_DATA */
+	GPIOMSP430_P4_3 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_NONE,
 
     /* Output pins */
 #ifdef LAUNCHPAD_PINDEF
@@ -141,6 +144,12 @@ GPIO_PinConfig gpioPinConfigs[] = {
 #else
 	GPIOMSP430_P3_7 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
 #endif
+	/* NESTBOX_LF_MODUL */
+	GPIOMSP430_P1_2 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
+	/* NESTBOX_LF_MODE */
+	GPIOMSP430_P3_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
+	/* NESTBOX_LF_SPEED */
+	GPIOMSP430_P1_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
 
 };
 
@@ -154,7 +163,8 @@ GPIO_PinConfig gpioPinConfigs[] = {
 GPIO_CallbackFxn gpioCallbackFunctions[] = {
 	user_button_isr,  /* nestbox user button */
 	nfc_wakeup_isr, /* lightbarrier interrupt pin */
-	lightbarrier_input_isr /* lightbarrier detection routine */
+	lightbarrier_input_isr, /* lightbarrier detection routine */
+	lf_data_read,
 };
 
 /* The device-specific GPIO_config structure */

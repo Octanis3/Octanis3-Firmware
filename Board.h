@@ -68,7 +68,7 @@ extern "C" {
 #ifndef LAUNCHPAD_PINDEF
 	#define Board_led_green          nbox_led_green
 #else
-	#define Board_led_green     		nbox_led_ir
+	#define Board_led_green     		nbox_led_blue
 #endif
 
 #define Board_LED_ON					nbox_LED_ON

@@ -7,6 +7,7 @@
 
 #include "rfid_reader.h"
 #include "ST95HF.h"
+#include "MLX90109_library/mlx90109.h"
 #include "uart_helper.h"
 #include "logger.h"
 
@@ -167,7 +168,7 @@ void rfid_Task()
     while (1) {
 		Task_sleep(100); //Semaphore_pend((Semaphore_Handle)semReader, BIOS_WAIT_FOREVER);
 
-    		if(initialized == 0)
+    		if(initialized == 1)
     		{
     			st95_init_spi();
 //    			st95_startup();
@@ -396,4 +397,10 @@ void nfc_wakeup_isr()
 
 //	GPIO_enableInt(lp_button);//not sure if needed here??
 }
+
+void lf_data_read()
+{
+
+}
+
 
