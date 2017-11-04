@@ -50,7 +50,7 @@ extern "C" {
 #endif
 
 
-#define LAUNCHPAD_PINDEF 1
+//#define LAUNCHPAD_PINDEF 1
 
 
 /* LEDs on nestbox_board are active high. */
@@ -65,7 +65,7 @@ typedef enum nbox_GPIOName {
     //inputs
 	nbox_button = 0,
 	nbox_nfc_irq_n,
-	nbox_lightbarrier_irq_n,
+	nbox_lightbarrier_irq,
 	nbox_lf_clk,
 	nbox_lf_data,
 

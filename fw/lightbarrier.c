@@ -11,6 +11,9 @@
 #include <msp430.h>
 #include "user_button.h"
 
+#include <xdc/cfg/global.h> //needed for semaphore
+#include <ti/sysbios/knl/Semaphore.h>
+
 void lightBarrier_init()
 {
 	//configure IR LED port as PWM output with ca. 1 kHz (adapt to something binary) frequency and
@@ -40,17 +43,9 @@ void lightBarrier_init()
     TA0CTL = TASSEL__SMCLK | MC__UP | TACLR;  // SMCLK, up mode, clear TAR
 
 
-	//configure P1.3 and P1.4 as analog inputs
-		// first, read the analog value of both inputs at ambient light conditions
-		// (i.e. IR LED off). Store value as IR_off_input
+	//enable P1.3 interrupt
+	GPIO_enableInt(nbox_lightbarrier_irq);
 
-		// turn on IR LED
-		// now, read the analog value of both inputs at LED ON condition
-		// Store value as IR_on_input
-		// turn off IR LED
-
-	//configure P1.3 and P1.4 as comparator inputs with interrupt on falling edge.
-		// set threshold to (IR_on_input + IR_off_input)/2
 }
 
 void lightBarrier_Task()
@@ -64,7 +59,11 @@ void lightBarrier_Task()
 
 
     while (1) {
-        Task_sleep(100);
+
+    		Semaphore_pend((Semaphore_Handle)semReader, BIOS_WAIT_FOREVER);
+        Task_sleep(2000);
+		GPIO_write(Board_led_blue,1);
+
     }
 }
 
@@ -91,9 +90,11 @@ void lightbarrier_input_isr(unsigned int index)
 //
 //	//check interrupt source
 //	if(action_executing == 0)
-//		Semaphore_post((Semaphore_Handle)semButton);
 
-	GPIO_toggle(Board_led_blue);
+	GPIO_write(Board_led_blue,0);
+
+	Semaphore_post((Semaphore_Handle)semReader);
+
 
 //	Hwi_enable(); //not sure if needed here??
 
