@@ -65,7 +65,8 @@ typedef enum nbox_GPIOName {
     //inputs
 	nbox_button = 0,
 	nbox_nfc_irq_n,
-	nbox_lightbarrier_irq,
+	nbox_lightbarrier_ext,
+	nbox_lightbarrier_int,
 	nbox_lf_clk,
 	nbox_lf_data,
 

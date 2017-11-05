@@ -116,8 +116,10 @@ GPIO_PinConfig gpioPinConfigs[] = {
 #endif
 	/* NESTBOX_SPI_NFC_IRQ_N */
 	GPIOMSP430_P3_6 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
-	/* NESTBOX_LIGHTBARRIER_IN */
+	/* NESTBOX_LIGHTBARRIER_IN_EXT */
 	GPIOMSP430_P1_4 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
+	/* NESTBOX_LIGHTBARRIER_IN_INT */
+	GPIOMSP430_P1_3 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
 	/* NESTBOX_LF_CLK */
 	GPIOMSP430_P2_4 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
 	/* NESTBOX_LF_DATA */
@@ -134,7 +136,8 @@ GPIO_PinConfig gpioPinConfigs[] = {
 	GPIOMSP430_P4_1 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 #endif
 
-	/* NESTBOX_LED_INFRARED */
+	/* NESTBOX_LED_INFRARED ==> DO NOT USE P1.0 as TI-RTOS GPIO;
+	 * --> directly modified at register level in lightbarrier task */
 //	GPIOMSP430_P1_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 	/* NESTBOX_SPI_NFC_SEL_N */
 	GPIOMSP430_P3_4 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
@@ -163,6 +166,7 @@ GPIO_PinConfig gpioPinConfigs[] = {
 GPIO_CallbackFxn gpioCallbackFunctions[] = {
 	user_button_isr,  /* nestbox user button */
 	nfc_wakeup_isr, /* lightbarrier interrupt pin */
+	lightbarrier_input_isr, /* lightbarrier detection routine */
 	lightbarrier_input_isr, /* lightbarrier detection routine */
 	lf_data_read,
 };

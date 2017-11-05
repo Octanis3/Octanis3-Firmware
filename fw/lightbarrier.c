@@ -10,9 +10,25 @@
 #include <ti/sysbios/hal/Hwi.h>
 #include <msp430.h>
 #include "user_button.h"
+#include "logger.h"
+
+#include <time.h>
+#include <ti/sysbios/hal/Seconds.h>
 
 #include <xdc/cfg/global.h> //needed for semaphore
 #include <ti/sysbios/knl/Semaphore.h>
+
+struct _lb_status{
+	uint8_t outer_trig;
+	uint8_t inner_trig;
+	enum dir{
+		_OUT = 0, //consistent with logger
+		_IN,
+		UNDEF,
+	} direction;
+	uint32_t timestamp;
+	uint16_t event_counter;
+} lb_status;
 
 void lightBarrier_init()
 {
@@ -42,16 +58,32 @@ void lightBarrier_init()
 //    TA0CCR2 = 250;                            // CCR2 PWM duty cycle
     TA0CTL = TASSEL__SMCLK | MC__UP | TACLR;  // SMCLK, up mode, clear TAR
 
+    // reset state
+	lb_status.event_counter = 0;
+	lb_status.inner_trig = 0;
+	lb_status.outer_trig = 0;
+	lb_status.direction = UNDEF;
 
 	//enable P1.3 interrupt
-	GPIO_enableInt(nbox_lightbarrier_irq);
+	GPIO_enableInt(nbox_lightbarrier_ext);
+	GPIO_enableInt(nbox_lightbarrier_int);
 
+
+}
+
+void lightBarrier_turn_off()
+{
+    TA0CCTL1 = OUTMOD_0;           // output mode
+    P1OUT &= ~BIT0;                // set P1.0 low.
+}
+
+void LightBarrier_turn_on()
+{
+    TA0CCTL1 = OUTMOD_7;                      // CCR1 reset/set
 }
 
 void lightBarrier_Task()
 {
-
-
     lightBarrier_init();
 
 	GPIO_write(Board_led_blue,1);
@@ -59,44 +91,94 @@ void lightBarrier_Task()
 
 
     while (1) {
+		Semaphore_pend((Semaphore_Handle)semLB1, BIOS_WAIT_FOREVER);
+		// first event was detected
+		lb_status.timestamp = Seconds_get();
 
-    		Semaphore_pend((Semaphore_Handle)semReader, BIOS_WAIT_FOREVER);
-        Task_sleep(2000);
-		GPIO_write(Board_led_blue,1);
+    		if(Semaphore_pend((Semaphore_Handle)semLB2, 10000))
+    		{
+    			// second event was detected
+    			// --> turn off PWM (?)
+
+    			Task_sleep(10000);
+    			        // timeout for event duration reached.
+    			        // --> reset all states and turn on PWM
+    			// --> create logging event
+    			log_write_new_entry(lb_status.timestamp, 0xFFFFFFFF, lb_status.direction);
+
+    			Task_sleep(10);
+			GPIO_enableInt(nbox_lightbarrier_ext);
+			GPIO_enableInt(nbox_lightbarrier_int);
+
+			//make sure no events occur anymore
+			while(lb_status.event_counter)
+			{
+				lb_status.event_counter = 0;
+				Task_sleep(2000);
+			}
+    		}
+    		else
+    		{
+    			// no second event detected
+
+    			// check if reader detected ID
+
+    		}
+
+    		// reset state
+    		lb_status.event_counter = 0;
+		lb_status.inner_trig = 0;
+		lb_status.outer_trig = 0;
+		lb_status.direction = UNDEF;
+		GPIO_enableInt(nbox_lightbarrier_ext);
+		GPIO_enableInt(nbox_lightbarrier_int);
 
     }
 }
 
-//// Comp_A interrupt service routine -- toggles LED
-////#pragma vector=COMP_E_VECTOR
-//void __attribute__((interrupt(COMP_E_VECTOR))) Comp_A_ISR (void)
-//{
-//	CEINT &= ~(CEIFG + CEIE); // Clear Interrupt flag and disable interrupt
-//
-//	//check if button is still switched on.
-//	if((PORT_DIGITAL_IN & PIN_BUTTON) == 0)
-//	{
-//		wakeup_source = WAKEUP_FROM_COMPARATOR;
-//
-//		//restart previously stopped timer:
-//		timer0_A_start();
-//		LPM4_EXIT;
-//	}
-//}
 
 void lightbarrier_input_isr(unsigned int index)
 {
 //	button_pressed = 1;
 //
 //	//check interrupt source
-//	if(action_executing == 0)
+	if(index == nbox_lightbarrier_ext)
+	{
+		GPIO_disableInt(nbox_lightbarrier_ext);
+		if(lb_status.inner_trig == 1 && lb_status.outer_trig == 0)
+		{
+			// second lightbarrier has triggered before --> direction is known
+			lb_status.direction = _OUT;
+			// post second LB semaphore (has 10sec timeout)
+			Semaphore_post((Semaphore_Handle)semLB2);
+		}
+		else
+		{
+			// no lightbarrier interruption has triggered before
+			// --> post first LB semaphore (has no timeout) and start RFID reader
+			Semaphore_post((Semaphore_Handle)semLB1);
+			Semaphore_post((Semaphore_Handle)semReader);
+		}
+	}
+	else if(index == nbox_lightbarrier_int)
+	{
+		GPIO_disableInt(nbox_lightbarrier_int);
+		if(lb_status.outer_trig == 1 && lb_status.inner_trig == 0)
+		{
+			// second lightbarrier has triggered before --> direction is known
+			lb_status.direction = _IN;
+			// post second LB semaphore (has 10sec timeout)
+			Semaphore_post((Semaphore_Handle)semLB2);
+		}
+		else if(lb_status.inner_trig == 0)
+		{
+			// no lightbarrier interruption has triggered before
+			// --> post first LB semaphore (has no timeout) and start RFID reader
+			Semaphore_post((Semaphore_Handle)semLB1);
+			Semaphore_post((Semaphore_Handle)semReader);
+		}
+		lb_status.inner_trig = 1;
+	}
 
-	GPIO_write(Board_led_blue,0);
-
-	Semaphore_post((Semaphore_Handle)semReader);
-
-
-//	Hwi_enable(); //not sure if needed here??
-
-//	GPIO_enableInt(lp_button);//not sure if needed here??
+	lb_status.event_counter = lb_status.event_counter+1;
 }
