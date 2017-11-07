@@ -23,7 +23,6 @@ void user_button_Task()
 	while(1)
 	{
 		Semaphore_pend((Semaphore_Handle)semButton, BIOS_WAIT_FOREVER);
-		action_executing = 1; //to prevent another button event in a short time (due to re-bouncing)
 
 		log_send_data_via_uart();
 

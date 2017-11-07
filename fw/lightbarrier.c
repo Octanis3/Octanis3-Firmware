@@ -45,15 +45,15 @@ void lightBarrier_init()
 
     CSCTL0_H = CSKEY >> 8;                    // Unlock CS registers
     CSCTL1 = DCOFSEL_6;                       // Set DCO = 8MHz
-    CSCTL2 = SELA__VLOCLK | SELS__DCOCLK | SELM__DCOCLK;// Set ACLK=VLO SMCLK=DCO
-    CSCTL3 |= DIVS__4;                          // Set divide by 4
+    CSCTL2 = SELA__LFMODCLK | SELS__DCOCLK | SELM__DCOCLK;// Set SMCLK=DCO, rest = default config
+   // CSCTL3 |= DIVS__0;                          // Set divide by 0
     CSCTL0_H = 0;                             // Lock CS registers
 
     // Configure Timer0_A
-    TA0CCR0 = 52;               	// PWM Period --> 8MHz/4/52 = 38.46 kHz,
+    TA0CCR0 = 210;               	// PWM Period --> 8MHz/208 = 38.09 kHz,
     								// which is the center frequency of the IR receiver
     TA0CCTL1 = OUTMOD_7;                      // CCR1 reset/set
-    TA0CCR1 = 26;                            // CCR1 PWM duty cycle: 50%. test if we can make it lower!
+    TA0CCR1 = 105;                            // CCR1 PWM duty cycle: 50%. test if we can make it lower!
 //    TA0CCTL2 = OUTMOD_7;                      // CCR2 reset/set
 //    TA0CCR2 = 250;                            // CCR2 PWM duty cycle
     TA0CTL = TASSEL__SMCLK | MC__UP | TACLR;  // SMCLK, up mode, clear TAR
@@ -85,8 +85,12 @@ void LightBarrier_turn_on()
 void lightBarrier_Task()
 {
     lightBarrier_init();
+	log_write_new_entry(234, 0xFFFFFFFF, 1);
+	log_write_new_entry(8765, 0xFFFFFFFF, 0);
+	log_write_new_entry(234, 0xFFFFFFFF, 1);
 
-	GPIO_write(Board_led_blue,1);
+
+	GPIO_write(Board_led_blue,0);
 	GPIO_write(Board_led_green,0);
 
 
@@ -100,11 +104,14 @@ void lightBarrier_Task()
     			// second event was detected
     			// --> turn off PWM (?)
 
-    			Task_sleep(10000);
+    			GPIO_write(Board_led_blue,1);
+    			Task_sleep(8000);
     			        // timeout for event duration reached.
     			        // --> reset all states and turn on PWM
     			// --> create logging event
     			log_write_new_entry(lb_status.timestamp, 0xFFFFFFFF, lb_status.direction);
+
+    			GPIO_write(Board_led_blue,0);
 
     			Task_sleep(10);
 			GPIO_enableInt(nbox_lightbarrier_ext);
@@ -114,7 +121,7 @@ void lightBarrier_Task()
 			while(lb_status.event_counter)
 			{
 				lb_status.event_counter = 0;
-				Task_sleep(2000);
+				Task_sleep(1000);
 			}
     		}
     		else
@@ -159,6 +166,7 @@ void lightbarrier_input_isr(unsigned int index)
 			Semaphore_post((Semaphore_Handle)semLB1);
 			Semaphore_post((Semaphore_Handle)semReader);
 		}
+		lb_status.outer_trig = 1;
 	}
 	else if(index == nbox_lightbarrier_int)
 	{
