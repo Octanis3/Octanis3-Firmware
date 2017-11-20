@@ -53,7 +53,7 @@ void lightBarrier_init()
     TA0CCR0 = 210;               	// PWM Period --> 8MHz/208 = 38.09 kHz,
     								// which is the center frequency of the IR receiver
     TA0CCTL1 = OUTMOD_7;                      // CCR1 reset/set
-    TA0CCR1 = 105;                            // CCR1 PWM duty cycle: 50%. test if we can make it lower!
+    TA0CCR1 = 50;//105;                            // CCR1 PWM duty cycle: 50%. test if we can make it lower!
 //    TA0CCTL2 = OUTMOD_7;                      // CCR2 reset/set
 //    TA0CCR2 = 250;                            // CCR2 PWM duty cycle
     TA0CTL = TASSEL__SMCLK | MC__UP | TACLR;  // SMCLK, up mode, clear TAR
@@ -104,39 +104,61 @@ void lightBarrier_Task()
     			// second event was detected
     			// --> turn off PWM (?)
 
-    			GPIO_write(Board_led_blue,1);
-    			Task_sleep(8000);
+    			if(lb_status.direction)
+    				GPIO_write(Board_led_green,1);
+    			else if(lb_status.direction == 0)
+    				GPIO_write(Board_led_blue,1);
+
+    			Task_sleep(2000);
     			        // timeout for event duration reached.
     			        // --> reset all states and turn on PWM
     			// --> create logging event
     			log_write_new_entry(lb_status.timestamp, 0xFFFFFFFF, lb_status.direction);
-
-    			GPIO_write(Board_led_blue,0);
 
     			Task_sleep(10);
 			GPIO_enableInt(nbox_lightbarrier_ext);
 			GPIO_enableInt(nbox_lightbarrier_int);
 
 			//make sure no events occur anymore
-			while(lb_status.event_counter)
+			while(lb_status.event_counter>0 || GPIO_read(nbox_lightbarrier_ext) || GPIO_read(nbox_lightbarrier_int))
 			{
 				lb_status.event_counter = 0;
 				Task_sleep(1000);
 			}
+			GPIO_write(Board_led_green,0);
+			GPIO_write(Board_led_blue,0);
     		}
     		else
     		{
     			// no second event detected
-
+    			GPIO_write(Board_led_green,1);
+    			GPIO_write(Board_led_blue,1);
+    			Task_sleep(500);
+    			GPIO_write(Board_led_green,0);
+    			GPIO_write(Board_led_blue,0);
+    			Task_sleep(500);
+    			GPIO_write(Board_led_green,1);
+    			GPIO_write(Board_led_blue,1);
+    			Task_sleep(500);
+    			GPIO_write(Board_led_green,0);
+    			GPIO_write(Board_led_blue,0);
     			// check if reader detected ID
 
     		}
 
     		// reset state
+
+    		GPIO_disableInt(nbox_lightbarrier_ext);
+		GPIO_disableInt(nbox_lightbarrier_int);
+
     		lb_status.event_counter = 0;
 		lb_status.inner_trig = 0;
 		lb_status.outer_trig = 0;
 		lb_status.direction = UNDEF;
+
+		Semaphore_reset((Semaphore_Handle)semLB1, 0);
+		Semaphore_reset((Semaphore_Handle)semReader, 0);
+
 		GPIO_enableInt(nbox_lightbarrier_ext);
 		GPIO_enableInt(nbox_lightbarrier_int);
 
