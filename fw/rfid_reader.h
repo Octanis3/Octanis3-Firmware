@@ -14,7 +14,7 @@
 #define TIMESTAMP_LENGTH 4
 
 void rfid_Task();
-
+uint32_t rfid_get_id();
 
 
 void nfc_wakeup_isr();

@@ -153,7 +153,7 @@ extern uint8_t 					NDEF_Buffer [];
 //	return status;
 //}
 
-
+char loggedUID[20] = {' '};
 
 
 void rfid_Task()
@@ -168,7 +168,7 @@ void rfid_Task()
     while (1) {
 		Task_sleep(100); //Semaphore_pend((Semaphore_Handle)semReader, BIOS_WAIT_FOREVER);
 
-    		if(initialized == 1)
+    		if(initialized == 0)
     		{
     			st95_init_spi();
 //    			st95_startup();
@@ -188,7 +188,7 @@ void rfid_Task()
 //    			st95_echo();
     		}
     		else if(initialized == 1){
-//    			Semaphore_pend((Semaphore_Handle)semReader, BIOS_WAIT_FOREVER); //just wait for the button once and then loop forever.
+    			Semaphore_pend((Semaphore_Handle)semReader, BIOS_WAIT_FOREVER); //just wait for the button once and then loop forever.
 //    			Semaphore_post((Semaphore_Handle)semReader);
 
     			uint8_t status;
@@ -302,12 +302,15 @@ void rfid_Task()
 			{
 //				uart_serial_write(&debug_uart, (uint8_t*)LastUIDFound, UID_LENGTH);
 //
-				uint32_t timestamp = Seconds_get();
+//				uint32_t timestamp = Seconds_get();
 //				uart_serial_write(&debug_uart, (uint8_t*)timestamp, TIMESTAMP_LENGTH);
 
-				static uint8_t in_out = 0;
-				in_out = !in_out;
+//				static uint8_t in_out = 0;
+//				in_out = !in_out;
 //				uart_serial_write(&debug_uart, &in_out, 1);
+
+				memcpy(loggedUID, LastUIDFound, 20);
+
 
 				GPIO_write(Board_led_green,1);
 				GPIO_toggle(Board_led_blue);
@@ -315,12 +318,13 @@ void rfid_Task()
 				GPIO_toggle(Board_led_blue);
 
 				// log to flash
-				log_write_new_entry(timestamp, *(uint32_t*)LastUIDFound, in_out); //TODO: UID is an array casted into a uint32 --> wrong byte order!
+//				log_write_new_entry(timestamp, *(uint32_t*)LastUIDFound, in_out); //TODO: UID is an array casted into a uint32 --> wrong byte order!
 
 
 			}
 			else
 			{
+				memset(loggedUID, 0xff, sizeof loggedUID);
 				GPIO_write(Board_led_green,0);
 			}
 
@@ -382,6 +386,10 @@ void rfid_Task()
     }
 }
 
+uint32_t rfid_get_id()
+{
+	return *(uint32_t*)loggedUID;
+}
 
 void nfc_wakeup_isr()
 {

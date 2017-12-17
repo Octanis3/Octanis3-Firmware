@@ -11,6 +11,7 @@
 #include <msp430.h>
 #include "user_button.h"
 #include "logger.h"
+#include "rfid_reader.h"
 
 #include <time.h>
 #include <ti/sysbios/hal/Seconds.h>
@@ -85,9 +86,6 @@ void LightBarrier_turn_on()
 void lightBarrier_Task()
 {
     lightBarrier_init();
-	log_write_new_entry(234, 0xFFFFFFFF, 1);
-	log_write_new_entry(8765, 0xFFFFFFFF, 0);
-	log_write_new_entry(234, 0xFFFFFFFF, 1);
 
 
 	GPIO_write(Board_led_blue,0);
@@ -112,8 +110,11 @@ void lightBarrier_Task()
     			Task_sleep(2000);
     			        // timeout for event duration reached.
     			        // --> reset all states and turn on PWM
+
+
+
     			// --> create logging event
-    			log_write_new_entry(lb_status.timestamp, 0xFFFFFFFF, lb_status.direction);
+    			log_write_new_entry(lb_status.timestamp, rfid_get_id(), lb_status.direction);
 
     			Task_sleep(10);
 			GPIO_enableInt(nbox_lightbarrier_ext);
