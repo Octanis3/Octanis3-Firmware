@@ -30,8 +30,6 @@
 #define OUTPUT_BUF_LEN		10 // to send a 32bit value as string
 #define OUTPUT_HEX_LEN		8  // to send a 32bit value as hex string
 
-static int ui2a(unsigned long num, unsigned long base, int uc,uint8_t* buffer);
-int intToStr(unsigned long x, uint8_t* buffer, int d);
 
 unsigned int* FRAM_offset_ptr;
 unsigned int* FRAM_read_ptr;
@@ -144,49 +142,5 @@ void log_send_data_via_uart()
 
 	//TODO: optional, reset the *LOG_NEXT_POS_OFS to zero.
 
-}
-
-
-static int ui2a(unsigned long num, unsigned long base, int uc,uint8_t* buffer)
-{
-    int n=0;
-    unsigned long d=1;
-    while (num/d >= base)
-        d*=base;
-    while (d!=0) {
-        unsigned long dgt = num / d;
-        num%= d;
-        d/=base;
-        if (n || dgt>0 || d==0) {
-            *buffer++ = dgt+(dgt<10 ? '0' : (uc ? 'A' : 'a')-10);
-            ++n;
-            }
-        }
-    return n;
-}
-
-// Converts a given integer x to string str[].  d is the number
-// of digits required in output. If d is more than the number
-// of digits in x, then 0s are added at the beginning.
-int intToStr(unsigned long x, uint8_t* buffer, int d)
-{
-	buffer += d;
-	while (x)
-	{
-		*buffer-- = (x%10) + '0';
-		x = x/10;
-
-		d--;
-	}
-
-   // If number of digits required is more, then
-   // add 0s at the beginning
-   while (d > 0)
-   {
-	   *buffer-- = '0';
-	   d--;
-   }
-
-	return x;
 }
 

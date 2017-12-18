@@ -46,10 +46,10 @@ extern "C" {
 #define MLX90109_PARAM_MODU_PIN   nbox_lf_modul
 #endif
 #ifndef MLX90109_PARAM_SPEED
-#define MLX90109_PARAM_SPEED      (4000)//2000 baud or 4000 baud
+#define MLX90109_PARAM_SPEED      (2000)//2000 baud for EM4100 or 4000 baud for fdx
 #endif
 #ifndef MLX90109_PARAM_CODE
-#define MLX90109_PARAM_CODE       (2)//  1 = Manchester, 2 = Biphase
+#define MLX90109_PARAM_CODE       (1)//  1 = Manchester for EM4100, 2 = Biphase
 #endif
 /** @} */
 
@@ -61,7 +61,7 @@ extern "C" {
 									.data			= MLX90109_PARAM_DATA_PIN ,\
 									.mode			= MLX90109_PARAM_MODE_PIN ,\
 									.dataSelect		= MLX90109_PARAM_DATASELECT_PIN ,\
-									.modu			= MLX90109_PARAM_MODU_PIN ,},
+									.modu			= MLX90109_PARAM_MODU_PIN ,}
 #endif
 
 static const mlx90109_params_t mlx90109_params[] ={

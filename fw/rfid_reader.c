@@ -8,6 +8,7 @@
 #include "rfid_reader.h"
 #include "ST95HF.h"
 #include "MLX90109_library/mlx90109.h"
+#include "MLX90109_library/mlx90109_params.h"
 #include "uart_helper.h"
 #include "logger.h"
 
@@ -17,9 +18,9 @@
 #include <xdc/cfg/global.h> //needed for semaphore
 #include <ti/sysbios/knl/Semaphore.h>
 
+/*************** HF: **********************/
+//#define HF_RFID
 #include "95HF_library/lib_ConfigManager.h"
-
-//extern int button_pressed;
 
 /**** STUFF FROM EXAMPLE CODE ************/
 #include "NDEF/lib_NDEF_URI.h"
@@ -34,126 +35,17 @@ extern ISO14443A_CARD 	ISO14443A_Card;
 extern ISO14443B_CARD 	ISO14443B_Card;
 extern FELICA_CARD 			FELICA_Card;
 extern uint8_t 					NDEF_Buffer [];
-//extern bool 						KEYPress;
-//extern bool							lockKEYUpDown;
-
-//sURI_Info 				url;
-//sSMSInfo 				sms;
-//sEmailInfo 			email;
-//sGeoInfo 				geo;
-//
-// /* PCD/PICC global memory space */
-//
-// /* TT1 (PCD only)*/
-// uint8_t TT1Tag[NFCT1_MAX_TAGMEMORY];
-//
-// /* TT2 */
-// uint8_t TT2Tag[NFCT2_MAX_TAGMEMORY];
-//
-// /* TT3 */
-// uint8_t TT3Tag[NFCT3_MAX_TAGMEMORY];
-// uint8_t *TT3AttribInfo = TT3Tag, *TT3NDEFfile = &TT3Tag[NFCT3_ATTRIB_INFO_SIZE];
-//
-// /* TT4 */
-// uint8_t CardCCfile [NFCT4_MAX_CCMEMORY];
-// uint8_t CardNDEFfileT4A [NFCT4_MAX_NDEFMEMORY];
-// uint8_t CardNDEFfileT4B [NFCT4_MAX_NDEFMEMORY];
-//
-// /* TT5 (PCD only)*/
-// uint8_t TT5Tag[NFCT5_MAX_TAGMEMORY];
-//
-// /* USB */
-// bool 		USB_Control_Allowed = false;
 
  /* Variables for the different modes */
  extern DeviceMode_t 				devicemode;
  extern TagType_t 			nfc_tagtype;
-
-//uint8_t readNDEFfromTAG(void)
-//{
-//	uint8_t status;
-//	sRecordInfo RecordStruct;
-//
-//	/* Init information fields */
-//	memset(url.Information,'\0',400);
-//	memset(sms.Information,'\0',400);
-//	memset(email.Information,'\0',400);
-//	memset(geo.Information,'\0',100);
-//
-//	if (nfc_tagtype == TT1)
-//	{
-//		errchk(PCDNFCT1_ReadNDEF());
-//	}
-//	else if (nfc_tagtype == TT2)
-//	{
-//		errchk(PCDNFCT2_ReadNDEF());
-//	}
-//	else if (nfc_tagtype == TT3)
-//	{
-//		errchk(PCDNFCT3_ReadNDEF());
-//	}
-//	else if (nfc_tagtype == TT4A || nfc_tagtype == TT4B)
-//	{
-//		errchk(PCDNFCT4_ReadNDEF());
-//	}
-//	else if (nfc_tagtype == TT5)
-//	{
-//		errchk(PCDNFCT5_ReadNDEF());
-//	}
-//	else
-//		return ERRORCODE_GENERIC;
-//
-//	//DONE
-//
-//	memset(NDEF_Buffer,'\0',20);
-//	status = NDEF_IdentifyNDEF( &RecordStruct, NDEF_Buffer);
-//	if(status == RESULTOK && RecordStruct.TypeLength != 0)
-//	{
-//		if (NDEF_ReadURI(&RecordStruct, &url)==RESULTOK)
-//		{
-//			//    URI content:
-//		}
-//		else if (NDEF_ReadSMS(&RecordStruct, &sms)==RESULTOK)
-//		{
-//			//    SMS content:
-//		}
-//		else if(NDEF_ReadEmail(&RecordStruct, &email)==RESULTOK)
-//		{
-//			// EMAIL content:
-//		}
-//		else if(NDEF_ReadGeo(&RecordStruct, &geo)==RESULTOK)
-//		{
-//			//   GEO content:
-//		}
-//		// This part has to be improved, it is just in order to write a simple text NDEF for the M24LR discovery
-//		else if(RecordStruct.NDEF_Type == TEXT_TYPE)
-//		{
-//			//  TEXT content:
-//		}
-//		else if(RecordStruct.NDEF_Type == VCARD_TYPE)
-//		{
-//			// VCARD detected
-//		}
-//		else
-//		{
-//			// Unknown NDEF type
-//		}
-//	}
-//	else if (RecordStruct.TypeLength == 0)
-//	{
-//		//  No NDEF content
-//	}
-//	else
-//	{
-//		//Error parsing NDEF
-//	}
-//
-//	return RESULTOK;
-//Error:
-//	return status;
-//}
-
 char loggedUID[20] = {' '};
+
+
+/*************** LF: **********************/
+#define LF_RFID
+static mlx90109_t mlx_dev;
+
 
 
 void rfid_Task()
@@ -165,25 +57,26 @@ void rfid_Task()
 	/* Initialize ST95HF as reader by default*/
 	int initialized = 0;
 
+	/* Initialize LF reader */
+	mlx90109_params_t mlx_params = MLX90109_PARAMS;
+	mlx90109_init(&mlx_dev, &mlx_params);
+
     while (1) {
-		Task_sleep(100); //Semaphore_pend((Semaphore_Handle)semReader, BIOS_WAIT_FOREVER);
+
+#ifdef HF_RFID
+    	Task_sleep(100); //Semaphore_pend((Semaphore_Handle)semReader, BIOS_WAIT_FOREVER);
 
     		if(initialized == 0)
     		{
     			st95_init_spi();
 //    			st95_startup();
-
     			ConfigManager_HWInit();
 
     			GPIO_write(Board_led_green,1);
 			Task_sleep(1500);
 			GPIO_write(Board_led_green,0);
 			GPIO_write(Board_led_blue,0);
-
-
 //    			button_pressed = 0;
-
-
     			initialized = 1;
 //    			st95_echo();
     		}
@@ -383,12 +276,38 @@ void rfid_Task()
 
 		// TODO remove this:
 //    		Task_sleep(100);
+		#endif
+		#ifdef LF_RFID
+
+		Semaphore_pend((Semaphore_Handle)semReader, BIOS_WAIT_FOREVER);
+		// tag has been successfully read out.
+
+		//TODO: check CRC
+
+		mlx90109_disable_reader(&mlx_dev);
+
+		GPIO_toggle(Board_led_blue);
+		Task_sleep(50);
+		GPIO_toggle(Board_led_blue);
+		Task_sleep(50);
+		GPIO_toggle(Board_led_blue);
+
+		rfid_start_detection();
+
+		#endif
     }
 }
 
 uint32_t rfid_get_id()
 {
 	return *(uint32_t*)loggedUID;
+}
+
+void rfid_start_detection()
+{
+#ifdef LF_RFID
+	mlx90109_activate_reader(&mlx_dev);
+#endif
 }
 
 void nfc_wakeup_isr()
@@ -406,9 +325,12 @@ void nfc_wakeup_isr()
 //	GPIO_enableInt(lp_button);//not sure if needed here??
 }
 
-void lf_data_read()
+void lf_tag_read_isr()
 {
-
+	if(em4100_read(&mlx_dev)==MLX90109_DATA_OK)
+	{
+		Semaphore_post((Semaphore_Handle)semReader);
+	}
 }
 
 

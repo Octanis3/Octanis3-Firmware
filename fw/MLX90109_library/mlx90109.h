@@ -56,7 +56,10 @@ typedef struct {
     mlx90109_params_t p; 		/**< device configuation parameter */
 	uint8_t counter;	  		/**< counter for data bits*/
 	uint8_t counter_header;		/**< counter for Header bits "10000000000"*/
+	uint8_t nibble_counter;		/**< counter for the 4-bit groups of the EM4100 */
 	uint8_t data[128];			/**< raw data*/
+	uint8_t tagId[10];			/**< EM4100 only: 2x4 version bits + 8x4 data bits*/
+	uint8_t id_counter;
 } mlx90109_t;
 
 /**
@@ -88,17 +91,22 @@ typedef struct {
 int16_t mlx90109_init(mlx90109_t *dev, const mlx90109_params_t *params);
 
 /**
- * @brief              Reads the Raw Data from Tag, must used in the GPIO Interrupt.
+ * @brief              Reads the Raw Data from FDX Tag, must used in the GPIO Interrupt.
  *
  * @param[out] dev     the device descriptor
  *
  * @return             0 if a bit could read successfully
  * @return             -3 if the raw data is complete
  */
+
+void mlx90109_activate_reader(mlx90109_t *dev);
+
+void mlx90109_disable_reader(mlx90109_t *dev);
+
 int16_t mlx90109_read(mlx90109_t *dev);
 
 /**
- * @brief              Extract the Data from the Raw data and performs a CRC.
+ * @brief              Extract the Data from the Raw data of the FDX tag and performs a CRC.
  *
  * @param[out] dev     the device descriptor
  * @param[out] tag     the Tag Data
@@ -108,6 +116,17 @@ int16_t mlx90109_read(mlx90109_t *dev);
  */
 int16_t mlx90109_format(mlx90109_t *dev, tagdata *tag);
 
+/************************************************************************/
+
+/**
+ * @brief              Reads the Raw Data from and EM4100 Tag, must used in the GPIO Interrupt.
+ *
+ * @param[out] dev     the device descriptor
+ *
+ * @return             0 if a bit could read successfully
+ * @return             -3 if the raw data is complete
+ */
+int16_t em4100_read(mlx90109_t *dev);
 
 #endif /* MLX90109_H_ */
 /** @} */

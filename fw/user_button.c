@@ -9,6 +9,7 @@
 
 #include "user_button.h"
 #include "logger.h"
+#include "rfid_reader.h"
 #include "../Board.h"
 
 #include <ti/sysbios/hal/Hwi.h>
@@ -24,7 +25,8 @@ void user_button_Task()
 	{
 		Semaphore_pend((Semaphore_Handle)semButton, BIOS_WAIT_FOREVER);
 
-		log_send_data_via_uart();
+
+		//log_send_data_via_uart();
 
 		Task_sleep(1000); //avoid too many subsequent memory readouts
 		GPIO_enableInt(Board_button);
@@ -37,6 +39,8 @@ void user_button_isr(unsigned int index)
 {
 //	button_pressed = 1;
 	GPIO_disableInt(Board_button);
+
+	rfid_start_detection();
 
 	//check interrupt source
 	Semaphore_post((Semaphore_Handle)semButton);

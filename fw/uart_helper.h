@@ -26,6 +26,8 @@ int uart_serial_putc(UART_Handle *dev, uint8_t c);
 
 int uart_serial_getc(UART_Handle *dev);
 
+int ui2a(unsigned long num, unsigned long base, int uc,uint8_t* buffer);
+int intToStr(unsigned long x, uint8_t* buffer, int d);
 
 
 

@@ -168,7 +168,7 @@ GPIO_CallbackFxn gpioCallbackFunctions[] = {
 	nfc_wakeup_isr, /* lightbarrier interrupt pin */
 	lightbarrier_input_isr, /* lightbarrier detection routine */
 	lightbarrier_input_isr, /* lightbarrier detection routine */
-	lf_data_read,
+	lf_tag_read_isr,
 };
 
 /* The device-specific GPIO_config structure */

@@ -97,6 +97,7 @@ void lightBarrier_Task()
 		// first event was detected
 		lb_status.timestamp = Seconds_get();
 
+
     		if(Semaphore_pend((Semaphore_Handle)semLB2, 10000))
     		{
     			// second event was detected
@@ -187,7 +188,8 @@ void lightbarrier_input_isr(unsigned int index)
 			// no lightbarrier interruption has triggered before
 			// --> post first LB semaphore (has no timeout) and start RFID reader
 			Semaphore_post((Semaphore_Handle)semLB1);
-			Semaphore_post((Semaphore_Handle)semReader);
+//			Semaphore_post((Semaphore_Handle)semReader);
+			rfid_start_detection();
 		}
 		lb_status.outer_trig = 1;
 	}

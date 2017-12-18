@@ -41,14 +41,34 @@
 #include "mlx90109.h"
 #include "mlx90109_params.h"
 
+#include <xdc/runtime/Timestamp.h>
+#include "../uart_helper.h"
+
+
+Float   factor;  /* Clock ratio cpu/timestamp */
+uint32_t time_on;
+uint32_t time_off;
+
+int32_t get_timefactor()
+{
+	xdc_runtime_Types_FreqHz freq1;   /* Timestamp frequency */
+	xdc_runtime_Types_FreqHz freq2;   /* BIOS frequency */
+	Timestamp_getFreq(&freq1);
+	BIOS_getCpuFreq(&freq2);
+	factor = (Float)freq2.lo / freq1.lo;
+	return 0;
+}
 
 int16_t mlx90109_init(mlx90109_t *dev, const mlx90109_params_t *params)
 {
+	get_timefactor();
 	/* write config params to device descriptor */
 	memcpy(&dev->p, params, sizeof(mlx90109_params_t));
 	
 	//Init Modul Pin if used
-	GPIO_write(dev->p.modu, 1); //turns off CW field
+	GPIO_write(dev->p.modu, 0); //turns off CW field
+	//disable clk interrupt
+	GPIO_disableInt(nbox_lf_clk);
 
 	//Init data Rate Pin if used
 	if (dev->p.dataSelect){
@@ -69,11 +89,44 @@ int16_t mlx90109_init(mlx90109_t *dev, const mlx90109_params_t *params)
 		}
 	
 	}
-
 	return MLX90109_OK;
-	
 }
 
+void mlx90109_activate_reader(mlx90109_t *dev)
+{
+	time_on = Timestamp_get32();
+	GPIO_write(dev->p.modu, 1); //turns ON CW field
+	// enable clock interrupt
+	GPIO_enableInt(nbox_lf_clk);
+}
+
+#define MLX_OUTPUT_BUF_LEN 20
+uint8_t outbuffer[MLX_OUTPUT_BUF_LEN];
+
+void mlx90109_disable_reader(mlx90109_t *dev)
+{
+	GPIO_write(dev->p.modu, 0); //turns OFF CW field
+	//disable clk interrupt
+	GPIO_disableInt(nbox_lf_clk);
+
+	//send out tag ID:
+	int i=0;
+	for(i=0;i<10;i++)
+	{
+		uint8_t hexbuf;
+		ui2a(dev->tagId[i], 16, 1, &hexbuf);
+		uart_serial_putc(&debug_uart,hexbuf);
+	}
+	uart_serial_putc(&debug_uart,',');
+
+	//send out readout difference:
+	int deltat = (time_off - time_on);//(uint32_t)(factor*(float)(time_off - time_on)/8.0);
+	int strlen = ui2a(deltat, 10, 1, outbuffer);
+	uart_serial_write(&debug_uart, outbuffer, strlen);
+	uart_serial_putc(&debug_uart,'\n');
+}
+
+/*
 int16_t mlx90109_format(mlx90109_t *dev, tagdata *tag)
 {
 	uint8_t i=0;
@@ -147,7 +200,7 @@ int16_t mlx90109_format(mlx90109_t *dev, tagdata *tag)
 	}
 	
 	return MLX90109_OK;
-}
+}*/
 
 
 int16_t mlx90109_read(mlx90109_t *dev)
@@ -190,6 +243,94 @@ int16_t mlx90109_read(mlx90109_t *dev)
 		return MLX90109_DATA_OK;	
 	}
 	else 
+	{
+		return MLX90109_OK;
+	}
+}
+
+int16_t em4100_read(mlx90109_t *dev)
+{
+	if((dev->counter_header==9))
+	{
+		// Detect "1"
+		if((GPIO_read(dev->p.data) > 0))
+		{
+			dev->data[dev->counter]=1;
+		}
+		// Detect "0"
+		if ((!(GPIO_read(dev->p.data))))
+		{
+			dev->data[dev->counter]=0;
+		}
+
+		if(dev->nibble_counter==4 && dev->id_counter<10)
+		{
+			//crc
+			dev->nibble_counter = 0;
+			dev->tagId[dev->id_counter] = dev->data[dev->counter-1] + //
+											((dev->data[dev->counter-2])<<1) +//
+											((dev->data[dev->counter-3])<<2) +//
+											((dev->data[dev->counter-4])<<3);
+			uint8_t crc = dev->data[dev->counter-1] +//
+								dev->data[dev->counter-2] +//
+								dev->data[dev->counter-3] +//
+								dev->data[dev->counter-4];
+
+
+			if((crc&0x01) == (dev->data[dev->counter]&0x01))
+			{
+				// CRC OK!
+				dev->nibble_counter = 0;
+				dev->id_counter++;
+			}
+			else
+			{
+				// start over
+				dev->counter_header=0;
+				dev->counter = 0;
+				dev->nibble_counter = 0;
+				return MLX90109_CRC_NOT_OK;
+			}
+
+		}
+		else
+		{
+			dev->nibble_counter++;
+		}
+
+
+		dev->counter++;
+	}
+	else if(dev->counter_header<9)
+	{
+		// Detect Header (111111111 	 9bit Header (following a stop-0)
+		if (!(GPIO_read(dev->p.data)))
+		{// 0's
+			dev->counter_header=0;
+		}
+
+		if (GPIO_read(dev->p.data) > 0)
+		{//1's
+			dev->counter_header++;
+		}
+		dev->counter = 0;
+		dev->nibble_counter = 0;
+		dev->id_counter = 0;
+	}
+
+
+
+
+	// Data complete after 64 bit incl header
+	if (dev->counter > 63-9 && (dev->counter_header==9))
+	{
+		time_off = Timestamp_get32();
+
+		dev->counter = 0;
+		dev->counter_header = 0;
+		return MLX90109_DATA_OK;
+	}
+	else
 	{
 		return MLX90109_OK;
 	}
