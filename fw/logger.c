@@ -18,18 +18,19 @@
 /* Note: the allocated storage space is 8 kB large, which is enough for 819 entries */
 
 
-#define LOG_TIME_32b_OFS			0x0 // 32 bit epoch timestamp
-#define LOG_UID_32b_OFS			0x1 // 32 bit UID
-#define LOG_DIR_8b_OFS			0x8 // 1 byte "I", "O" or "U" in/out/unknown
-#define LOG_CRC_8b_OFS			0x9 // 1 byte CRC (for int16 alignment)
+#define LOG_UID_64b_OFS			0x0 // 64 bit UID
+#define LOG_UID_32b_MSB_OFS			0x0 // 64 bit UID
+#define LOG_UID_32b_LSB_OFS			0x1 // 64 bit UID
 
-#define LOG_ENTRY_8b_LEN		0xA
-#define LOG_ENTRY_16b_LEN	0x5
+#define LOG_TIME_32b_OFS			0x2 // 32 bit epoch timestamp
+#define LOG_DIR_8b_OFS			0xC // 1 byte "I", "O" or "U" in/out/unknown
+#define LOG_CRC_8b_OFS			0xD // 1 byte CRC (for int16 alignment)
+
+#define LOG_ENTRY_8b_LEN		0xE
+#define LOG_ENTRY_16b_LEN	0x7
 
 
-#define OUTPUT_BUF_LEN		10 // to send a 32bit value as string
-#define OUTPUT_HEX_LEN		8  // to send a 32bit value as hex string
-
+#define OUTPUT_BUF_LEN		LOG_ENTRY_8b_LEN+2+2 // adding two ',' and two digits for decimal time stamp rep.
 
 unsigned int* FRAM_offset_ptr;
 unsigned int* FRAM_read_ptr;
@@ -51,7 +52,7 @@ void log_startup()
 
 }
 
-int log_write_new_entry(uint32_t timestamp, uint32_t uid, uint8_t inout)
+int log_write_new_entry(uint32_t timestamp, uint64_t uid, uint8_t inout)
 {
 	FRAM_offset_ptr = (unsigned int*)LOG_NEXT_POS_OFS; // pointer should be already initialized at startup, but just to be sure...
 	unsigned int* FRAM_write_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); // = base address plus *FRAM_offset_ptr
@@ -65,8 +66,8 @@ int log_write_new_entry(uint32_t timestamp, uint32_t uid, uint8_t inout)
 	}
 	// else, continue...
 
+	*((uint64_t*)FRAM_write_ptr+LOG_UID_64b_OFS) = uid;
 	*((uint32_t*)FRAM_write_ptr+LOG_TIME_32b_OFS) = timestamp;
-	*((uint32_t*)FRAM_write_ptr+LOG_UID_32b_OFS) = uid;
 
 	unsigned char inout_c = 'U';
 	if(inout == 1)
@@ -130,7 +131,8 @@ void log_send_data_via_uart()
 		uart_serial_putc(&debug_uart, ',');
 
 		//send out UID and I/O:
-		strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_OFS), 16, 1, outbuffer);
+		strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_MSB_OFS), 16, 1, outbuffer); //the first 32 bits
+		strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_LSB_OFS), 16, 1, outbuffer); //the second 32 bits
 		outbuffer[strlen] = ',';
 		outbuffer[strlen+1] = *((uint8_t*)FRAM_read_ptr+LOG_DIR_8b_OFS);
 		uart_serial_write(&debug_uart, outbuffer, strlen+2);

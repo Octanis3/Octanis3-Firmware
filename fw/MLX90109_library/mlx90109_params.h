@@ -22,6 +22,12 @@
 #include "../../Board.h"
 #include "mlx90109.h"
 
+//#define EM4100 // comment if decoding FDX tags
+
+#ifndef EM4100
+	#define FDX
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -45,11 +51,23 @@ extern "C" {
 #ifndef MLX90109_PARAM_MODU_PIN
 #define MLX90109_PARAM_MODU_PIN   nbox_lf_modul
 #endif
-#ifndef MLX90109_PARAM_SPEED
-#define MLX90109_PARAM_SPEED      (2000)//2000 baud for EM4100 or 4000 baud for fdx
-#endif
-#ifndef MLX90109_PARAM_CODE
-#define MLX90109_PARAM_CODE       (1)//  1 = Manchester for EM4100, 2 = Biphase
+
+#ifdef EM4100
+// http://www.priority1design.com.au/em4100_protocol.html
+	#ifndef MLX90109_PARAM_SPEED
+	#define MLX90109_PARAM_SPEED      (2000)//2000 baud for EM4100 or 4000 baud for fdx
+	#endif
+	#ifndef MLX90109_PARAM_CODE
+	#define MLX90109_PARAM_CODE       (1)//  1 = Manchester for EM4100, 2 = Biphase for FDX
+	#endif
+#else
+// http://www.priority1design.com.au/fdx-b_animal_identification_protocol.html
+	#ifndef MLX90109_PARAM_SPEED
+	#define MLX90109_PARAM_SPEED      (4000)//2000 baud for EM4100 or 4000 baud for fdx
+	#endif
+	#ifndef MLX90109_PARAM_CODE
+	#define MLX90109_PARAM_CODE       (2)//  1 = Manchester for EM4100, 2 = Biphase for FDX
+	#endif
 #endif
 /** @} */
 

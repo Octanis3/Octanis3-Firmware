@@ -10,11 +10,18 @@
 
 #include "Board.h"
 
+#define LF_RFID //uncomment this line if using HF tags
+
+#ifndef LF_RFID
+	#define HF_RFID
+#endif
+
+
 #define UID_LENGTH 4
 #define TIMESTAMP_LENGTH 4
 
 void rfid_Task();
-uint32_t rfid_get_id();
+uint64_t rfid_get_id();
 
 void rfid_start_detection();
 

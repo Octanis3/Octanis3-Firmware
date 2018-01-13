@@ -43,6 +43,7 @@
 
 #include <xdc/runtime/Timestamp.h>
 #include "../uart_helper.h"
+#include <assert.h>
 
 
 Float   factor;  /* Clock ratio cpu/timestamp */
@@ -126,7 +127,23 @@ void mlx90109_disable_reader(mlx90109_t *dev)
 	uart_serial_putc(&debug_uart,'\n');
 }
 
-/*
+#define UINT8_BIT_SIZE 8U
+#define RIGHTMOST_BIT_SET(value) ((value) & 0x0001U)
+
+uint16_t ucrc16_calc_le(const uint8_t *buf, size_t len, uint16_t poly,
+                        uint16_t seed)
+{
+    assert(buf != NULL);
+    unsigned int c,i;
+    for (c = 0; c < len; c++, buf++) {
+        seed ^= (*buf);
+        for (i = 0; i < UINT8_BIT_SIZE; i++) {
+            seed = RIGHTMOST_BIT_SET(seed) ? ((seed >> 1) ^ poly) : (seed >> 1);
+        }
+    }
+    return seed;
+}
+
 int16_t mlx90109_format(mlx90109_t *dev, tagdata *tag)
 {
 	uint8_t i=0;
@@ -200,56 +217,12 @@ int16_t mlx90109_format(mlx90109_t *dev, tagdata *tag)
 	}
 	
 	return MLX90109_OK;
-}*/
-
-
-int16_t mlx90109_read(mlx90109_t *dev)
-{
-	// Detect "1"
-	if((GPIO_read(dev->p.data) > 0)&&(dev->counter_header==11))
-	{
-		dev->data[dev->counter]=1;
-		dev->counter++;
-	}
-	// Detect "0"
-	if ((!(GPIO_read(dev->p.data)))&&(dev->counter_header==11))
-	{
-		dev->data[dev->counter]=0;
-		dev->counter++;
-	}
-	
-	// Detect Header (10000000000 	  11bit Header)
-	if ((!(GPIO_read(dev->p.data)))&&(dev->counter_header<10))
-	{// 0's
-		dev->counter_header++;
-	}
-	
-	if ((GPIO_read(dev->p.data) > 0)&&(dev->counter_header<10))
-	{//1's
-		dev->counter_header=0;
-		dev->counter = 0;
-	}
-	
-	if ((GPIO_read(dev->p.data) > 0) && (dev->counter_header == 10))
-	{
-		dev->counter_header++;
-	}
-
-	// Data complete after 127 bit
-	if ( dev->counter > 127)
-	{
-		dev->counter = 0;
-		dev->counter_header = 0;
-		return MLX90109_DATA_OK;	
-	}
-	else 
-	{
-		return MLX90109_OK;
-	}
 }
+
 
 int16_t em4100_read(mlx90109_t *dev)
 {
+#ifdef EM4100
 	if((dev->counter_header==9))
 	{
 		// Detect "1"
@@ -317,10 +290,6 @@ int16_t em4100_read(mlx90109_t *dev)
 		dev->nibble_counter = 0;
 		dev->id_counter = 0;
 	}
-
-
-
-
 	// Data complete after 64 bit incl header
 	if (dev->counter > 63-9 && (dev->counter_header==9))
 	{
@@ -334,4 +303,48 @@ int16_t em4100_read(mlx90109_t *dev)
 	{
 		return MLX90109_OK;
 	}
+#else //FDX-B protocol
+	// Detect "1"
+	if((GPIO_read(dev->p.data) > 0)&&(dev->counter_header==11))
+	{
+		dev->data[dev->counter]=1;
+		dev->counter++;
+	}
+	// Detect "0"
+	if ((!(GPIO_read(dev->p.data)))&&(dev->counter_header==11))
+	{
+		dev->data[dev->counter]=0;
+		dev->counter++;
+	}
+
+	// Detect Header (10000000000 	  11bit Header)
+	if ((!(GPIO_read(dev->p.data)))&&(dev->counter_header<10))
+	{// 0's
+		dev->counter_header++;
+		dev->counter = 0;
+	}
+
+	if ((GPIO_read(dev->p.data) > 0)&&(dev->counter_header<10))
+	{//1's
+		dev->counter_header=0;
+		dev->counter = 0;
+	}
+
+	if ((GPIO_read(dev->p.data) > 0) && (dev->counter_header == 10))
+	{
+		dev->counter_header++;
+	}
+
+	// Data complete after 127 bit
+	if ( dev->counter > 127)
+	{
+		dev->counter = 0;
+		dev->counter_header = 0;
+		return MLX90109_DATA_OK;
+	}
+	else
+	{
+		return MLX90109_OK;
+	}
+#endif
 }

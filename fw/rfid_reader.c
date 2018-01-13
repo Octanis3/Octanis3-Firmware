@@ -18,8 +18,8 @@
 #include <xdc/cfg/global.h> //needed for semaphore
 #include <ti/sysbios/knl/Semaphore.h>
 
+#ifndef LF_RFID
 /*************** HF: **********************/
-//#define HF_RFID
 #include "95HF_library/lib_ConfigManager.h"
 
 /**** STUFF FROM EXAMPLE CODE ************/
@@ -36,17 +36,17 @@ extern ISO14443B_CARD 	ISO14443B_Card;
 extern FELICA_CARD 			FELICA_Card;
 extern uint8_t 					NDEF_Buffer [];
 
- /* Variables for the different modes */
- extern DeviceMode_t 				devicemode;
- extern TagType_t 			nfc_tagtype;
+/* Variables for the different modes */
+extern DeviceMode_t 				devicemode;
+extern TagType_t 			nfc_tagtype;
 char loggedUID[20] = {' '};
 
-
+#else
 /*************** LF: **********************/
-#define LF_RFID
 static mlx90109_t mlx_dev;
+static tagdata lf_tagdata;
 
-
+#endif
 
 void rfid_Task()
 {
@@ -224,65 +224,30 @@ void rfid_Task()
 
     		}
 
-    		/* Put ST95HF to deep sleep/low power mode */
 
-    		/* Pend on reader semaphore (can be released either by light barrier interrupt,
-    		 * in which case a read has to be performed, or by the user button, in which
-    		 * case the ST95HF has to be switched into tag mode.
-    		 */
+	#endif
 
-    		// Semaphore pend ....
-
-    		/* If barrier triggered, wake up and issue a read command */
-		{
-			//wake ST95HF
-
-			//send read command
-
-			//receive the ID
-
-			//store ID in flash memory (--> send message to mailbox to be treated by
-			// 								int. flash memory task)
-
-
-		}
-    		/* else if user button triggered, wake up/switch ST95HF into tag mode and
-    		 * start to listen for incoming NFC read commands.
-    		 */
-		{
-			//(wake ST95HF ?? if needed ??)
-
-			//re-initialize ST95HF in tag-mode
-
-			//wait for incoming NFC reads
-
-				//read received command
-
-				//if command == "send nestbox device ID" --> reply with ID.
-					// continue waiting for incoming commands
-
-				//if command == "send stored data" --> successively send the stored data
-					// continue waiting for incoming commands
-
-				//if command == "delete stored data" --> delete it
-					// continue waiting for incoming commands
-
-				//if command == "end communication" --> re-initialize ST95HF in reader mode
-					// exit loop
-
-			// if timeout (no incoming reads for 1 minute) --> re-initialize ST95HF in reader mode
-				// exit loop
-		}
-
-		// TODO remove this:
-//    		Task_sleep(100);
-		#endif
-		#ifdef LF_RFID
+	#ifdef LF_RFID
 
 		Semaphore_pend((Semaphore_Handle)semReader, BIOS_WAIT_FOREVER);
 		// tag has been successfully read out.
 
-		//TODO: check CRC
+		#ifndef EM4100
+		//for FDX-B only: check CRC:
+		if(mlx90109_format(&mlx_dev, &lf_tagdata) == MLX90109_OK)
+		{
+			mlx90109_disable_reader(&mlx_dev);
+
+			GPIO_toggle(Board_led_blue);
+			Task_sleep(50);
+			GPIO_toggle(Board_led_blue);
+			Task_sleep(50);
+			GPIO_toggle(Board_led_blue);
+		}
+
+		#else
+
+		lf_tagdata.tagId = *((uint64_t*)&mlx_dev.tagId[1])
 
 		mlx90109_disable_reader(&mlx_dev);
 
@@ -291,16 +256,15 @@ void rfid_Task()
 		GPIO_toggle(Board_led_blue);
 		Task_sleep(50);
 		GPIO_toggle(Board_led_blue);
-
-		rfid_start_detection();
-
 		#endif
+
+	#endif
     }
 }
 
-uint32_t rfid_get_id()
+uint64_t rfid_get_id()
 {
-	return *(uint32_t*)loggedUID;
+	return lf_tagdata.tagId;
 }
 
 void rfid_start_detection()
