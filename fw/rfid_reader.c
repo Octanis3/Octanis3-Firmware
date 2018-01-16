@@ -14,6 +14,8 @@
 
 #include <time.h>
 #include <ti/sysbios/hal/Seconds.h>
+#include <xdc/runtime/Timestamp.h>
+
 
 #include <xdc/cfg/global.h> //needed for semaphore
 #include <ti/sysbios/knl/Semaphore.h>
@@ -236,7 +238,7 @@ void rfid_Task()
 		//for FDX-B only: check CRC:
 		if(mlx90109_format(&mlx_dev, &lf_tagdata) == MLX90109_OK)
 		{
-			mlx90109_disable_reader(&mlx_dev);
+			mlx90109_disable_reader(&mlx_dev, &lf_tagdata);
 
 			GPIO_toggle(Board_led_blue);
 			Task_sleep(50);
@@ -291,10 +293,14 @@ void nfc_wakeup_isr()
 
 void lf_tag_read_isr()
 {
+//	int cnt = mlx_dev.counter;
+//	mlx_dev.int_time[cnt] = Timestamp_get32();
 	if(em4100_read(&mlx_dev)==MLX90109_DATA_OK)
 	{
 		Semaphore_post((Semaphore_Handle)semReader);
 	}
+//	mlx_dev.int_time[cnt] = (Timestamp_get32()-mlx_dev.int_time[cnt]);
+
 }
 
 

@@ -335,7 +335,7 @@ const UART_Config UART_config[] = {
  */
 void nbox_initUART(void)
 {
-    /* P4.0,1 = USCI_A0 TXD/RXD */
+    /* P2.0,1 = USCI_A0 TXD/RXD */
     GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2,
         GPIO_PIN0, GPIO_SECONDARY_MODULE_FUNCTION);
     GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P2,

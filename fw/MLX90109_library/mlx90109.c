@@ -104,25 +104,24 @@ void mlx90109_activate_reader(mlx90109_t *dev)
 #define MLX_OUTPUT_BUF_LEN 20
 uint8_t outbuffer[MLX_OUTPUT_BUF_LEN];
 
-void mlx90109_disable_reader(mlx90109_t *dev)
+void mlx90109_disable_reader(mlx90109_t *dev, tagdata *tag)
 {
 	GPIO_write(dev->p.modu, 0); //turns OFF CW field
 	//disable clk interrupt
 	GPIO_disableInt(nbox_lf_clk);
 
 	//send out tag ID:
-	int i=0;
-	for(i=0;i<10;i++)
-	{
-		uint8_t hexbuf;
-		ui2a(dev->tagId[i], 16, 1, &hexbuf);
-		uart_serial_putc(&debug_uart,hexbuf);
-	}
+	uint8_t hexbuf[8];
+	int strlen = ui2a((tag->tagId)>>32, 16, 'A', hexbuf);
+	uart_serial_write(&debug_uart,hexbuf, strlen);
+	strlen = ui2a((tag->tagId), 16, 'A', hexbuf);
+	uart_serial_write(&debug_uart,hexbuf, strlen);
+
 	uart_serial_putc(&debug_uart,',');
 
 	//send out readout difference:
 	int deltat = (time_off - time_on);//(uint32_t)(factor*(float)(time_off - time_on)/8.0);
-	int strlen = ui2a(deltat, 10, 1, outbuffer);
+	strlen = ui2a(deltat, 10, 1, outbuffer);
 	uart_serial_write(&debug_uart, outbuffer, strlen);
 	uart_serial_putc(&debug_uart,'\n');
 }
@@ -154,12 +153,12 @@ int16_t mlx90109_format(mlx90109_t *dev, tagdata *tag)
 	dev->counter_header = 0;
 	
 	// Data for Checksum
-	for (k=0; k<=7; k++)
+	for (k=0; k<8; k++) //8 rows of 8+1 bits
 	{
 		tag->checksumData[k] = 0;
-		for (i=(k*9); i<=7+(k*9); i++)
+		for (i=0; i<8; i++) //the 8 first bits of each row
 		{
-			tag->checksumData[k] |= (dev->data[i] << (i-(k*9)));
+			tag->checksumData[k] |= ((dev->data[i+(k*9)]) << i);
 		}
 	}
 
@@ -180,6 +179,18 @@ int16_t mlx90109_format(mlx90109_t *dev, tagdata *tag)
 	// Checksum calculaton
 	crc = ucrc16_calc_le(&tag->checksumData[0], sizeof(tag->checksumData), 0x8408 , 0x0000);
 	
+	//send out time stamp:
+	uint8_t outbuffer[8];
+
+	int strlen = ui2a(crc, 16, 1, outbuffer);
+	uart_serial_write(&debug_uart, outbuffer, strlen);
+	uart_serial_putc(&debug_uart, ',');
+	strlen = ui2a(tag->checksum16, 16, 1, outbuffer);
+	uart_serial_write(&debug_uart, outbuffer, strlen);
+	uart_serial_putc(&debug_uart, '\n');
+
+
+
 	if ((tag->checksum16 != crc))
 	{
 		tag->tagId = 0;
@@ -277,7 +288,7 @@ int16_t em4100_read(mlx90109_t *dev)
 	else if(dev->counter_header<9)
 	{
 		// Detect Header (111111111 	 9bit Header (following a stop-0)
-		if (!(GPIO_read(dev->p.data)))
+		if ((!(GPIO_read(dev->p.data))))
 		{// 0's
 			dev->counter_header=0;
 		}
@@ -304,39 +315,45 @@ int16_t em4100_read(mlx90109_t *dev)
 		return MLX90109_OK;
 	}
 #else //FDX-B protocol
-	// Detect "1"
-	if((GPIO_read(dev->p.data) > 0)&&(dev->counter_header==11))
+	// Detect Header (00000000001 	  11bit Header)
+	if(dev->counter_header<11)
 	{
-		dev->data[dev->counter]=1;
+		if (!(GPIO_read(dev->p.data)))
+		{// 0's
+			dev->tagId[dev->counter_header] = 0;
+			dev->counter_header++;
+
+		}
+		else if(dev->counter_header == 10)
+		{//the final 1 of the header
+			dev->counter_header++;
+		}
+		else
+		{//a '1' that is too early
+			dev->counter_header=0;
+		}
+		dev->counter = 0;
+		//dev->last_timestamp = Timestamp_get32();
+	}
+	else //if(dev->counter_header==11)
+	{
+		dev->data[dev->counter] = GPIO_read(dev->p.data);
+		// Detect "1"
+//		if(GPIO_read(dev->p.data) > 0)
+//		{
+//			dev->data[dev->counter]=1;
+//		}
+//		else
+//		{
+//			dev->data[dev->counter]=0;
+//		}
+//		//dev->timediff[dev->counter] = Timestamp_get32()-dev->last_timestamp;
+//		//dev->last_timestamp = Timestamp_get32();
 		dev->counter++;
 	}
-	// Detect "0"
-	if ((!(GPIO_read(dev->p.data)))&&(dev->counter_header==11))
-	{
-		dev->data[dev->counter]=0;
-		dev->counter++;
-	}
 
-	// Detect Header (10000000000 	  11bit Header)
-	if ((!(GPIO_read(dev->p.data)))&&(dev->counter_header<10))
-	{// 0's
-		dev->counter_header++;
-		dev->counter = 0;
-	}
-
-	if ((GPIO_read(dev->p.data) > 0)&&(dev->counter_header<10))
-	{//1's
-		dev->counter_header=0;
-		dev->counter = 0;
-	}
-
-	if ((GPIO_read(dev->p.data) > 0) && (dev->counter_header == 10))
-	{
-		dev->counter_header++;
-	}
-
-	// Data complete after 127 bit
-	if ( dev->counter > 127)
+	// Data complete after 128-11 bit
+	if ( dev->counter > (114))
 	{
 		dev->counter = 0;
 		dev->counter_header = 0;

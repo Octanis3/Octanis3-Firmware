@@ -7,14 +7,18 @@
 
 #include "logger.h"
 #include "uart_helper.h"
+#include "../Board.h"
+
 
 #define LOG_POS_VALID_PW		0x1234 	// write this value to the LOG_NEXT_POS_VALID space in memory
 									// at the first time we make a log entry to this FRAM
 
 #define LOG_NEXT_POS_VALID	0x11FFC // store the 16bit "password" (type unsigned int == uint16_t)
 #define LOG_NEXT_POS_OFS		0x11FFE // store the 16bit offset (type unsigned int == uint16_t)
+#define LOG_TIMESTAMP		0x11FFE // store the 32bit timestamp (type unsigned int == uint16_t)
+
 #define LOG_START_POS		0x00012000
-#define LOG_END_POS			0x00013FFE // this is the last byte position to write to
+#define LOG_END_POS			0x00013FF0 // this is the last byte position to write to; conservative...
 /* Note: the allocated storage space is 8 kB large, which is enough for 819 entries */
 
 
@@ -82,6 +86,16 @@ int log_write_new_entry(uint32_t timestamp, uint64_t uid, uint8_t inout)
 
 	return LOG_ENTRY_8b_LEN;
 }
+
+void log_send_lb_state()
+{
+	if(GPIO_read(nbox_lightbarrier_int)==1)
+		uart_serial_putc(&debug_uart, '1');
+	else
+		uart_serial_putc(&debug_uart, '0');
+
+}
+
 
 void log_send_data_via_uart()
 {
