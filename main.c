@@ -42,6 +42,9 @@
 /* Board Header file */
 #include "Board.h"
 
+//to set the CPU frequency.
+#include <ti/sysbios/knl/Clock.h>
+
 // heart beat task
 #define HB_TASKSTACKSIZE   512
 Task_Struct hb_task_Struct;
@@ -84,6 +87,17 @@ int main(void)
     Task_Params lb_taskParams;
     Task_Params rfid_taskParams;
     Task_Params button_taskParams;
+
+    // disable interrupts if an interrupt could lead to
+	// another call to Clock_tickReconfig or if interrupt
+	// processing relies on having a running timer
+	//xdc_runtime_Types_FreqHz clock_frequency;   /* Timestamp frequency */
+	//clock_frequency.lo = 16000000;
+
+//	Hwi_disable() or Swi_disable();
+//	BIOS_setCpuFreq(&clock_frequency);
+//	Clock_tickReconfig(); //need to call Clock_tickStop() and Clock_tickStart if this is called before BIOS_start()!!
+	//	Hwi_restore() or Swi_enable()
 
 
     /* Call board init functions */

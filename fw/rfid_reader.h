@@ -10,13 +10,6 @@
 
 #include "Board.h"
 
-#define LF_RFID //uncomment this line if using HF tags
-
-#ifndef LF_RFID
-	#define HF_RFID
-#endif
-
-
 #define UID_LENGTH 4
 #define TIMESTAMP_LENGTH 4
 

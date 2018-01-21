@@ -47,6 +47,7 @@ typedef struct {
 	unsigned int mode;				/**< GPIO Pin Mode */
 	unsigned int dataSelect;			/**< GPIO Pin dataSelect / Speed */
 	unsigned int modu;				/**< GPIO Pin Modu, RF on/off */
+	unsigned int tag_select;		/** is either MLX_TAG_EM4100 or MLX_TAG_FDX */
 } mlx90109_params_t;	
 
 /**
@@ -58,10 +59,10 @@ typedef struct {
 	uint8_t counter_header;		/**< counter for Header bits "10000000000"*/
 	uint8_t nibble_counter;		/**< counter for the 4-bit groups of the EM4100 */
 	uint8_t data[128];			/**< raw data*/
-	uint32_t timediff[128];
-	uint32_t int_time[128];
+	uint16_t timediff[128];
+	uint16_t int_time[128];
 
-	uint32_t last_timestamp;
+	uint16_t last_timestamp;
 	uint8_t tagId[10];			/**< EM4100 only: 2x4 version bits + 8x4 data bits*/
 	uint8_t id_counter;
 } mlx90109_t;

@@ -134,7 +134,7 @@ int st95_startup()
 	Task_sleep(12); // 10ms minimum, t4 datasheet (time to power up CR995HF)
 						// + 100us min, t0 in datasheet
 
-
+#ifdef HF_RFID
 	GPIO_write(Board_nfc_wakeup_n, 0);
 	Task_sleep(1); // 10us minumum, t1 in datasheet
 	GPIO_write(Board_nfc_wakeup_n, 1);
@@ -211,7 +211,7 @@ int st95_startup()
 		spi_unsel();
 
 	}
-
+#endif
 
 	return 0;
 }

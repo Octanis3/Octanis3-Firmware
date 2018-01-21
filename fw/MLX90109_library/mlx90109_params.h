@@ -69,6 +69,10 @@ extern "C" {
 	#define MLX90109_PARAM_CODE       (2)//  1 = Manchester for EM4100, 2 = Biphase for FDX
 	#endif
 #endif
+
+
+#define MLX_TAG_EM4100 		1
+#define MLX_TAG_FDX		 	0
 /** @} */
 
 /**
@@ -79,7 +83,8 @@ extern "C" {
 									.data			= MLX90109_PARAM_DATA_PIN ,\
 									.mode			= MLX90109_PARAM_MODE_PIN ,\
 									.dataSelect		= MLX90109_PARAM_DATASELECT_PIN ,\
-									.modu			= MLX90109_PARAM_MODU_PIN ,}
+									.modu			= MLX90109_PARAM_MODU_PIN , \
+									.tag_select     = MLX_TAG_FDX}
 #endif
 
 static const mlx90109_params_t mlx90109_params[] ={

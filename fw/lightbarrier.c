@@ -50,14 +50,15 @@ void lightBarrier_init()
     // previously configured port settings
 
     CSCTL0_H = CSKEY >> 8;                    // Unlock CS registers
-    CSCTL1 = DCOFSEL_6;                       // Set DCO = 8MHz
+   // CSCTL1 = DCORSEL_L | DCOFSEL_4;           // Set DCO = 16 MHz
     CSCTL2 = SELA__LFMODCLK | SELS__DCOCLK | SELM__DCOCLK;// Set SMCLK=DCO, rest = default config
-   // CSCTL3 |= DIVS__0;                          // Set divide by 0
+    // CSCTL3 |= DIVS__0;                     // Set divide by 0
     CSCTL0_H = 0;                             // Lock CS registers
 
     // Configure Timer0_A
-    TA0CCR0 = 210;               	// PWM Period --> 8MHz/208 = 38.09 kHz,
+    TA0CCR0 = 210;//421;               	// PWM Period --> 16MHz/421 = 38.005 kHz,
     								// which is the center frequency of the IR receiver
+
 
 #ifdef LAUNCHPAD_PINDEF
     TA0CCTL2 = OUTMOD_7;                      // CCR1 reset/set
@@ -67,6 +68,8 @@ void lightBarrier_init()
     TA0CCR1 = 50;//105;                            // CCR1 PWM duty cycle: 50%. test if we can make it lower!
 #endif
     TA0CTL = TASSEL__SMCLK | MC__UP | TACLR;  // SMCLK, up mode, clear TAR
+
+    TA3CTL = TASSEL__SMCLK | MC__CONTINUOUS | TACLR;  // SMCLK, up mode, clear TAR
 
     // reset state
 	lb_status.event_counter = 0;

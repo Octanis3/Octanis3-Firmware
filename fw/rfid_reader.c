@@ -11,6 +11,8 @@
 #include "MLX90109_library/mlx90109_params.h"
 #include "uart_helper.h"
 #include "logger.h"
+#include <msp430.h>
+
 
 #include <time.h>
 #include <ti/sysbios/hal/Seconds.h>
@@ -234,10 +236,25 @@ void rfid_Task()
 		Semaphore_pend((Semaphore_Handle)semReader, BIOS_WAIT_FOREVER);
 		// tag has been successfully read out.
 
-		#ifndef EM4100
-		//for FDX-B only: check CRC:
-		if(mlx90109_format(&mlx_dev, &lf_tagdata) == MLX90109_OK)
+		if(mlx_dev.p.tag_select ==  MLX_TAG_FDX)
 		{
+			//for FDX-B only: check CRC:
+			if(mlx90109_format(&mlx_dev, &lf_tagdata) == MLX90109_OK)
+			{
+				mlx90109_disable_reader(&mlx_dev, &lf_tagdata);
+
+				GPIO_toggle(Board_led_blue);
+				Task_sleep(50);
+				GPIO_toggle(Board_led_blue);
+				Task_sleep(50);
+				GPIO_toggle(Board_led_blue);
+			}
+		}
+		else
+		{
+
+			lf_tagdata.tagId = *((uint64_t*)&mlx_dev.tagId[1]);
+
 			mlx90109_disable_reader(&mlx_dev, &lf_tagdata);
 
 			GPIO_toggle(Board_led_blue);
@@ -246,20 +263,6 @@ void rfid_Task()
 			Task_sleep(50);
 			GPIO_toggle(Board_led_blue);
 		}
-
-		#else
-
-		lf_tagdata.tagId = *((uint64_t*)&mlx_dev.tagId[1])
-
-		mlx90109_disable_reader(&mlx_dev);
-
-		GPIO_toggle(Board_led_blue);
-		Task_sleep(50);
-		GPIO_toggle(Board_led_blue);
-		Task_sleep(50);
-		GPIO_toggle(Board_led_blue);
-		#endif
-
 	#endif
     }
 }
@@ -294,12 +297,58 @@ void nfc_wakeup_isr()
 void lf_tag_read_isr()
 {
 //	int cnt = mlx_dev.counter;
-//	mlx_dev.int_time[cnt] = Timestamp_get32();
+//	mlx_dev.int_time[cnt] = TA3R;
 	if(em4100_read(&mlx_dev)==MLX90109_DATA_OK)
 	{
 		Semaphore_post((Semaphore_Handle)semReader);
 	}
-//	mlx_dev.int_time[cnt] = (Timestamp_get32()-mlx_dev.int_time[cnt]);
+
+//	if(mlx_dev.counter_header<11)
+//		{
+//			if (!(GPIO_read(mlx_dev.p.data)))
+//			{// 0's
+//			mlx_dev.tagId[mlx_dev.counter_header] = 0;
+//				mlx_dev.counter_header++;
+//
+//			}
+//			else if(mlx_dev.counter_header == 10)
+//			{//the final 1 of the header
+//				mlx_dev.counter_header++;
+//			}
+//			else
+//			{//a '1' that is too early
+//				mlx_dev.counter_header=0;
+//			}
+//			mlx_dev.counter = 0;
+//			//mlx_dev.last_timestamp = Timestamp_get32();
+//		}
+//		else //if(mlx_dev.counter_header==11)
+//		{
+//			mlx_dev.data[mlx_dev.counter] = GPIO_read(mlx_dev.p.data);
+//
+//			// Detect "1"
+//	//		if(GPIO_read(mlx_dev.p.data) > 0)
+//	//		{
+//	//			mlx_dev.data[mlx_dev.counter]=1;
+//	//		}
+//	//		else
+//	//		{
+//	//			mlx_dev.data[mlx_dev.counter]=0;
+//	//		}
+//			mlx_dev.timediff[mlx_dev.counter] = TA3R-mlx_dev.last_timestamp;
+//			mlx_dev.last_timestamp = TA3R;
+//			mlx_dev.counter++;
+//		}
+//
+//		// Data complete after 128-11 bit
+//		if ( mlx_dev.counter > (114))
+//		{
+//			mlx_dev.counter = 0;
+//			mlx_dev.counter_header = 0;
+//			Semaphore_post((Semaphore_Handle)semReader);
+//		}
+//
+//		mlx_dev.int_time[cnt] = (TA3R-mlx_dev.int_time[cnt]);
 
 }
 

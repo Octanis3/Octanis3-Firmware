@@ -65,31 +65,51 @@ int16_t mlx90109_init(mlx90109_t *dev, const mlx90109_params_t *params)
 	get_timefactor();
 	/* write config params to device descriptor */
 	memcpy(&dev->p, params, sizeof(mlx90109_params_t));
+
+
 	
 	//Init Modul Pin if used
 	GPIO_write(dev->p.modu, 0); //turns off CW field
 	//disable clk interrupt
 	GPIO_disableInt(nbox_lf_clk);
 
-	//Init data Rate Pin if used
-	if (dev->p.dataSelect){
-		if (MLX90109_PARAM_SPEED == 2000){
-			GPIO_write(dev->p.dataSelect, 1);
-		}
-		else if (MLX90109_PARAM_SPEED == 4000){
-			GPIO_write(dev->p.dataSelect, 0);
-		}
+//	//Init data Rate Pin if used
+//	if (dev->p.dataSelect){
+//		if (MLX90109_PARAM_SPEED == 2000){
+//			GPIO_write(dev->p.dataSelect, 1);
+//		}
+//		else if (MLX90109_PARAM_SPEED == 4000){
+//			GPIO_write(dev->p.dataSelect, 0);
+//		}
+//	}
+//	//Init Mode Pin if used
+//	if (dev->p.mode){
+//		if (MLX90109_PARAM_CODE == 1){
+//			GPIO_write(dev->p.mode, 1);
+//		}
+//		else if (MLX90109_PARAM_CODE == 2){
+//			GPIO_write(dev->p.mode, 0);
+//		}
+//
+//	}
+
+
+	//check if we are in 125kHz mode (done with jumper)
+	if(GPIO_read(nbox_lf_freq_sel))
+	{
+		dev->p.tag_select = MLX_TAG_EM4100;
+		//high --> jumper is on P3.5&3.4 --> 125khz! change to EM parameters!
+		GPIO_write(dev->p.dataSelect, 1);
+		GPIO_write(dev->p.mode, 1);
 	}
-	//Init Mode Pin if used
-	if (dev->p.mode){
-		if (MLX90109_PARAM_CODE == 1){
-			GPIO_write(dev->p.mode, 1);
-		}
-		else if (MLX90109_PARAM_CODE == 2){
-			GPIO_write(dev->p.mode, 0);
-		}
+	else
+	{
+		dev->p.tag_select = MLX_TAG_FDX;
+		//low --> jumper is not placed --> 134kHz!
+		GPIO_write(dev->p.dataSelect, 0);
+		GPIO_write(dev->p.mode, 0);
+	}
 	
-	}
 	return MLX90109_OK;
 }
 
@@ -233,135 +253,141 @@ int16_t mlx90109_format(mlx90109_t *dev, tagdata *tag)
 
 int16_t em4100_read(mlx90109_t *dev)
 {
-#ifdef EM4100
-	if((dev->counter_header==9))
+	if(dev->p.tag_select == MLX_TAG_EM4100)
 	{
-		// Detect "1"
-		if((GPIO_read(dev->p.data) > 0))
+		if((dev->counter_header==9))
 		{
-			dev->data[dev->counter]=1;
-		}
-		// Detect "0"
-		if ((!(GPIO_read(dev->p.data))))
-		{
-			dev->data[dev->counter]=0;
-		}
-
-		if(dev->nibble_counter==4 && dev->id_counter<10)
-		{
-			//crc
-			dev->nibble_counter = 0;
-			dev->tagId[dev->id_counter] = dev->data[dev->counter-1] + //
-											((dev->data[dev->counter-2])<<1) +//
-											((dev->data[dev->counter-3])<<2) +//
-											((dev->data[dev->counter-4])<<3);
-			uint8_t crc = dev->data[dev->counter-1] +//
-								dev->data[dev->counter-2] +//
-								dev->data[dev->counter-3] +//
-								dev->data[dev->counter-4];
-
-
-			if((crc&0x01) == (dev->data[dev->counter]&0x01))
+			// Detect "1"
+			if((GPIO_read(dev->p.data) > 0))
 			{
-				// CRC OK!
+				dev->data[dev->counter]=1;
+			}
+			// Detect "0"
+			if ((!(GPIO_read(dev->p.data))))
+			{
+				dev->data[dev->counter]=0;
+			}
+
+			if(dev->nibble_counter==4 && dev->id_counter<10)
+			{
+				//crc
 				dev->nibble_counter = 0;
-				dev->id_counter++;
+				dev->tagId[dev->id_counter] = dev->data[dev->counter-1] + //
+												((dev->data[dev->counter-2])<<1) +//
+												((dev->data[dev->counter-3])<<2) +//
+												((dev->data[dev->counter-4])<<3);
+				uint8_t crc = dev->data[dev->counter-1] +//
+									dev->data[dev->counter-2] +//
+									dev->data[dev->counter-3] +//
+									dev->data[dev->counter-4];
+
+
+				if((crc&0x01) == (dev->data[dev->counter]&0x01))
+				{
+					// CRC OK!
+					dev->nibble_counter = 0;
+					dev->id_counter++;
+				}
+				else
+				{
+					// start over
+					dev->counter_header=0;
+					dev->counter = 0;
+					dev->nibble_counter = 0;
+					return MLX90109_CRC_NOT_OK;
+				}
+
 			}
 			else
 			{
-				// start over
-				dev->counter_header=0;
-				dev->counter = 0;
-				dev->nibble_counter = 0;
-				return MLX90109_CRC_NOT_OK;
+				dev->nibble_counter++;
 			}
 
+
+			dev->counter++;
+		}
+		else if(dev->counter_header<9)
+		{
+			// Detect Header (111111111 	 9bit Header (following a stop-0)
+			if ((!(GPIO_read(dev->p.data))))
+			{// 0's
+				dev->counter_header=0;
+			}
+
+			if (GPIO_read(dev->p.data) > 0)
+			{//1's
+				dev->counter_header++;
+			}
+			dev->counter = 0;
+			dev->nibble_counter = 0;
+			dev->id_counter = 0;
+		}
+		// Data complete after 64 bit incl header
+		if (dev->counter > 63-9 && (dev->counter_header==9))
+		{
+			time_off = Timestamp_get32();
+
+			dev->counter = 0;
+			dev->counter_header = 0;
+			return MLX90109_DATA_OK;
 		}
 		else
 		{
-			dev->nibble_counter++;
+			return MLX90109_OK;
 		}
 
-
-		dev->counter++;
-	}
-	else if(dev->counter_header<9)
-	{
-		// Detect Header (111111111 	 9bit Header (following a stop-0)
-		if ((!(GPIO_read(dev->p.data))))
-		{// 0's
-			dev->counter_header=0;
-		}
-
-		if (GPIO_read(dev->p.data) > 0)
-		{//1's
-			dev->counter_header++;
-		}
-		dev->counter = 0;
-		dev->nibble_counter = 0;
-		dev->id_counter = 0;
-	}
-	// Data complete after 64 bit incl header
-	if (dev->counter > 63-9 && (dev->counter_header==9))
-	{
-		time_off = Timestamp_get32();
-
-		dev->counter = 0;
-		dev->counter_header = 0;
-		return MLX90109_DATA_OK;
 	}
 	else
-	{
-		return MLX90109_OK;
-	}
-#else //FDX-B protocol
-	// Detect Header (00000000001 	  11bit Header)
-	if(dev->counter_header<11)
-	{
-		if (!(GPIO_read(dev->p.data)))
-		{// 0's
-			dev->tagId[dev->counter_header] = 0;
-			dev->counter_header++;
+	{ //FDX-B protocol
 
+
+		// Detect Header (00000000001 	  11bit Header)
+		if(dev->counter_header<11)
+		{
+			if (!(GPIO_read(dev->p.data)))
+			{// 0's
+				dev->tagId[dev->counter_header] = 0;
+				dev->counter_header++;
+
+			}
+			else if(dev->counter_header == 10)
+			{//the final 1 of the header
+				dev->counter_header++;
+			}
+			else
+			{//a '1' that is too early
+				dev->counter_header=0;
+			}
+			dev->counter = 0;
+			//dev->last_timestamp = Timestamp_get32();
 		}
-		else if(dev->counter_header == 10)
-		{//the final 1 of the header
-			dev->counter_header++;
+		else //if(dev->counter_header==11)
+		{
+			dev->data[dev->counter] = GPIO_read(dev->p.data);
+			// Detect "1"
+	//		if(GPIO_read(dev->p.data) > 0)
+	//		{
+	//			dev->data[dev->counter]=1;
+	//		}
+	//		else
+	//		{
+	//			dev->data[dev->counter]=0;
+	//		}
+	//		//dev->timediff[dev->counter] = Timestamp_get32()-dev->last_timestamp;
+	//		//dev->last_timestamp = Timestamp_get32();
+			dev->counter++;
+		}
+
+		// Data complete after 128-11 bit
+		if ( dev->counter > (114))
+		{
+			dev->counter = 0;
+			dev->counter_header = 0;
+			return MLX90109_DATA_OK;
 		}
 		else
-		{//a '1' that is too early
-			dev->counter_header=0;
+		{
+			return MLX90109_OK;
 		}
-		dev->counter = 0;
-		//dev->last_timestamp = Timestamp_get32();
 	}
-	else //if(dev->counter_header==11)
-	{
-		dev->data[dev->counter] = GPIO_read(dev->p.data);
-		// Detect "1"
-//		if(GPIO_read(dev->p.data) > 0)
-//		{
-//			dev->data[dev->counter]=1;
-//		}
-//		else
-//		{
-//			dev->data[dev->counter]=0;
-//		}
-//		//dev->timediff[dev->counter] = Timestamp_get32()-dev->last_timestamp;
-//		//dev->last_timestamp = Timestamp_get32();
-		dev->counter++;
-	}
-
-	// Data complete after 128-11 bit
-	if ( dev->counter > (114))
-	{
-		dev->counter = 0;
-		dev->counter_header = 0;
-		return MLX90109_DATA_OK;
-	}
-	else
-	{
-		return MLX90109_OK;
-	}
-#endif
 }

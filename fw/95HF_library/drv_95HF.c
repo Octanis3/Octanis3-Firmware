@@ -733,12 +733,14 @@ void drv95HF_SendIRQINPulse(void)
 {
 	if (drv95HFConfig.uInterface == RFTRANS_95HF_INTERFACE_SPI)
 	{
+#ifdef HF_RFID
 		/* Send a pulse on IRQ_IN */
 		RFTRANS_95HF_IRQIN_HIGH();
 		Task_sleep(1);
 		RFTRANS_95HF_IRQIN_LOW() ;
 		Task_sleep(1);
 		RFTRANS_95HF_IRQIN_HIGH() ;
+#endif
 	}
 #ifdef CR95HF	
 	else if (drv95HFConfig.uInterface == RFTRANS_95HF_INTERFACE_UART)

@@ -55,7 +55,7 @@
 
 #include "fw/user_button.h"
 #include "fw/lightbarrier.h"
-#include "fw/rfid_reader.h"
+#include "fw/rfid_reader.h" //for precompiler assignments
 
 const SPI_Config SPI_config[];
 
@@ -124,6 +124,10 @@ GPIO_PinConfig gpioPinConfigs[] = {
 	GPIOMSP430_P2_4 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
 	/* NESTBOX_LF_DATA */
 	GPIOMSP430_P4_3 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_NONE,
+	#ifdef LF_RFID
+	/* NESTBOX_LF_FREQ_SELECT */
+	GPIOMSP430_P3_5 | GPIO_CFG_IN_PD | GPIO_CFG_IN_INT_NONE,
+	#endif
 
     /* Output pins */
 #ifdef LAUNCHPAD_PINDEF
@@ -141,11 +145,13 @@ GPIO_PinConfig gpioPinConfigs[] = {
 //	GPIOMSP430_P1_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 	/* NESTBOX_SPI_NFC_SEL_N */
 	GPIOMSP430_P3_4 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
+#ifdef HF_RFID
 	/* NESTBOX_SPI_NFC_WAKEUP_N */
 #ifdef LAUNCHPAD_PINDEF
 	GPIOMSP430_P3_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
 #else
 	GPIOMSP430_P3_7 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
+#endif
 #endif
 	/* NESTBOX_LF_MODUL */
 	GPIOMSP430_P1_2 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
