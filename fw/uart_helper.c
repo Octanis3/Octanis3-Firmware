@@ -79,7 +79,7 @@ int ui2a(unsigned long num, unsigned long base, int uc, int leading_zeros,uint8_
     if(leading_zeros)
     {
     		unsigned long tmp = num;
-    		while(!(tmp & 0xf0000000))
+    		while((!(tmp & 0xf0000000)) && (n<sizeof(long)*2-1))
     		{
     			tmp = tmp << 4;
     			*buffer++ = '0';
