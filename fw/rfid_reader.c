@@ -242,12 +242,6 @@ void rfid_Task()
 			if(mlx90109_format(&mlx_dev, &lf_tagdata) == MLX90109_OK)
 			{
 				mlx90109_disable_reader(&mlx_dev, &lf_tagdata);
-
-				GPIO_toggle(Board_led_blue);
-				Task_sleep(50);
-				GPIO_toggle(Board_led_blue);
-				Task_sleep(50);
-				GPIO_toggle(Board_led_blue);
 			}
 		}
 		else
@@ -256,12 +250,6 @@ void rfid_Task()
 			lf_tagdata.tagId = *((uint64_t*)&mlx_dev.tagId[1]);
 
 			mlx90109_disable_reader(&mlx_dev, &lf_tagdata);
-
-			GPIO_toggle(Board_led_blue);
-			Task_sleep(50);
-			GPIO_toggle(Board_led_blue);
-			Task_sleep(50);
-			GPIO_toggle(Board_led_blue);
 		}
 	#endif
     }
@@ -286,7 +274,7 @@ void nfc_wakeup_isr()
   The application can use the Interrupt mode to skip the polling stage.
   */
 
-	GPIO_toggle(Board_led_blue);
+//	GPIO_toggle(Board_led_blue);
 	//check interrupt source
 
 //	Hwi_enable(); //not sure if needed here??

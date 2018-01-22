@@ -124,10 +124,10 @@ void lightBarrier_Task()
     			// second event was detected
     			// --> turn off PWM (?)
 
-    			if(lb_status.direction)
-    				GPIO_write(Board_led_green,1);
-    			else if(lb_status.direction == 0)
-    				GPIO_write(Board_led_blue,1);
+//    			if(lb_status.direction)
+//    				GPIO_write(Board_led_green,1);
+//    			else if(lb_status.direction == 0)
+//    				GPIO_write(Board_led_blue,1);
 
     			Task_sleep(2000);
     			        // timeout for event duration reached.
@@ -148,23 +148,23 @@ void lightBarrier_Task()
 				lb_status.event_counter = 0;
 				Task_sleep(1000);
 			}
-			GPIO_write(Board_led_green,0);
-			GPIO_write(Board_led_blue,0);
+//			GPIO_write(Board_led_green,0);
+//			GPIO_write(Board_led_blue,0);
     		}
     		else
     		{
     			// no second event detected
-    			GPIO_write(Board_led_green,1);
-    			GPIO_write(Board_led_blue,1);
-    			Task_sleep(500);
-    			GPIO_write(Board_led_green,0);
-    			GPIO_write(Board_led_blue,0);
-    			Task_sleep(500);
-    			GPIO_write(Board_led_green,1);
-    			GPIO_write(Board_led_blue,1);
-    			Task_sleep(500);
-    			GPIO_write(Board_led_green,0);
-    			GPIO_write(Board_led_blue,0);
+//    			GPIO_write(Board_led_green,1);
+//    			GPIO_write(Board_led_blue,1);
+//    			Task_sleep(500);
+//    			GPIO_write(Board_led_green,0);
+//    			GPIO_write(Board_led_blue,0);
+//    			Task_sleep(500);
+//    			GPIO_write(Board_led_green,1);
+//    			GPIO_write(Board_led_blue,1);
+//    			Task_sleep(500);
+//    			GPIO_write(Board_led_green,0);
+//    			GPIO_write(Board_led_blue,0);
     			// check if reader detected ID
 
     		}
