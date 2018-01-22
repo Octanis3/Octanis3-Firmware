@@ -134,6 +134,7 @@ void mlx90109_disable_reader(mlx90109_t *dev, tagdata *tag)
 
 	GPIO_write(Board_led_green,0);
 
+#ifdef VERBOSE
 	//send out tag ID:
 	uint8_t hexbuf[8];
 	int strlen = ui2a((tag->tagId)>>32, 16, 'A', hexbuf);
@@ -148,6 +149,7 @@ void mlx90109_disable_reader(mlx90109_t *dev, tagdata *tag)
 	strlen = ui2a(deltat, 10, 1, outbuffer);
 	uart_serial_write(&debug_uart, outbuffer, strlen);
 	uart_serial_putc(&debug_uart,'\n');
+#endif
 }
 
 #define UINT8_BIT_SIZE 8U
@@ -167,7 +169,7 @@ uint16_t ucrc16_calc_le(const uint8_t *buf, size_t len, uint16_t poly,
     return seed;
 }
 
-int16_t mlx90109_format(mlx90109_t *dev, tagdata *tag)
+int16_t fdx_format(mlx90109_t *dev, tagdata *tag)
 {
 	uint8_t i=0;
 	uint8_t k=0;
@@ -203,16 +205,16 @@ int16_t mlx90109_format(mlx90109_t *dev, tagdata *tag)
 	// Checksum calculaton
 	crc = ucrc16_calc_le(&tag->checksumData[0], sizeof(tag->checksumData), 0x8408 , 0x0000);
 	
-	//send out time stamp:
-	uint8_t outbuffer[8];
 
+#ifdef VERBOSE
+	uint8_t outbuffer[8];
 	int strlen = ui2a(crc, 16, 1, outbuffer);
 	uart_serial_write(&debug_uart, outbuffer, strlen);
 	uart_serial_putc(&debug_uart, ',');
 	strlen = ui2a(tag->checksum16, 16, 1, outbuffer);
 	uart_serial_write(&debug_uart, outbuffer, strlen);
 	uart_serial_putc(&debug_uart, '\n');
-
+#endif
 
 
 	if ((tag->checksum16 != crc))
@@ -254,8 +256,21 @@ int16_t mlx90109_format(mlx90109_t *dev, tagdata *tag)
 	return MLX90109_OK;
 }
 
+int16_t em4100_format(mlx90109_t *dev, tagdata *tag)
+{
+	//TODO check CRC...
+	int i=0;
+	tag->tagId = 0;
+	for(i=0;i<10;i++)
+	{
+		tag->tagId = (tag->tagId) << (4);
+		tag->tagId += (dev->tagId[i]);
+	}
 
-int16_t em4100_read(mlx90109_t *dev)
+	return MLX90109_OK;
+}
+
+int16_t mlx90109_read(mlx90109_t *dev)
 {
 	if(dev->p.tag_select == MLX_TAG_EM4100)
 	{

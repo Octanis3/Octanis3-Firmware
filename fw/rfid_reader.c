@@ -235,7 +235,7 @@ void rfid_Task()
 		if(mlx_dev.p.tag_select ==  MLX_TAG_FDX)
 		{
 			//for FDX-B only: check CRC:
-			if(mlx90109_format(&mlx_dev, &lf_tagdata) == MLX90109_OK)
+			if(fdx_format(&mlx_dev, &lf_tagdata) == MLX90109_OK)
 			{
 				lf_tagdata.valid = 1;
 				rfid_stop_detection();
@@ -243,10 +243,11 @@ void rfid_Task()
 		}
 		else
 		{
-
-			lf_tagdata.tagId = *((uint64_t*)&mlx_dev.tagId[1]);
-			lf_tagdata.valid = 1;
-			rfid_stop_detection();
+			if(em4100_format(&mlx_dev, &lf_tagdata) == MLX90109_OK)
+			{
+				lf_tagdata.valid = 1;
+				rfid_stop_detection();
+			}
 		}
 	#endif
     }
@@ -295,7 +296,7 @@ void lf_tag_read_isr()
 {
 //	int cnt = mlx_dev.counter;
 //	mlx_dev.int_time[cnt] = TA3R;
-	if(em4100_read(&mlx_dev)==MLX90109_DATA_OK)
+	if(mlx90109_read(&mlx_dev)==MLX90109_DATA_OK)
 	{
 		Semaphore_post((Semaphore_Handle)semReader);
 	}

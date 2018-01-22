@@ -12,6 +12,10 @@
 
 #define SERIAL_EOF      -1
 
+//leading zeros only works for hexadecimal base!!!
+#define PRINT_LEADING_ZEROS 1
+#define HIDE_LEADING_ZEROS 0
+
 #define UART_BUFFER_SIZE 50
 
 extern UART_Handle debug_uart;
@@ -26,7 +30,7 @@ int uart_serial_putc(UART_Handle *dev, uint8_t c);
 
 int uart_serial_getc(UART_Handle *dev);
 
-int ui2a(unsigned long num, unsigned long base, int uc,uint8_t* buffer);
+int ui2a(unsigned long num, unsigned long base, int uc, int leading_zeros,uint8_t* buffer);
 int intToStr(unsigned long x, uint8_t* buffer, int d);
 
 

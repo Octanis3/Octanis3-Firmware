@@ -49,7 +49,7 @@
 extern "C" {
 #endif
 
-
+//#define VERBOSE 1
 #define LAUNCHPAD_PINDEF 1
 
 #define LF_RFID //comment this line if using HF tags

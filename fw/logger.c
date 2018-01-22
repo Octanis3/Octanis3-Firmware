@@ -142,14 +142,14 @@ void log_send_data_via_uart()
 	while(FRAM_read_ptr < FRAM_read_end_ptr)
 	{
 		//send out time stamp:
-		int strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_TIME_32b_OFS), 10, 1, outbuffer);
+		int strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_TIME_32b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
 		uart_serial_write(&debug_uart, outbuffer, strlen);
 		uart_serial_putc(&debug_uart, ',');
 
 		//send out UID and I/O:
-		strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_MSB_OFS), 16, 1, outbuffer); //the first 32 bits
+		strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_MSB_OFS), 16, 1,HIDE_LEADING_ZEROS, outbuffer); //the first 32 bits
 		uart_serial_write(&debug_uart, outbuffer, strlen);
-		strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_LSB_OFS), 16, 1, outbuffer); //the second 32 bits
+		strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_LSB_OFS), 16, 1,PRINT_LEADING_ZEROS, outbuffer); //the second 32 bits
 		outbuffer[strlen] = ',';
 		outbuffer[strlen+1] = *((uint8_t*)FRAM_read_ptr+LOG_DIR_8b_OFS);
 		uart_serial_write(&debug_uart, outbuffer, strlen+2);

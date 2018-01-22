@@ -108,10 +108,8 @@ void mlx90109_activate_reader(mlx90109_t *dev);
 
 void mlx90109_disable_reader(mlx90109_t *dev, tagdata *tag);
 
-int16_t mlx90109_read(mlx90109_t *dev);
-
 /**
- * @brief              Extract the Data from the Raw data of the FDX tag and performs a CRC.
+ * @brief              Extract the Data from the Raw data of the FDX (EM4100) tag and performs a CRC.
  *
  * @param[out] dev     the device descriptor
  * @param[out] tag     the Tag Data
@@ -119,19 +117,22 @@ int16_t mlx90109_read(mlx90109_t *dev);
  * @return             0 if CRC is ok
  * @return             -2 if CRC is not ok
  */
-int16_t mlx90109_format(mlx90109_t *dev, tagdata *tag);
+int16_t fdx_format(mlx90109_t *dev, tagdata *tag);
+
+int16_t em4100_format(mlx90109_t *dev, tagdata *tag);
+
 
 /************************************************************************/
 
 /**
- * @brief              Reads the Raw Data from and EM4100 Tag, must used in the GPIO Interrupt.
+ * @brief              Reads the Raw Data from an EM4100 or FDX Tag, must used in the GPIO Interrupt.
  *
  * @param[out] dev     the device descriptor
  *
  * @return             0 if a bit could read successfully
  * @return             -3 if the raw data is complete
  */
-int16_t em4100_read(mlx90109_t *dev);
+int16_t mlx90109_read(mlx90109_t *dev);
 
 #endif /* MLX90109_H_ */
 /** @} */

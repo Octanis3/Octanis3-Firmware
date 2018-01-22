@@ -69,13 +69,23 @@ int uart_serial_getc(UART_Handle *dev)
 	return SERIAL_EOF;
 }
 
-
-int ui2a(unsigned long num, unsigned long base, int uc,uint8_t* buffer)
+//leading zeros only works for hexadecimal base!!!
+int ui2a(unsigned long num, unsigned long base, int uc, int leading_zeros,uint8_t* buffer)
 {
     int n=0;
     unsigned long d=1;
     while (num/d >= base)
         d*=base;
+    if(leading_zeros)
+    {
+    		unsigned long tmp = num;
+    		while(!(tmp & 0xf0000000))
+    		{
+    			tmp = tmp << 4;
+    			*buffer++ = '0';
+    			++n;
+    		}
+    }
     while (d!=0) {
         unsigned long dgt = num / d;
         num%= d;
