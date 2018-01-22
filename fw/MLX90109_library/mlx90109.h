@@ -79,7 +79,7 @@ typedef struct {
 	uint16_t checksumArr[2];	/**< Checksum 2byte of 64bit block, from Tag */
 	uint16_t checksum16;		/**< 16bit checksum, calcuated */
 	uint8_t dataB[3];			/**< for Data on Tag, if DataBlock is 1 */
-	uint8_t newTag;
+	uint8_t valid;
 } tagdata;
 
 /**

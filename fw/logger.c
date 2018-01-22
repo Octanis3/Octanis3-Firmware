@@ -70,7 +70,9 @@ int log_write_new_entry(uint32_t timestamp, uint64_t uid, uint8_t inout)
 	}
 	// else, continue...
 
-	*((uint64_t*)FRAM_write_ptr+LOG_UID_64b_OFS) = uid;
+	*((uint32_t*)FRAM_write_ptr+LOG_UID_32b_MSB_OFS) = uid>>32;
+	*((uint32_t*)FRAM_write_ptr+LOG_UID_32b_LSB_OFS) = 0xffffffff & uid;
+
 	*((uint32_t*)FRAM_write_ptr+LOG_TIME_32b_OFS) = timestamp;
 
 	unsigned char inout_c = 'U';
@@ -146,6 +148,7 @@ void log_send_data_via_uart()
 
 		//send out UID and I/O:
 		strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_MSB_OFS), 16, 1, outbuffer); //the first 32 bits
+		uart_serial_write(&debug_uart, outbuffer, strlen);
 		strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_LSB_OFS), 16, 1, outbuffer); //the second 32 bits
 		outbuffer[strlen] = ',';
 		outbuffer[strlen+1] = *((uint8_t*)FRAM_read_ptr+LOG_DIR_8b_OFS);

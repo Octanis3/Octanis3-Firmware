@@ -54,12 +54,8 @@ static tagdata lf_tagdata;
 
 void rfid_Task()
 {
-
 	uart_debug_open();
 	log_startup();
-
-	/* Initialize ST95HF as reader by default*/
-	int initialized = 0;
 
 	/* Initialize LF reader */
 	mlx90109_params_t mlx_params = MLX90109_PARAMS;
@@ -241,30 +237,43 @@ void rfid_Task()
 			//for FDX-B only: check CRC:
 			if(mlx90109_format(&mlx_dev, &lf_tagdata) == MLX90109_OK)
 			{
-				mlx90109_disable_reader(&mlx_dev, &lf_tagdata);
+				lf_tagdata.valid = 1;
+				rfid_stop_detection();
 			}
 		}
 		else
 		{
 
 			lf_tagdata.tagId = *((uint64_t*)&mlx_dev.tagId[1]);
-
-			mlx90109_disable_reader(&mlx_dev, &lf_tagdata);
+			lf_tagdata.valid = 1;
+			rfid_stop_detection();
 		}
 	#endif
     }
 }
 
-uint64_t rfid_get_id()
+int rfid_get_id(uint64_t* id)
 {
-	return lf_tagdata.tagId;
+	if(lf_tagdata.valid)
+	{
+		*id = lf_tagdata.tagId;
+		return 1;
+	}
+	else
+		return 0;
 }
 
 void rfid_start_detection()
 {
 #ifdef LF_RFID
+	lf_tagdata.valid = 0;
 	mlx90109_activate_reader(&mlx_dev);
 #endif
+}
+
+void rfid_stop_detection()
+{
+	mlx90109_disable_reader(&mlx_dev, &lf_tagdata);
 }
 
 void nfc_wakeup_isr()
