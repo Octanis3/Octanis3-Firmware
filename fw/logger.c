@@ -8,27 +8,29 @@
 #include "logger.h"
 #include "uart_helper.h"
 #include "../Board.h"
-
+#include <ti/sysbios/hal/Seconds.h>
 
 #define LOG_POS_VALID_PW		0x1234 	// write this value to the LOG_NEXT_POS_VALID space in memory
 									// at the first time we make a log entry to this FRAM
 
+#define LOG_BACKUP_PERIOD	2		// seconds between two time stamp back-ups
+
 #define LOG_NEXT_POS_VALID	0x11FFC // store the 16bit "password" (type unsigned int == uint16_t)
 #define LOG_NEXT_POS_OFS		0x11FFE // store the 16bit offset (type unsigned int == uint16_t)
-#define LOG_TIMESTAMP		0x11FFE // store the 32bit timestamp (type unsigned int == uint16_t)
-
+#define LOG_TIMESTAMP		0x11FF8 // store the 32bit timestamp (type unsigned int == uint16_t)
+							// ^--- RESERVED SPACE STARTS HERE!! CHANGE nestbox_memory_map.cmd FILE IF MODIFYING THIS VALUE!
 #define LOG_START_POS		0x00012000
 #define LOG_END_POS			0x00013FF0 // this is the last byte position to write to; conservative...
 /* Note: the allocated storage space is 8 kB large, which is enough for 819 entries */
 
 
-#define LOG_UID_64b_OFS			0x0 // 64 bit UID
+#define LOG_UID_64b_OFS				0x0 // 64 bit UID
 #define LOG_UID_32b_MSB_OFS			0x0 // 64 bit UID
 #define LOG_UID_32b_LSB_OFS			0x1 // 64 bit UID
 
-#define LOG_TIME_32b_OFS			0x2 // 32 bit epoch timestamp
-#define LOG_DIR_8b_OFS			0xC // 1 byte "I", "O" or "U" in/out/unknown
-#define LOG_CRC_8b_OFS			0xD // 1 byte CRC (for int16 alignment)
+#define LOG_TIME_32b_OFS				0x2 // 32 bit epoch timestamp
+#define LOG_DIR_8b_OFS				0xC // 1 byte "I", "O" or "U" in/out/unknown
+#define LOG_CRC_8b_OFS				0xD // 1 byte CRC (for int16 alignment)
 
 #define LOG_ENTRY_8b_LEN		0xE
 #define LOG_ENTRY_16b_LEN	0x7
@@ -39,21 +41,31 @@
 unsigned int* FRAM_offset_ptr;
 unsigned int* FRAM_read_ptr;
 
+unsigned int log_initialized = 0;
 
 void log_startup()
 {
 	FRAM_offset_ptr = (unsigned int*)LOG_NEXT_POS_OFS;
 
 	unsigned int* FRAM_pw = (unsigned int*)LOG_NEXT_POS_VALID;
-	if((*FRAM_pw) != LOG_POS_VALID_PW)
+	if(((*FRAM_pw) != LOG_POS_VALID_PW) || (GPIO_read(Board_button)==0))
 	{
 		// new initialization
 		*FRAM_offset_ptr = 0x0000;
 
 		// store correct password
 		(*FRAM_pw) = LOG_POS_VALID_PW;
-	}
 
+		//reset time stamp:
+		(*(uint32_t*)LOG_TIMESTAMP) = Seconds_get();
+	}
+	else
+	{
+		//recover time stamp, except if user button is pressed --> full reset.
+		Seconds_set((*(uint32_t*)LOG_TIMESTAMP) + (LOG_BACKUP_PERIOD/2));
+		//LOG_BACKUP_PERIOD/2: add the average time difference that got lost due to backup interval
+	}
+	log_initialized = 1;
 }
 
 int log_write_new_entry(uint32_t timestamp, uint64_t uid, uint8_t inout)
@@ -162,4 +174,15 @@ void log_send_data_via_uart()
 	//TODO: optional, reset the *LOG_NEXT_POS_OFS to zero.
 
 }
+
+//called periodically
+Void cron_quick_clock(UArg arg){
+	// flash led
+//	GPIO_toggle(Board_led_green); // use red led for user inputs
+
+	// back up time stamp
+	if(log_initialized)
+		(*(uint32_t*)LOG_TIMESTAMP) = Seconds_get();
+}
+
 

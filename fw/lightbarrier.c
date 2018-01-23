@@ -55,7 +55,7 @@ void lightBarrier_init()
 
     CSCTL0_H = CSKEY >> 8;                    // Unlock CS registers
    // CSCTL1 = DCORSEL_L | DCOFSEL_4;           // Set DCO = 16 MHz
-    CSCTL2 = SELA__LFMODCLK | SELS__DCOCLK | SELM__DCOCLK;// Set SMCLK=DCO, rest = default config
+    CSCTL2 = SELA__LFXTCLK | SELS__DCOCLK | SELM__DCOCLK;// Set SMCLK=DCO, rest = default config
     // CSCTL3 |= DIVS__0;                     // Set divide by 0
     CSCTL0_H = 0;                             // Lock CS registers
 
