@@ -122,6 +122,7 @@ void lightBarrier_Task()
 		// first event was detected
 		lb_status.timestamp = Seconds_get();
 		lb_status.event_valid = 0; // any subsequent event trigger is NOT considered to be a new event, until
+		uint64_t tag_id=0;
 
     		if(Semaphore_pend((Semaphore_Handle)semLB2, 2000))
     		{
@@ -147,7 +148,6 @@ void lightBarrier_Task()
 				Task_sleep(T_INACTIVITY);
 			}
 
-			uint64_t tag_id=0;
 			if(!rfid_get_id(&tag_id))
 			{
 				// readout failed --> turn off reader
@@ -168,20 +168,14 @@ void lightBarrier_Task()
     		}
     		else
     		{
-    			// no second event detected
-//    			GPIO_write(Board_led_green,1);
-//    			GPIO_write(Board_led_blue,1);
-//    			Task_sleep(500);
-//    			GPIO_write(Board_led_green,0);
-//    			GPIO_write(Board_led_blue,0);
-//    			Task_sleep(500);
-//    			GPIO_write(Board_led_green,1);
-//    			GPIO_write(Board_led_blue,1);
-//    			Task_sleep(500);
-//    			GPIO_write(Board_led_green,0);
-//    			GPIO_write(Board_led_blue,0);
-    			// check if reader detected ID
-
+    			// no second event detected!
+    			// disable reader
+    			if(!rfid_get_id(&tag_id))
+			{
+				// readout failed --> turn off reader
+				rfid_stop_detection();
+			}
+			log_write_new_entry(lb_status.timestamp, tag_id, lb_status.direction);
     		}
 
     		// reset state
