@@ -9,6 +9,7 @@
 #include "uart_helper.h"
 #include "../Board.h"
 #include <ti/sysbios/hal/Seconds.h>
+#include <msp430.h>
 
 #define LOG_POS_VALID_PW		0x1234 	// write this value to the LOG_NEXT_POS_VALID space in memory
 									// at the first time we make a log entry to this FRAM
@@ -65,6 +66,16 @@ void log_startup()
 		Seconds_set((*(uint32_t*)LOG_TIMESTAMP) + (LOG_BACKUP_PERIOD/2));
 		//LOG_BACKUP_PERIOD/2: add the average time difference that got lost due to backup interval
 	}
+
+	// compensate for LFX deviation:
+    RTCCTL01 = RTCHOLD;
+
+	//compensate for 11.1ppm = 5*2.17 --> 5 = 0b101
+	RTCCTL23 = RTCCAL2 + RTCCAL0;
+	RTCCTL23 &= ~RTCCALS;
+
+    RTCCTL01 &= ~(RTCHOLD);                 // Start RTC
+
 	log_initialized = 1;
 }
 

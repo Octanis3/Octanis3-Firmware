@@ -54,7 +54,9 @@ void lightBarrier_init()
     // previously configured port settings
 
     CSCTL0_H = CSKEY >> 8;                    // Unlock CS registers
-   // CSCTL1 = DCORSEL_L | DCOFSEL_4;           // Set DCO = 16 MHz
+    // CSCTL1 = DCORSEL_L | DCOFSEL_4;           // Set DCO = 16 MHz
+
+    // SELA__LFXTCLK needed for real time clock!!
     CSCTL2 = SELA__LFXTCLK | SELS__DCOCLK | SELM__DCOCLK;// Set SMCLK=DCO, rest = default config
     // CSCTL3 |= DIVS__0;                     // Set divide by 0
     CSCTL0_H = 0;                             // Lock CS registers
@@ -203,8 +205,6 @@ void lightBarrier_Task()
 
 void lightbarrier_input_isr(unsigned int index)
 {
-//	button_pressed = 1;
-//
 //	//check interrupt source
 	if(index == nbox_lightbarrier_ext)
 	{
@@ -212,7 +212,7 @@ void lightbarrier_input_isr(unsigned int index)
 		if(lb_status.inner_trig == 1 && lb_status.outer_trig == 0)
 		{
 			// second lightbarrier has triggered before --> direction is known
-			lb_status.direction = _OUT;
+			lb_status.direction = _IN;
 			// post second LB semaphore (has 10sec timeout)
 			Semaphore_post((Semaphore_Handle)semLB2);
 		}
@@ -232,7 +232,7 @@ void lightbarrier_input_isr(unsigned int index)
 		if(lb_status.outer_trig == 1 && lb_status.inner_trig == 0)
 		{
 			// second lightbarrier has triggered before --> direction is known
-			lb_status.direction = _IN;
+			lb_status.direction = _OUT;
 			// post second LB semaphore (has 2 sec timeout)
 			Semaphore_post((Semaphore_Handle)semLB2);
 		}
