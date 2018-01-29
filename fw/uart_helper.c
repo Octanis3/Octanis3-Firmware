@@ -7,6 +7,8 @@
 
 #include "../Board.h"
 #include "uart_helper.h"
+#include <xdc/runtime/Timestamp.h>
+#include <ti/sysbios/hal/Seconds.h>
 
 UART_Handle debug_uart;
 
@@ -42,6 +44,57 @@ int uart_debug_open(){
 	}
 
 	return 1;
+}
+
+int debug_prints_allowed = 0;
+void uart_start_debug_prints()
+{
+	debug_prints_allowed = 1;
+}
+
+void uart_stop_debug_prints()
+{
+	debug_prints_allowed = 0;
+}
+
+
+const char newline = '\n';
+const char zero = '0';
+void uart_serial_print_event(char type, const uint8_t* data, unsigned int n)
+{
+	if(debug_prints_allowed)
+	{
+		uint32_t t = Timestamp_get32();
+		uint32_t seconds = t >> 15;
+		uint32_t msecs = (t & 0x7fff) * 1000 /32768;
+
+		uint32_t rtc_sec = Seconds_get();
+
+		uint8_t strlen;
+		uint8_t sec_buf[7];
+		strlen = ui2a(rtc_sec, 10, 1, HIDE_LEADING_ZEROS, sec_buf);
+		sec_buf[strlen]=',';
+		UART_write(debug_uart, sec_buf, strlen+1);
+
+		strlen = ui2a(seconds, 10, 1, HIDE_LEADING_ZEROS, sec_buf);
+		if(strlen>6)
+				strlen = 6;
+		sec_buf[strlen]='.';
+		UART_write(debug_uart, sec_buf, strlen+1);
+		strlen = ui2a(msecs, 10, 1, HIDE_LEADING_ZEROS, sec_buf);
+		if(strlen<3)
+			UART_write(debug_uart, &zero, 1);
+		if(strlen<2)
+			UART_write(debug_uart, &zero, 1);
+		if(strlen>4)
+			strlen = 4;
+		sec_buf[strlen]=',';
+		sec_buf[strlen+1]=type;
+		sec_buf[strlen+2]=',';
+		UART_write(debug_uart, sec_buf, strlen+3);
+		UART_write(debug_uart, data, n);
+		UART_write(debug_uart, &newline, 1);
+	}
 }
 
 size_t uart_serial_write(UART_Handle *dev, const uint8_t *data, unsigned int n)

@@ -238,7 +238,8 @@ void rfid_Task()
 			if(fdx_format(&mlx_dev, &lf_tagdata) == MLX90109_OK)
 			{
 				lf_tagdata.valid = 1;
-				rfid_stop_detection();
+				if(!log_phase_two())
+					rfid_stop_detection();
 			}
 		}
 		else
@@ -246,10 +247,29 @@ void rfid_Task()
 			if(em4100_format(&mlx_dev, &lf_tagdata) == MLX90109_OK)
 			{
 				lf_tagdata.valid = 1;
-				rfid_stop_detection();
+				if(!log_phase_two())
+					rfid_stop_detection();
 			}
 		}
+
+		if(lf_tagdata.valid)
+		{
+			Semaphore_pend((Semaphore_Handle)semSerial,BIOS_WAIT_FOREVER);
+			uint8_t outbuffer[20]; // (64bits/4bits per character) = 16; conservative buffer size value!
+			uint8_t strlen = ui2a((lf_tagdata.tagId)>>32, 16, 1,HIDE_LEADING_ZEROS, outbuffer); //the first 32 bits
+			strlen = strlen + ui2a((uint32_t)(0xffffffff & (lf_tagdata.tagId)), 16, 1,PRINT_LEADING_ZEROS, &(outbuffer[strlen])); //the second 32 bits
+			uart_serial_print_event('R', outbuffer, strlen);
+			Semaphore_post((Semaphore_Handle)semSerial);
+		}
+
 	#endif
+		if(log_phase_two())
+		{
+			Task_sleep(100);
+			rfid_start_detection();
+			Semaphore_reset((Semaphore_Handle)semReader,0);
+		}
+
     }
 }
 

@@ -30,6 +30,11 @@ int uart_serial_putc(UART_Handle *dev, uint8_t c);
 
 int uart_serial_getc(UART_Handle *dev);
 
+void uart_start_debug_prints();
+void uart_stop_debug_prints();
+
+void uart_serial_print_event(char type, const uint8_t* data, unsigned int n);
+
 int ui2a(unsigned long num, unsigned long base, int uc, int leading_zeros,uint8_t* buffer);
 int intToStr(unsigned long x, uint8_t* buffer, int d);
 

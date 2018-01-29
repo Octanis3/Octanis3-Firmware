@@ -11,6 +11,10 @@
 #include <ti/sysbios/hal/Seconds.h>
 #include <msp430.h>
 
+
+#include <xdc/cfg/global.h> //needed for semaphore
+#include <ti/sysbios/knl/Semaphore.h>
+
 #define LOG_POS_VALID_PW		0x1234 	// write this value to the LOG_NEXT_POS_VALID space in memory
 									// at the first time we make a log entry to this FRAM
 
@@ -36,6 +40,7 @@
 #define LOG_ENTRY_8b_LEN		0xE
 #define LOG_ENTRY_16b_LEN	0x7
 
+#define T_PHASE_2			86400 //after 24hours, all events get logged
 
 #define OUTPUT_BUF_LEN		LOG_ENTRY_8b_LEN+2+2 // adding two ',' and two digits for decimal time stamp rep.
 
@@ -43,6 +48,7 @@ unsigned int* FRAM_offset_ptr;
 unsigned int* FRAM_read_ptr;
 
 unsigned int log_initialized = 0;
+static unsigned int phase_two = 0;
 
 void log_startup()
 {
@@ -121,6 +127,10 @@ void log_send_lb_state()
 
 }
 
+const uint8_t start_string[] = "#================== start FRAM logs ===================\n";
+const uint8_t title_row[] = "time [s],RFID UID,direction\n";
+const uint8_t end_string[] = "#================== end FRAM logs ===================\n";
+
 
 void log_send_data_via_uart()
 {
@@ -155,8 +165,11 @@ void log_send_data_via_uart()
 
 
 	************************ end example *************************/
-
+	uart_stop_debug_prints();
 	uart_debug_open();
+
+	uart_serial_write(&debug_uart, start_string, sizeof(start_string));
+	uart_serial_write(&debug_uart, title_row, sizeof(title_row));
 
 	unsigned int* FRAM_read_end_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); //points to the end of the valid stored data
 	FRAM_read_ptr = (unsigned int*)LOG_START_POS; // points to start of logged data.
@@ -182,8 +195,16 @@ void log_send_data_via_uart()
 		FRAM_read_ptr += LOG_ENTRY_16b_LEN;
 	}
 
+	uart_serial_write(&debug_uart, end_string, sizeof(end_string));
+	uart_start_debug_prints();
+
 	//TODO: optional, reset the *LOG_NEXT_POS_OFS to zero.
 
+}
+
+uint8_t log_phase_two()
+{
+	return phase_two;
 }
 
 //called periodically
@@ -194,6 +215,25 @@ Void cron_quick_clock(UArg arg){
 	// back up time stamp
 	if(log_initialized)
 		(*(uint32_t*)LOG_TIMESTAMP) = Seconds_get();
+
+	if(Seconds_get() > T_PHASE_2)
+		phase_two = 1;
+}
+
+void log_Task()
+{
+	Task_sleep(5000); //wait until UART is initialized
+	uart_start_debug_prints();
+
+	while(1)
+	{
+		// print status of light barrier
+		uint8_t stat = '0' + 2*GPIO_read(nbox_lightbarrier_int) + GPIO_read(nbox_lightbarrier_ext);
+		uart_serial_print_event('S', &stat, 1);
+		Semaphore_post((Semaphore_Handle)semSerial);
+		Task_sleep(1000);
+		Semaphore_pend((Semaphore_Handle)semSerial,BIOS_WAIT_FOREVER);
+	}
 }
 
 

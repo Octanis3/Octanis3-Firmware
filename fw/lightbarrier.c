@@ -11,6 +11,7 @@
 #include <msp430.h>
 #include "user_button.h"
 #include "logger.h"
+#include "uart_helper.h"
 #include "rfid_reader.h"
 
 #include <time.h>
@@ -113,10 +114,8 @@ void lightBarrier_Task()
 {
     lightBarrier_init();
 
-
 	GPIO_write(Board_led_blue,0);
 	GPIO_write(Board_led_green,0);
-
 
     while (1) {
 
@@ -126,53 +125,67 @@ void lightBarrier_Task()
 		lb_status.event_valid = 0; // any subsequent event trigger is NOT considered to be a new event, until
 		uint64_t tag_id=0;
 
-    		if(Semaphore_pend((Semaphore_Handle)semLB2, 2000))
+    		if(Semaphore_pend((Semaphore_Handle)semLB2, 100))
     		{
+    			Semaphore_pend((Semaphore_Handle)semSerial,BIOS_WAIT_FOREVER);
+    			uint8_t c = lb_status.direction+'0';
+    			uart_serial_print_event('L', &c, 1);
+    			Semaphore_post((Semaphore_Handle)semSerial);
+
     			// second event was detected
     			// --> turn off PWM!
-    			lightBarrier_turn_off();
 
-    			Task_sleep(T_EVENT_DURATION);
-    			        // timeout for event duration reached.
-    			        // --> reset all states and turn on PWM
+    			if(!log_phase_two())
+    			{
+					lightBarrier_turn_off();
 
-    			//turn on light barrier again.
-    			lightBarrier_turn_on();
+					Task_sleep(T_EVENT_DURATION);
+							// timeout for event duration reached.
+							// --> reset all states and turn on PWM
 
-    			Task_sleep(10);
-			GPIO_enableInt(nbox_lightbarrier_ext);
-			GPIO_enableInt(nbox_lightbarrier_int);
+					//turn on light barrier again.
+					lightBarrier_turn_on();
 
-			//make sure no events occur anymore
-			while(lb_status.event_counter>0 || GPIO_read(nbox_lightbarrier_ext) || GPIO_read(nbox_lightbarrier_int))
-			{
-				lb_status.event_counter = 0;
-				Task_sleep(T_INACTIVITY);
-			}
+					Task_sleep(10);
+				GPIO_enableInt(nbox_lightbarrier_ext);
+				GPIO_enableInt(nbox_lightbarrier_int);
 
-			if(!rfid_get_id(&tag_id))
-			{
-				// readout failed --> turn off reader
-				rfid_stop_detection();
-				GPIO_write(Board_led_green,0);
-				Task_sleep(250);
-				GPIO_write(Board_led_green,1);
-				Task_sleep(250);
-				GPIO_write(Board_led_green,0);
-				Task_sleep(250);
-				GPIO_write(Board_led_green,1);
-				Task_sleep(250);
-				GPIO_write(Board_led_green,0);
-			}
+				//make sure no events occur anymore
+				while(lb_status.event_counter>0 || GPIO_read(nbox_lightbarrier_ext) || GPIO_read(nbox_lightbarrier_int))
+				{
+					lb_status.event_counter = 0;
+					Task_sleep(T_INACTIVITY);
+				}
+
+				if(!rfid_get_id(&tag_id))
+				{
+					// readout failed --> turn off reader
+					rfid_stop_detection();
+					GPIO_write(Board_led_green,0);
+					Task_sleep(250);
+					GPIO_write(Board_led_green,1);
+					Task_sleep(250);
+					GPIO_write(Board_led_green,0);
+					Task_sleep(250);
+					GPIO_write(Board_led_green,1);
+					Task_sleep(250);
+					GPIO_write(Board_led_green,0);
+				}
+    			}
 			// --> create logging event
 			log_write_new_entry(lb_status.timestamp, tag_id, lb_status.direction);
 
     		}
     		else
     		{
+    			Semaphore_pend((Semaphore_Handle)semSerial,BIOS_WAIT_FOREVER);
+    			uint8_t c = (lb_status.outer_trig) + (lb_status.inner_trig*2) + 64; //will print A for outer and B for inner trigger'd
+    			uart_serial_print_event('U', &c, 1);
+    			Semaphore_post((Semaphore_Handle)semSerial);
+
     			// no second event detected!
     			// disable reader
-    			if(!rfid_get_id(&tag_id))
+    			if(!rfid_get_id(&tag_id) && !(log_phase_two()))
 			{
 				// readout failed --> turn off reader
 				rfid_stop_detection();
