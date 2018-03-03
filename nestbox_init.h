@@ -68,7 +68,7 @@ extern "C" {
 typedef enum nbox_GPIOName {
     //inputs
 	nbox_button = 0,
-	nbox_nfc_irq_n,
+	nbox_loadcell_data,
 	nbox_lightbarrier_ext,
 	nbox_lightbarrier_int,
 	nbox_lf_clk,
@@ -83,9 +83,11 @@ typedef enum nbox_GPIOName {
 #endif
     nbox_led_blue,
 //	nbox_led_ir,
-	nbox_spi_nfc_sel_n,
 #ifdef HF_RFID
+	nbox_spi_nfc_sel_n,
 	nbox_nfc_wakeup_n,
+#else
+	nbox_loadcell_clk,
 #endif
 	nbox_lf_modul,
 	nbox_lf_mode,

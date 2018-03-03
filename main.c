@@ -39,6 +39,7 @@
 #include "fw/rfid_reader.h"
 #include "fw/user_button.h"
 #include "fw/logger.h"
+#include "fw/load_cell.h"
 
 /* Board Header file */
 #include "Board.h"
@@ -71,6 +72,11 @@ Char button_task_Stack[BUTTON_TASKSTACKSIZE];
 Task_Struct log_task_Struct;
 Char log_task_Stack[LOG_TASKSTACKSIZE];
 
+// log task
+#define LOAD_CELL_TASKSTACKSIZE   512
+Task_Struct load_cell_task_Struct;
+Char load_cell_task_Stack[LOAD_CELL_TASKSTACKSIZE];
+
 /*
  *  ======== heartBeatFxn ========
  *  Toggle the Board_led_green. The Task_sleep is determined by arg0 which
@@ -94,6 +100,8 @@ int main(void)
     Task_Params rfid_taskParams;
     Task_Params button_taskParams;
     Task_Params log_taskParams;
+    Task_Params load_cell_taskParams;
+
 
     // disable interrupts if an interrupt could lead to
 	// another call to Clock_tickReconfig or if interrupt
@@ -143,13 +151,19 @@ int main(void)
 	button_taskParams.priority = 3; // <--- MUST HAVE LOWER PRIORITY, OTHERWISE THE SPI POLLING MAY GET IT STUCK AND HANG OTHER TASKS.
 	Task_construct(&button_task_Struct, (Task_FuncPtr)user_button_Task, &button_taskParams, NULL);
 
-	/* Construct userButton Task  thread */
+	/* Construct logging Task  thread */
 	Task_Params_init(&log_taskParams);
 	log_taskParams.stackSize = LOG_TASKSTACKSIZE;
 	log_taskParams.stack = &log_task_Stack;
 	log_taskParams.priority = 4; //
 	Task_construct(&log_task_Struct, (Task_FuncPtr)log_Task, &log_taskParams, NULL);
 
+	/* Construct load cell Task  thread */
+	Task_Params_init(&load_cell_taskParams);
+	load_cell_taskParams.stackSize = LOAD_CELL_TASKSTACKSIZE;
+	load_cell_taskParams.stack = &load_cell_task_Stack;
+	load_cell_taskParams.priority = 2; //
+	Task_construct(&load_cell_task_Struct, (Task_FuncPtr)load_cell_Task, &load_cell_taskParams, NULL);
 
     /* Turn on user LED  */
     GPIO_write(Board_led_green, Board_LED_ON);
