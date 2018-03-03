@@ -10,6 +10,7 @@
 #include "../Board.h"
 #include <ti/sysbios/hal/Seconds.h>
 #include <msp430.h>
+#include "rfid_reader.h"
 
 
 #include <xdc/cfg/global.h> //needed for semaphore
@@ -217,7 +218,13 @@ Void cron_quick_clock(UArg arg){
 		(*(uint32_t*)LOG_TIMESTAMP) = Seconds_get();
 
 	if(Seconds_get() > T_PHASE_2)
-		phase_two = 1;
+	{
+		if(phase_two == 0)
+		{
+			phase_two = 1;
+			rfid_start_detection();
+		}
+	}
 }
 
 void log_Task()
