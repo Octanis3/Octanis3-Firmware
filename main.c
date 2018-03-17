@@ -72,8 +72,8 @@ Char button_task_Stack[BUTTON_TASKSTACKSIZE];
 Task_Struct log_task_Struct;
 Char log_task_Stack[LOG_TASKSTACKSIZE];
 
-// log task
-#define LOAD_CELL_TASKSTACKSIZE   512
+// load cell task
+#define LOAD_CELL_TASKSTACKSIZE   1024
 Task_Struct load_cell_task_Struct;
 Char load_cell_task_Stack[LOAD_CELL_TASKSTACKSIZE];
 

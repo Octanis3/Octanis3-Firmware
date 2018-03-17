@@ -9,6 +9,92 @@
 #include "../Board.h"
 #include "uart_helper.h"
 
+#include "rfid_reader.h"
+#include "logger.h"
+
+#include <xdc/cfg/global.h> //needed for semaphore
+#include <ti/sysbios/knl/Semaphore.h>
+
+#define WEIGHT_THRESHOLD 100
+#define SAMPLE_RATE		HX_SAMPLE_RATE //Hz
+#define MIN_EVENT_TIME 	10 //seconds
+#define N_AVERAGES		10
+#define EVENT_BUF_SIZE	SAMPLE_RATE*MIN_EVENT_TIME/N_AVERAGES //need to account for 10 averaging window already in place!
+
+#define PLUS_SIGN 		' '
+#define MINUS_SIGN		'-'
+
+#define RFID_TIMEOUT		3000 	//ms
+#define T_RFID_RETRY		10000 	//ms
+#define T_LOADCELL_POLL	1000 	//ms
+
+#define WEIGHT_TOLERANCE 	0.1f		// maximum deviation from average value within one measurement series
+#define WEIGHT_MAX_CHANGE	0.015f	// maximum change
+
+void print_load_cell_value(float value, char sign, char log_symbol)
+{
+	uint8_t strlen;
+	uint8_t weight_buf[20];
+	strlen = ui2a((unsigned long)(value*1000), 10, 1, HIDE_LEADING_ZEROS, &weight_buf[1]);
+	weight_buf[0] = sign;
+
+	Semaphore_pend((Semaphore_Handle)semSerial,BIOS_WAIT_FOREVER);
+	uart_serial_print_event(log_symbol, weight_buf, strlen+1);
+	Semaphore_post((Semaphore_Handle)semSerial);
+}
+
+int load_cell_get_stable()
+{
+	static float meas_buf[EVENT_BUF_SIZE] = {0.0,};
+	static int first_valid = 0;
+	static int first_invalid = 0;
+
+	int i = 0;
+	int tmp = first_invalid;
+	float deviation = 0;
+
+	// fill circular buffer with new measurements
+	do{
+		meas_buf[tmp] = hx711_get_units(N_AVERAGES, &deviation);
+		if(meas_buf[tmp]<WEIGHT_THRESHOLD)
+		{
+			first_valid = 0;
+			first_invalid = 0;
+			return 0;
+		}
+		if(deviation > WEIGHT_TOLERANCE)
+			continue;
+
+		print_load_cell_value(meas_buf[tmp], PLUS_SIGN, 'W');
+
+		tmp = tmp + 1;
+		if(tmp >= EVENT_BUF_SIZE)
+			tmp = 0;
+
+	}while(tmp != first_valid);
+
+	// calculate average over circular buffer:
+	float average = meas_buf[0];
+	for(i=1; i<EVENT_BUF_SIZE; i++)
+	{
+		average = average + meas_buf[i];
+	}
+	average = average/EVENT_BUF_SIZE;
+
+//	// check backwards if all values are within derivative limit
+//	if(first_valid > 0)
+//		tmp = first_valid - 1;
+//	else
+//		tmp = EVENT_BUF_SIZE-1;
+//
+//	for(i=0; i<EVENT_BUF_SIZE; i++)
+//	{
+//		average =
+//	}
+
+	print_load_cell_value(average, PLUS_SIGN, 'A');
+	return 1;
+}
 
 void load_cell_Task()
 {
@@ -19,31 +105,86 @@ void load_cell_Task()
 	hx711_power_up();
 
 	Task_sleep(1000); //wait until things are settled...
+	//todo: check if tare is successful!!
 	hx711_tare(20);
+
+	//weight value
 	float value;
+
+	//storage for measurement series
+	char event_ongoing = 0;
+	char series_completed = 0;
+
+	uint64_t owl_ID = 0;
+
+	hx711_power_up();
 
 	while(1)
 	{
-
-
-		value = hx711_get_units(10);
-
-		char sign = '+';
-		if(value<0)
+		// currently no event detected & reader was off
+		if(!event_ongoing || series_completed)
 		{
-			value = -value;
-			sign = '-';
+			// hx711_power_up();
+
+			// check if bird is present:
+			float dummy_tol;
+			value = hx711_get_units(1,&dummy_tol);
+
+			// hx711_power_down();
+
+			char sign = PLUS_SIGN;
+			if(value<0)
+			{
+				value = -value;
+				sign = MINUS_SIGN;
+			}
+
+			//print the inexact weight value: (TODO:remove)
+			print_load_cell_value(value, sign, 'D');
+
+			if(value>WEIGHT_THRESHOLD && sign == PLUS_SIGN)
+			{
+				if(event_ongoing==0)
+				{
+					rfid_start_detection();
+					Semaphore_pend((Semaphore_Handle)semLoadCell,RFID_TIMEOUT);
+
+					if(!log_phase_two())
+						rfid_stop_detection();
+
+					if(rfid_get_id(&owl_ID))
+					{
+						event_ongoing = 1;
+						series_completed = 0;
+					}
+					else
+						Task_sleep(T_RFID_RETRY);
+				}
+			}
+			else
+			{
+				event_ongoing = 0;
+			}
+
+			// polling delay...
+			Task_sleep(T_LOADCELL_POLL);
 		}
 
-		uart_serial_print_event('W', &sign, 1);
+		if(event_ongoing)
+		{
+			// -->ID WAS DETECTED!
 
-		uint8_t strlen;
-		uint8_t sec_buf[7];
-		strlen = ui2a((unsigned long)value, 10, 1, HIDE_LEADING_ZEROS, sec_buf);
-		sec_buf[strlen]='\n';
-		UART_write(debug_uart, sec_buf, strlen+1);
-
-		Task_sleep(1000);
+			//measure weight again with 10 averages:
+			if(load_cell_get_stable())
+			{
+				//log event!! + mark series completed, but keep event ongoing (in order to not count it twice)!
+				series_completed = 1;
+			}
+			else
+			{
+				Task_sleep(T_LOADCELL_POLL);
+			}
+		}
 	}
 
 }

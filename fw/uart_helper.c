@@ -10,6 +10,9 @@
 #include <xdc/runtime/Timestamp.h>
 #include <ti/sysbios/hal/Seconds.h>
 
+#include <xdc/cfg/global.h> //needed for semaphore
+#include <ti/sysbios/knl/Semaphore.h>
+
 UART_Handle debug_uart;
 
 int uart_debug_open(){
@@ -39,6 +42,8 @@ int uart_debug_open(){
 
 		const char test_string[] = "nestbox UART initialized\n";
 		uart_serial_write(&debug_uart, (uint8_t*)test_string, sizeof(test_string));
+
+		Semaphore_post((Semaphore_Handle)semSerial);
 
 		uart_initialized = 1;
 	}

@@ -95,20 +95,20 @@ int16_t mlx90109_init(mlx90109_t *dev, const mlx90109_params_t *params)
 
 
 	//check if we are in 125kHz mode (done with jumper)
-	if(GPIO_read(nbox_lf_freq_sel))
-	{
+//	if(GPIO_read(nbox_lf_freq_sel))
+//	{
 		dev->p.tag_select = MLX_TAG_EM4100;
 		//high --> jumper is on P3.5&3.4 --> 125khz! change to EM parameters!
 		GPIO_write(dev->p.dataSelect, 1);
 		GPIO_write(dev->p.mode, 1);
-	}
-	else
-	{
-		dev->p.tag_select = MLX_TAG_FDX;
-		//low --> jumper is not placed --> 134kHz!
-		GPIO_write(dev->p.dataSelect, 0);
-		GPIO_write(dev->p.mode, 0);
-	}
+//	}
+//	else
+//	{
+//		dev->p.tag_select = MLX_TAG_FDX;
+//		//low --> jumper is not placed --> 134kHz!
+//		GPIO_write(dev->p.dataSelect, 0);
+//		GPIO_write(dev->p.mode, 0);
+//	}
 	
 	return MLX90109_OK;
 }

@@ -3,6 +3,8 @@
 #define LOW 	0
 #define HIGH 	1
 
+#define HX_TARE_TOLERANCE 100 	// ADC counts --> 50 miligrams!
+
 uint8_t PD_SCK;		// Power Down and Serial Clock Input Pin
 uint8_t DOUT;  	// Serial Data Output Pin
 uint8_t GAIN = 1;		// amplification factor, default 128!
@@ -39,16 +41,16 @@ void hx711_set_gain(uint8_t gain) {
 }
 
 int32_t hx711_read() {
-	// wait for the chip to become ready
-	while (!hx711_is_ready()) {
-		Task_sleep(10);
-	}
-
 	int32_t value = 0;
 	uint32_t tmp = 0;
 
 	// pulse the clock pin 24 times to read the data
 	uint8_t i;
+
+	// wait for the chip to become ready
+	while (!hx711_is_ready()) {
+		Task_sleep(10);
+	}
 
 	for (i = 0; i < 24; i++) {
 		GPIO_write(PD_SCK, HIGH);
@@ -74,27 +76,51 @@ int32_t hx711_read() {
 	return value;
 }
 
-int32_t hx711_read_average(uint8_t times) {
-	int32_t sum = 0;
+int32_t hx711_read_average(uint8_t times, int32_t* max_deviation) {
+
+	int32_t value = hx711_read();
+	int32_t sum = value;
+	int32_t max = sum;
+	int32_t min = sum;
+
 	uint8_t i;
-	for (i = 0; i < times; i++) {
-		sum += hx711_read();
+
+	for (i = 1; i < times; i++)
+	{
 		Task_sleep(100);
+		value = hx711_read();
+		sum += value;
+		if(value>max)
+			max = value;
+		if(value<min)
+			min = value;
 	}
+
+	*max_deviation = max-min;
+
 	return sum / times;
 }
 
-double hx711_get_value(uint8_t times) {
-	return hx711_read_average(times) - OFFSET;
+double hx711_get_value(uint8_t times, int32_t* max_deviation) {
+	return hx711_read_average(times, max_deviation) - OFFSET;
 }
 
-float hx711_get_units(uint8_t times) {
-	return hx711_get_value(times) / SCALE;
+float hx711_get_units(uint8_t times, float* max_deviation) {
+	int32_t max_dev_int = 0;
+	int32_t value = hx711_get_value(times, &max_dev_int);
+
+	*max_deviation = max_dev_int/SCALE;
+	return value / SCALE;
 }
 
-void hx711_tare(uint8_t times) {
-	double sum = hx711_read_average(times);
+int hx711_tare(uint8_t times) {
+	int32_t tare_deviation;
+	double sum = hx711_read_average(times, &tare_deviation);
 	hx711_set_offset(sum);
+	if(tare_deviation<HX_TARE_TOLERANCE)
+		return 1;
+	else
+		return 0;
 }
 
 void hx711_set_scale(float scale) {

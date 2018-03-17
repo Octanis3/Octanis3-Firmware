@@ -235,11 +235,11 @@ void log_Task()
 	while(1)
 	{
 		// print status of light barrier
-		uint8_t stat = '0' + 2*GPIO_read(nbox_lightbarrier_int) + GPIO_read(nbox_lightbarrier_ext);
-		uart_serial_print_event('S', &stat, 1);
-		Semaphore_post((Semaphore_Handle)semSerial);
+//		uint8_t stat = '0' + 2*GPIO_read(nbox_lightbarrier_int) + GPIO_read(nbox_lightbarrier_ext);
+//		uart_serial_print_event('S', &stat, 1);
+//		Semaphore_post((Semaphore_Handle)semSerial);
 		Task_sleep(1000);
-		Semaphore_pend((Semaphore_Handle)semSerial,BIOS_WAIT_FOREVER);
+//		Semaphore_pend((Semaphore_Handle)semSerial,BIOS_WAIT_FOREVER);
 	}
 }
 

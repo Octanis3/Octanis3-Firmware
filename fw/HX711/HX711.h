@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "../../Board.h"
 
+#define HX_SAMPLE_RATE 10
 
 // Allows to set the pins and gain later than in the constructor
 void hx711_begin(uint8_t dout, uint8_t pd_sck, uint8_t gain);
@@ -22,17 +23,17 @@ void hx711_set_gain(uint8_t gain);
 int32_t hx711_read();
 
 // returns an average reading; times = how many times to read
-int32_t hx711_read_average(uint8_t times);
+int32_t hx711_read_average(uint8_t times, int32_t* max_deviation);
 
 // returns (read_average() - OFFSET), that is the current value without the tare weight; times = how many readings to do
-double hx711_get_value(uint8_t times);
+double hx711_get_value(uint8_t times, int32_t* max_deviation);
 
 // returns get_value() divided by SCALE, that is the raw value divided by a value obtained via calibration
 // times = how many readings to do
-float hx711_get_units(uint8_t times);
+float hx711_get_units(uint8_t times, float* max_deviation);
 
 // set the OFFSET value for tare weight; times = how many times to read the tare value
-void hx711_tare(uint8_t times);
+int hx711_tare(uint8_t times);
 
 // set the SCALE value; this value is used to convert the raw data to "human readable" data (measure units)
 void hx711_set_scale(float scale);
