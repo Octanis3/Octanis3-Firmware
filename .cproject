@@ -119,7 +119,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="fw/EM4100_library|fw/MLX90109_library/V4.c|src|fw/NDEF/lib_flash_ndef.c|fw/95HF_library/lib|archive" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="fw/archive|fw/archive/95HF_library|fw/archive/ST95HF.c|fw/ADS1220|fw/EM4100_library|fw/MLX90109_library/V4.c|src|archive" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

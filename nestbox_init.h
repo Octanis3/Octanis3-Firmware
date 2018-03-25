@@ -52,10 +52,7 @@ extern "C" {
 //#define VERBOSE 1
 #define LAUNCHPAD_PINDEF 1
 
-#define LF_RFID //comment this line if using HF tags
-#ifndef LF_RFID
-	#define HF_RFID
-#endif
+#define LF_RFID //TODO: remove all references to this
 
 /* LEDs on nestbox_board are active high. */
 #define nbox_LED_OFF (0)
@@ -68,30 +65,21 @@ extern "C" {
 typedef enum nbox_GPIOName {
     //inputs
 	nbox_button = 0,
-	nbox_loadcell_data,
 	nbox_lightbarrier_ext,
 	nbox_lightbarrier_int,
 	nbox_lf_clk,
 	nbox_lf_data,
-#ifdef LF_RFID
 	nbox_lf_freq_sel,
-#endif
+	nbox_loadcell_data,
 
 	//outputs
+    nbox_led_blue,
 #ifndef LAUNCHPAD_PINDEF
     nbox_led_green,
 #endif
-    nbox_led_blue,
 //	nbox_led_ir,
-#ifdef HF_RFID
-	nbox_spi_nfc_sel_n,
-	nbox_nfc_wakeup_n,
-#else
 	nbox_loadcell_clk,
-#endif
 	nbox_lf_modul,
-	nbox_lf_mode,
-	nbox_lf_speed,
 
     nbox_GPIOCOUNT
 } nbox_GPIOName;

@@ -109,18 +109,7 @@ Void nbox_isrDMA(UArg arg)
 GPIO_PinConfig gpioPinConfigs[] = {
     /* Input pins */
     /* nestbox user button */
-#ifdef LAUNCHPAD_PINDEF
     GPIOMSP430_P4_5 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
-#else
-    GPIOMSP430_P4_2 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
-#endif
-#ifdef HF_RFID
-	/* NESTBOX_SPI_NFC_IRQ_N */
-	GPIOMSP430_P3_6 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
-#else
-	/* NESTBOX_LOADCELL_DATA */
-	GPIOMSP430_P3_6 | GPIO_CFG_IN_PD | GPIO_CFG_IN_INT_NONE, //TODO: change back to pull up! load cell data pin must be low to stat that it is "ready".
-#endif
 	/* NESTBOX_LIGHTBARRIER_IN_EXT */
 	GPIOMSP430_P1_4 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
 	/* NESTBOX_LIGHTBARRIER_IN_INT */
@@ -129,45 +118,28 @@ GPIO_PinConfig gpioPinConfigs[] = {
 	GPIOMSP430_P2_4 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
 	/* NESTBOX_LF_DATA */
 	GPIOMSP430_P4_3 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_NONE,
-	#ifdef LF_RFID
 	/* NESTBOX_LF_FREQ_SELECT */
 	GPIOMSP430_P3_5 | GPIO_CFG_IN_PD | GPIO_CFG_IN_INT_NONE,
-	#endif
+	/* NESTBOX_LOADCELL_DATA */ //!! only needed for HX711
+	GPIOMSP430_P3_6 | GPIO_CFG_IN_PD | GPIO_CFG_IN_INT_NONE, //TODO: change back to pull up! load cell data pin must be low to stat that it is "ready".
 
-    /* Output pins */
-#ifdef LAUNCHPAD_PINDEF
+
+    /************ Output pins ***********/
 	/* NESTBOX_LED_BLUE */
     GPIOMSP430_P4_6 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
-#else
+#ifndef LAUNCHPAD_PINDEF
 	/* NESTBOX_LED_GREEN */
     GPIOMSP430_P4_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
-	/* NESTBOX_LED_BLUE */
-	GPIOMSP430_P4_1 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 #endif
 
 	/* NESTBOX_LED_INFRARED ==> DO NOT USE P1.0 as TI-RTOS GPIO;
 	 * --> directly modified at register level in lightbarrier task */
 //	GPIOMSP430_P1_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
-#ifdef HF_RFID
-	/* NESTBOX_SPI_NFC_SEL_N */
-	GPIOMSP430_P3_4 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
-	/* NESTBOX_SPI_NFC_WAKEUP_N */
-#ifdef LAUNCHPAD_PINDEF
-	GPIOMSP430_P3_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
-#else
-	GPIOMSP430_P3_7 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
-#endif
-#else
+
 	/* NESTBOX_LOADCELL_CLK */
 	GPIOMSP430_P3_4 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
-#endif
 	/* NESTBOX_LF_MODUL */
 	GPIOMSP430_P1_2 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
-	/* NESTBOX_LF_MODE */
-	GPIOMSP430_P3_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
-	/* NESTBOX_LF_SPEED */
-	GPIOMSP430_P1_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
-
 };
 
 /*
@@ -179,7 +151,6 @@ GPIO_PinConfig gpioPinConfigs[] = {
  */
 GPIO_CallbackFxn gpioCallbackFunctions[] = {
 	user_button_isr,  /* nestbox user button */
-	nfc_wakeup_isr, /* lightbarrier interrupt pin */
 	lightbarrier_input_isr, /* lightbarrier detection routine */
 	lightbarrier_input_isr, /* lightbarrier detection routine */
 	lf_tag_read_isr,

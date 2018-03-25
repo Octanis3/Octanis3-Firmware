@@ -42,12 +42,6 @@ extern "C" {
 #ifndef MLX90109_PARAM_DATA_PIN
 #define MLX90109_PARAM_DATA_PIN   	   nbox_lf_data//(GPIO_PIN(PORT_C, 14))
 #endif
-#ifndef MLX90109_PARAM_MODE_PIN
-#define MLX90109_PARAM_MODE_PIN		  nbox_lf_mode
-#endif
-#ifndef MLX90109_PARAM_DATASELECT_PIN
-#define MLX90109_PARAM_DATASELECT_PIN nbox_lf_speed
-#endif
 #ifndef MLX90109_PARAM_MODU_PIN
 #define MLX90109_PARAM_MODU_PIN   nbox_lf_modul
 #endif
@@ -81,8 +75,6 @@ extern "C" {
 #ifndef MLX90109_PARAMS
 #define MLX90109_PARAMS           { .clock			= MLX90109_PARAM_CLOCK_PIN ,\
 									.data			= MLX90109_PARAM_DATA_PIN ,\
-									.mode			= MLX90109_PARAM_MODE_PIN ,\
-									.dataSelect		= MLX90109_PARAM_DATASELECT_PIN ,\
 									.modu			= MLX90109_PARAM_MODU_PIN , \
 									.tag_select     = MLX_TAG_FDX}
 #endif

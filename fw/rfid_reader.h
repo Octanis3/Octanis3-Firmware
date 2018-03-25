@@ -19,8 +19,6 @@ int rfid_get_id(uint64_t* id);
 void rfid_start_detection();
 void rfid_stop_detection();
 
-void nfc_wakeup_isr();
-
 void lf_tag_read_isr();
 
 #endif /* FW_RFID_READER_H_ */

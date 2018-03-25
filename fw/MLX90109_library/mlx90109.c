@@ -73,41 +73,17 @@ int16_t mlx90109_init(mlx90109_t *dev, const mlx90109_params_t *params)
 	//disable clk interrupt
 	GPIO_disableInt(nbox_lf_clk);
 
-//	//Init data Rate Pin if used
-//	if (dev->p.dataSelect){
-//		if (MLX90109_PARAM_SPEED == 2000){
-//			GPIO_write(dev->p.dataSelect, 1);
-//		}
-//		else if (MLX90109_PARAM_SPEED == 4000){
-//			GPIO_write(dev->p.dataSelect, 0);
-//		}
-//	}
-//	//Init Mode Pin if used
-//	if (dev->p.mode){
-//		if (MLX90109_PARAM_CODE == 1){
-//			GPIO_write(dev->p.mode, 1);
-//		}
-//		else if (MLX90109_PARAM_CODE == 2){
-//			GPIO_write(dev->p.mode, 0);
-//		}
-//
-//	}
-
 
 	//check if we are in 125kHz mode (done with jumper)
 //	if(GPIO_read(nbox_lf_freq_sel))
 //	{
 		dev->p.tag_select = MLX_TAG_EM4100;
 		//high --> jumper is on P3.5&3.4 --> 125khz! change to EM parameters!
-		GPIO_write(dev->p.dataSelect, 1);
-		GPIO_write(dev->p.mode, 1);
 //	}
 //	else
 //	{
 //		dev->p.tag_select = MLX_TAG_FDX;
 //		//low --> jumper is not placed --> 134kHz!
-//		GPIO_write(dev->p.dataSelect, 0);
-//		GPIO_write(dev->p.mode, 0);
 //	}
 	
 	return MLX90109_OK;

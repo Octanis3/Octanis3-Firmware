@@ -44,8 +44,6 @@ enum {
 typedef struct {
 	unsigned int clock;       		/**< GPIO Pin Clock */
 	unsigned int data;   		 	  	/**< GPIO Pin Data */
-	unsigned int mode;				/**< GPIO Pin Mode */
-	unsigned int dataSelect;			/**< GPIO Pin dataSelect / Speed */
 	unsigned int modu;				/**< GPIO Pin Modu, RF on/off */
 	unsigned int tag_select;		/** is either MLX_TAG_EM4100 or MLX_TAG_FDX */
 } mlx90109_params_t;	

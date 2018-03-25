@@ -6,8 +6,6 @@
  */
 
 #include "ST95HF.h"
-#include "Board.h"
-
 
 // global handle, to be used to perform a spi_read/write action
 SPI_Handle  st95_spi;

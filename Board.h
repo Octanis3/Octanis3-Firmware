@@ -49,11 +49,9 @@ extern "C" {
 
 /* TI-RTOS Header files */
 #include <ti/drivers/GPIO.h>
- #include <ti/drivers/SPI.h>
+#include <ti/drivers/SPI.h>
 // #include <ti/drivers/UART.h>
 // #include <ti/drivers/Watchdog.h>
-
-
 
 #define Board_initGeneral           nbox_initGeneral
 #define Board_initGPIO              nbox_initGPIO
@@ -74,22 +72,9 @@ extern "C" {
 #define Board_LED_ON					nbox_LED_ON
 #define Board_LED_OFF				nbox_LED_OFF
 
-#define Board_led_IR          		nbox_led_ir
-
-// NFC module definitions
-#ifdef HF_RFID
 #define Board_SPI0                  	nbox_SPI
-#define Board_nfc_spi_sel_n			nbox_spi_nfc_sel_n
-#define Board_nfc_wakeup_n			nbox_nfc_wakeup_n
-#define Board_nfc_irq_n				nbox_nfc_irq_n
-#else
-#define Board_SPI0                  	nbox_SPI
-#define Board_nfc_spi_sel_n			NULL
-#define Board_nfc_wakeup_n			NULL
-#define Board_nfc_irq_n				NULL
-#endif
 
-#define Board_USBDEVICE             0
+//#define Board_USBDEVICE             	0
 
 //#define Board_UART_lora             nbox_UARTA0
 #define Board_UART_debug            nbox_UARTA1

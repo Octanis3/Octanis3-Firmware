@@ -47,11 +47,6 @@
 //to set the CPU frequency.
 #include <ti/sysbios/knl/Clock.h>
 
-// heart beat task
-#define HB_TASKSTACKSIZE   512
-Task_Struct hb_task_Struct;
-Char hb_task_Stack[HB_TASKSTACKSIZE];
-
 // light barrier task
 #define LB_TASKSTACKSIZE   512
 Task_Struct lb_task_Struct;
@@ -78,24 +73,10 @@ Task_Struct load_cell_task_Struct;
 Char load_cell_task_Stack[LOAD_CELL_TASKSTACKSIZE];
 
 /*
- *  ======== heartBeatFxn ========
- *  Toggle the Board_led_green. The Task_sleep is determined by arg0 which
- *  is configured for the heartBeat Task instance.
- */
-void heartBeat_Task(UArg arg0, UArg arg1)
-{
-    while (1) {
-        Task_sleep((unsigned int)arg0);
-//        GPIO_toggle(Board_led_blue);
-    }
-}
-
-/*
  *  ======== main ========
  */
 int main(void)
 {
-    Task_Params hb_taskParams;
     Task_Params lb_taskParams;
     Task_Params rfid_taskParams;
     Task_Params button_taskParams;
@@ -121,14 +102,6 @@ int main(void)
     Board_initSPI();
     Board_initUART();
     // Board_initWatchdog();
-
-    /* Construct heartBeat Task  thread */
-    Task_Params_init(&hb_taskParams);
-    hb_taskParams.arg0 = 100;
-    hb_taskParams.stackSize = HB_TASKSTACKSIZE;
-    hb_taskParams.stack = &hb_task_Stack;
-    Task_construct(&hb_task_Struct, (Task_FuncPtr)heartBeat_Task, &hb_taskParams, NULL);
-
 
     /* Construct ligthBarrier Task  thread */
 	Task_Params_init(&lb_taskParams);
