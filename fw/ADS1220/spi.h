@@ -140,8 +140,8 @@ typedef void (*SPICallback)(struct spi_transaction *trans);
  *   0 is sent for the remaining words
  */
 struct spi_transaction {
-  volatile uint8_t *input_buf;  ///< pointer to receive buffer for DMA
-  volatile uint8_t *output_buf; ///< pointer to transmit buffer for DMA
+   uint8_t *input_buf;  ///< pointer to receive buffer for DMA
+   uint8_t *output_buf; ///< pointer to transmit buffer for DMA
   uint16_t input_length;        ///< number of data words to read
   uint16_t output_length;       ///< number of data words to write
   uint8_t slave_idx;            ///< slave id: #SPI_SLAVE0 to #SPI_SLAVE4
@@ -191,5 +191,50 @@ extern void spi1_init(void);
  * Must be implemented by underlying architecture
  */
 extern void spi1_arch_init(void);
+
+/** Initialize a spi peripheral.
+ * @param p spi peripheral to be configured
+ */
+extern void spi_init(struct spi_periph *p);
+
+/** Initialize all used slaves and unselect them.
+ */
+extern void spi_init_slaves(void);
+
+/** Submit a spi transaction.
+ * Must be implemented by the underlying architecture
+ * @param p spi peripheral to be used
+ * @param t spi transaction
+ * @return TRUE if insertion to the transaction queue succeeded
+ */
+extern bool spi_submit(struct spi_periph *p, struct spi_transaction *t);
+
+/** Select a slave.
+ * @param slave slave id
+ */
+extern void spi_slave_select(uint8_t slave);
+
+/** Unselect a slave.
+ * @param slave slave id
+ */
+extern void spi_slave_unselect(uint8_t slave);
+
+/** Lock the SPI fifo.
+ * This will stop the SPI fifo after the current transaction if any,
+ * or before the next one if none are pending.
+ * Only the slave that locks the fifo can unlock it.
+ * @param p spi peripheral to be used
+ * @param slave slave id
+ * @return true if correctly locked
+ */
+extern bool spi_lock(struct spi_periph *p, uint8_t slave);
+
+/** Resume the SPI fifo.
+ * Only the slave that locks the fifo can unlock it.
+ * @param p spi peripheral to be used
+ * @param slave slave id
+ * @return true if correctly unlocked
+ */
+extern bool spi_resume(struct spi_periph *p, uint8_t slave);
 
 #endif /* SPI_H */

@@ -28,12 +28,12 @@
 
 #include "spi.h"
 
-struct spi_periph spi0;
+struct spi_periph spi1;
 
-void spi0_init(void)
+void spi1_init(void)
 {
-  spi_init(&spi0);
-  spi0_arch_init();
+  spi_init(&spi1);
+  spi1_arch_init();
 }
 
 void spi_init(struct spi_periph *p)

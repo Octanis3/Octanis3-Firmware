@@ -140,6 +140,7 @@ struct Ads1220Config {
   enum Ads1220Idac idac;          ///< IDAC config
   enum Ads1220Imux i1mux;         ///< IDAC routing 1
   enum Ads1220Imux i2mux;         ///< IDAC routing 2
+  bool low_switch; 				///< set true if switch shall be closed upon sync/start
 };
 
 
@@ -155,8 +156,8 @@ struct Ads1220 {
   // SPI
   struct spi_periph *spi_p;                     ///< spi peripheral
   struct spi_transaction spi_trans;             ///< spi transaction
-  volatile uint8_t tx_buf[ADS1220_BUFFER_LEN];  ///< transmit buffer
-  volatile uint8_t rx_buf[ADS1220_BUFFER_LEN];  ///< receive buffer
+  uint8_t tx_buf[ADS1220_BUFFER_LEN];  ///< transmit buffer
+  uint8_t rx_buf[ADS1220_BUFFER_LEN];  ///< receive buffer
   // Config
   struct Ads1220Config config;                  ///< configuration
   // Data

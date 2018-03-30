@@ -104,6 +104,9 @@ struct spi_periph_dma {
   uint8_t  comm_sig;               ///< comm config signature used to check for changes
 };
 
+// global handle, to be used to perform a spi_read/write action
+SPI_Handle  nestbox_spi_handle;
+
 
 #if USE_SPI0
 #error "The STM32 doesn't have SPI0"
@@ -126,30 +129,12 @@ static struct spi_periph_dma spi3_dma;
 
 static inline void SpiSlaveUnselect(uint8_t slave)
 {
-  switch (slave) {
-    case 0:
-      GPIO_write(SPI_SELECT_SLAVE0_PORT, SPI_SELECT_SLAVE0_PIN);
-      break;
-    case 1:
-      gpio_set(SPI_SELECT_SLAVE1_PORT, SPI_SELECT_SLAVE1_PIN);
-      break;
-    default:
-      break;
-  }
+	GPIO_write(slave, 1);
 }
 
 static inline void SpiSlaveSelect(uint8_t slave)
 {
-  switch (slave) {
-    case 0:
-      gpio_clear(SPI_SELECT_SLAVE0_PORT, SPI_SELECT_SLAVE0_PIN);
-      break;
-    case 1:
-      gpio_clear(SPI_SELECT_SLAVE1_PORT, SPI_SELECT_SLAVE1_PIN);
-      break;
-    default:
-      break;
-  }
+	GPIO_write(slave, 0);
 }
 
 void spi_slave_select(uint8_t slave)
@@ -164,16 +149,9 @@ void spi_slave_unselect(uint8_t slave)
 
 void spi_init_slaves(void)
 {
-
-#if USE_SPI_SLAVE0
-  gpio_setup_output(SPI_SELECT_SLAVE0_PORT, SPI_SELECT_SLAVE0_PIN);
-  SpiSlaveUnselect(0);
-#endif
-
-#if USE_SPI_SLAVE1
-  gpio_setup_output(SPI_SELECT_SLAVE1_PORT, SPI_SELECT_SLAVE1_PIN);
-  SpiSlaveUnselect(1);
-#endif
+	SpiSlaveUnselect(nbox_loadcell_spi_cs_n);
+//	  SpiSlaveUnselect(nbox_sd_spi_cs_n);
+}
 
 
 /******************************************************************************
@@ -183,61 +161,86 @@ void spi_init_slaves(void)
  *****************************************************************************/
 bool spi_submit(struct spi_periph *p, struct spi_transaction *t)
 {
-  uint8_t idx;
-  idx = p->trans_insert_idx + 1;
-  if (idx >= SPI_TRANSACTION_QUEUE_LEN) { idx = 0; }
-  if ((idx == p->trans_extract_idx) || ((t->input_length == 0) && (t->output_length == 0))) {
-    t->status = SPITransFailed;
-    return FALSE; /* queue full or input_length and output_length both 0 */
-    // TODO can't tell why it failed here if it does
-  }
+	SPI_Transaction  spiTransaction;
+	Bool	 transferOK;
 
-  t->status = SPITransPending;
+	spiTransaction.count = t->output_length;
+	if(spiTransaction.count == 0)
+		spiTransaction.count = t->input_length;
+	spiTransaction.txBuf = t->output_buf;
+	spiTransaction.rxBuf = t->input_buf;
 
-  //Disable interrupts to avoid race conflict with end of DMA transfer interrupt
-  //FIXME
-  spi_arch_int_disable(p);
+	SpiSlaveSelect(nbox_loadcell_spi_cs_n);
+	transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
+	//if(keep_selected == 0)
+		SpiSlaveUnselect(nbox_loadcell_spi_cs_n);
 
-  // GT: no copy?  There's a queue implying a copy here...
-  p->trans[p->trans_insert_idx] = t;
-  p->trans_insert_idx = idx;
 
-  /* if peripheral is idle, start the transaction */
-  if (p->status == SPIIdle && !p->suspend) {
-    spi_start_dma_transaction(p, p->trans[p->trans_extract_idx]);
-  }
-  //FIXME
-  spi_arch_int_enable(p);
-  return TRUE;
+	if (!transferOK) {
+		t->status = SPITransFailed;
+
+		return 0;/* Error in SPI transfer or transfer is already in progress */
+	}
+
+	t->status = SPITransSuccess;
+	return 1;
+
+//
+//  uint8_t idx;
+//  idx = p->trans_insert_idx + 1;
+//  if (idx >= SPI_TRANSACTION_QUEUE_LEN) { idx = 0; }
+//  if ((idx == p->trans_extract_idx) || ((t->input_length == 0) && (t->output_length == 0))) {
+//    t->status = SPITransFailed;
+//    return FALSE; /* queue full or input_length and output_length both 0 */
+//    // TODO can't tell why it failed here if it does
+//  }
+//
+//  t->status = SPITransPending;
+//
+//  //Disable interrupts to avoid race conflict with end of DMA transfer interrupt
+//  //FIXME
+//  spi_arch_int_disable(p);
+//
+//  // GT: no copy?  There's a queue implying a copy here...
+//  p->trans[p->trans_insert_idx] = t;
+//  p->trans_insert_idx = idx;
+//
+//  /* if peripheral is idle, start the transaction */
+//  if (p->status == SPIIdle && !p->suspend) {
+//    spi_start_dma_transaction(p, p->trans[p->trans_extract_idx]);
+//  }
+//  //FIXME
+//  spi_arch_int_enable(p);
+//  return TRUE;
 }
 
-bool spi_lock(struct spi_periph *p, uint8_t slave)
-{
-  spi_arch_int_disable(p);
-  if (slave < 254 && p->suspend == 0) {
-    p->suspend = slave + 1; // 0 is reserved for unlock state
-    spi_arch_int_enable(p);
-    return TRUE;
-  }
-  spi_arch_int_enable(p);
-  return FALSE;
-}
-
-bool spi_resume(struct spi_periph *p, uint8_t slave)
-{
-  spi_arch_int_disable(p);
-  if (p->suspend == slave + 1) {
-    // restart fifo
-    p->suspend = 0;
-    if (p->trans_extract_idx != p->trans_insert_idx && p->status == SPIIdle) {
-      spi_start_dma_transaction(p, p->trans[p->trans_extract_idx]);
-    }
-    spi_arch_int_enable(p);
-    return TRUE;
-  }
-  spi_arch_int_enable(p);
-  return FALSE;
-}
+//bool spi_lock(struct spi_periph *p, uint8_t slave)
+//{
+//  spi_arch_int_disable(p);
+//  if (slave < 254 && p->suspend == 0) {
+//    p->suspend = slave + 1; // 0 is reserved for unlock state
+//    spi_arch_int_enable(p);
+//    return TRUE;
+//  }
+//  spi_arch_int_enable(p);
+//  return FALSE;
+//}
+//
+//bool spi_resume(struct spi_periph *p, uint8_t slave)
+//{
+//  spi_arch_int_disable(p);
+//  if (p->suspend == slave + 1) {
+//    // restart fifo
+//    p->suspend = 0;
+//    if (p->trans_extract_idx != p->trans_insert_idx && p->status == SPIIdle) {
+//      spi_start_dma_transaction(p, p->trans[p->trans_extract_idx]);
+//    }
+//    spi_arch_int_enable(p);
+//    return TRUE;
+//  }
+//  spi_arch_int_enable(p);
+//  return FALSE;
+//}
 
 static inline uint8_t get_transaction_signature(struct spi_transaction *t)
 {
@@ -290,7 +293,7 @@ static inline uint8_t get_transaction_signature(struct spi_transaction *t)
 //  }
 //}
 //
-///// Enable DMA channel interrupts
+/// Enable DMA channel interrupts
 //static void spi_arch_int_enable(struct spi_periph *spi)
 //{
 //  /// @todo fix priority levels if necessary
@@ -301,14 +304,14 @@ static inline uint8_t get_transaction_signature(struct spi_transaction *t)
 //  nvic_set_priority(((struct spi_periph_dma *)spi->init_struct)->tx_nvic_irq, NVIC_SPI_IRQ_PRIO);
 //  nvic_enable_irq(((struct spi_periph_dma *)spi->init_struct)->tx_nvic_irq);
 //}
-//
-///// Disable DMA channel interrupts
+
+/// Disable DMA channel interrupts
 //static void spi_arch_int_disable(struct spi_periph *spi)
 //{
 //  nvic_disable_irq(((struct spi_periph_dma *)spi->init_struct)->rx_nvic_irq);
 //  nvic_disable_irq(((struct spi_periph_dma *)spi->init_struct)->tx_nvic_irq);
 //}
-//
+
 ///// start next transaction if there is one in the queue
 //static void spi_next_transaction(struct spi_periph *periph)
 //{
@@ -475,15 +478,15 @@ void spi1_arch_init(void)
 	SPI_Params_init(&spiParams);
 	spiParams.transferMode = SPI_MODE_BLOCKING;
 	spiParams.transferCallbackFxn = NULL;
-	spiParams.frameFormat = SPI_POL0_PHA0; // The ST95HF supports (CPOL = 0, CPHA = 0) and (CPOL = 1, CPHA = 1) modes.
+	spiParams.frameFormat = SPI_POL0_PHA1; // ADS1220: Only SPI mode 1 (CPOL = 0, CPHA = 1) is supported.
 	spiParams.mode = SPI_MASTER;
 	//	spiParams.bitRate = 500000; /*!< SPI bit rate in Hz */ //max can be 2 MHz.
 	// spiParams.dataSize = ????; /*!< SPI data frame size in bits (default = 8) */
 	// NOTE:  .bitOrder = EUSCI_B_SPI_MSB_FIRST is defined in nestbox_init.
 
 
-	st95_spi = SPI_open(Board_SPI0, &spiParams);
-	if (st95_spi == NULL) {
+	nestbox_spi_handle = SPI_open(Board_SPI0, &spiParams);
+	if (nestbox_spi_handle == NULL) {
 	   /* Error opening SPI */
 
 		GPIO_toggle(Board_led_blue);
@@ -502,51 +505,48 @@ void spi1_arch_init(void)
   spi1.status = SPIIdle;
 
 
-  // Enable SPI1 Periph and gpio clocks
-  rcc_periph_clock_enable(RCC_SPI1);
+//  // Configure GPIOs: SCK, MISO and MOSI
+//#ifdef STM32F1
+//  gpio_setup_pin_af(GPIO_BANK_SPI1_MISO, GPIO_SPI1_MISO, 0, FALSE);
+//  gpio_setup_pin_af(GPIO_BANK_SPI1_MOSI, GPIO_SPI1_MOSI, 0, TRUE);
+//  gpio_setup_pin_af(GPIO_BANK_SPI1_SCK, GPIO_SPI1_SCK, 0, TRUE);
+//#elif defined STM32F4
+//  gpio_setup_pin_af(SPI1_GPIO_PORT_MISO, SPI1_GPIO_MISO, SPI1_GPIO_AF, FALSE);
+//  gpio_setup_pin_af(SPI1_GPIO_PORT_MOSI, SPI1_GPIO_MOSI, SPI1_GPIO_AF, TRUE);
+//  gpio_setup_pin_af(SPI1_GPIO_PORT_SCK, SPI1_GPIO_SCK, SPI1_GPIO_AF, TRUE);
+//
+//  gpio_set_output_options(SPI1_GPIO_PORT_MOSI, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, SPI1_GPIO_MOSI);
+//  gpio_set_output_options(SPI1_GPIO_PORT_SCK, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, SPI1_GPIO_SCK);
+//#endif
 
-  // Configure GPIOs: SCK, MISO and MOSI
-#ifdef STM32F1
-  gpio_setup_pin_af(GPIO_BANK_SPI1_MISO, GPIO_SPI1_MISO, 0, FALSE);
-  gpio_setup_pin_af(GPIO_BANK_SPI1_MOSI, GPIO_SPI1_MOSI, 0, TRUE);
-  gpio_setup_pin_af(GPIO_BANK_SPI1_SCK, GPIO_SPI1_SCK, 0, TRUE);
-#elif defined STM32F4
-  gpio_setup_pin_af(SPI1_GPIO_PORT_MISO, SPI1_GPIO_MISO, SPI1_GPIO_AF, FALSE);
-  gpio_setup_pin_af(SPI1_GPIO_PORT_MOSI, SPI1_GPIO_MOSI, SPI1_GPIO_AF, TRUE);
-  gpio_setup_pin_af(SPI1_GPIO_PORT_SCK, SPI1_GPIO_SCK, SPI1_GPIO_AF, TRUE);
+//  // reset SPI
+//  spi_reset(SPI1);
+//
+//  // Disable SPI peripheral
+//  spi_disable(SPI1);
+//
+//  // Force SPI mode over I2S.
+//  SPI1_I2SCFGR = 0;
 
-  gpio_set_output_options(SPI1_GPIO_PORT_MOSI, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, SPI1_GPIO_MOSI);
-  gpio_set_output_options(SPI1_GPIO_PORT_SCK, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, SPI1_GPIO_SCK);
-#endif
-
-  // reset SPI
-  spi_reset(SPI1);
-
-  // Disable SPI peripheral
-  spi_disable(SPI1);
-
-  // Force SPI mode over I2S.
-  SPI1_I2SCFGR = 0;
-
-  // configure master SPI.
-  spi_init_master(SPI1, spi1_dma.comm.br, spi1_dma.comm.cpol, spi1_dma.comm.cpha,
-                  spi1_dma.comm.dff, spi1_dma.comm.lsbfirst);
-  /*
-   * Set NSS management to software.
-   *
-   * Note:
-   * Setting nss high is very important, even if we are controlling the GPIO
-   * ourselves this bit needs to be at least set to 1, otherwise the spi
-   * peripheral will not send any data out.
-   */
-  spi_enable_software_slave_management(SPI1);
-  spi_set_nss_high(SPI1);
-
-  // Enable SPI_1 DMA clock
-  rcc_periph_clock_enable(spi1_dma.rcc_dma);
-
-  // Enable SPI1 periph.
-  spi_enable(SPI1);
-
-  spi_arch_int_enable(&spi1);
+//  // configure master SPI.
+//  spi_init_master(SPI1, spi1_dma.comm.br, spi1_dma.comm.cpol, spi1_dma.comm.cpha,
+//                  spi1_dma.comm.dff, spi1_dma.comm.lsbfirst);
+//  /*
+//   * Set NSS management to software.
+//   *
+//   * Note:
+//   * Setting nss high is very important, even if we are controlling the GPIO
+//   * ourselves this bit needs to be at least set to 1, otherwise the spi
+//   * peripheral will not send any data out.
+//   */
+//  spi_enable_software_slave_management(SPI1);
+//  spi_set_nss_high(SPI1);
+//
+//  // Enable SPI_1 DMA clock
+//  rcc_periph_clock_enable(spi1_dma.rcc_dma);
+//
+//  // Enable SPI1 periph.
+//  spi_enable(SPI1);
+//
+//  spi_arch_int_enable(&spi1);
 }

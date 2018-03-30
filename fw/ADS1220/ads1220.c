@@ -91,11 +91,18 @@ static void ads1220_send_config(struct Ads1220 *ads)
                      (ads->config.rate << 5));
   ads->tx_buf[3] = (
                      (ads->config.idac << 0) |
+					(ads->config.low_switch << 3) |
                      (ads->config.vref << 6));
   ads->tx_buf[4] = (
                      (ads->config.i2mux << 2) |
                      (ads->config.i1mux << 5));
   spi_submit(ads->spi_p, &(ads->spi_trans));
+
+  //start continuous readout mode:
+  ads->spi_trans.output_length = 1;
+  ads->tx_buf[0] = ADS1220_START_SYNC;
+  spi_submit(ads->spi_p, &(ads->spi_trans));
+
 }
 
 // Configuration function called before normal use

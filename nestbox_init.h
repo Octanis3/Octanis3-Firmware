@@ -80,6 +80,7 @@ typedef enum nbox_GPIOName {
 //	nbox_led_ir,
 	nbox_loadcell_clk,
 	nbox_lf_modul,
+	nbox_loadcell_spi_cs_n,
 
     nbox_GPIOCOUNT
 } nbox_GPIOName;

@@ -6,6 +6,7 @@
  */
 
 #include "HX711/HX711.h"
+#include "ADS1220/ads1220.h"
 #include "../Board.h"
 #include "uart_helper.h"
 
@@ -96,6 +97,20 @@ int load_cell_get_stable()
 	return 1;
 }
 
+void ads1220_set_loadcell_config(struct Ads1220 *ads){
+	ads->config.mux = ADS1220_MUX_AIN1_AIN2;
+	ads->config.gain = ADS1220_GAIN_128;
+	ads->config.pga_bypass = 0;
+	ads->config.rate = ADS1220_RATE_20_HZ;
+	// todo: change operating mode to duty-cycle mode
+	ads->config.conv = ADS1220_CONTINIOUS_CONVERSION;
+	ads->config.vref = ADS1220_VREF_EXTERNAL_AIN;
+	ads->config.idac = ADS1220_IDAC_OFF;
+	ads->config.i1mux = ADS1220_IMUX_OFF;
+	ads->config.i2mux = ADS1220_IMUX_OFF;
+	ads->config.low_switch = 1;
+}
+
 void load_cell_Task()
 {
 	Task_sleep(1000); //wait until things are settled...
@@ -119,8 +134,29 @@ void load_cell_Task()
 
 	hx711_power_up();
 
+
+	spi1_init();
+	struct Ads1220 ads;
+	struct spi_periph ads_spi;
+
+	ads1220_init(&ads, &ads_spi, nbox_loadcell_spi_cs_n);
+	ads1220_set_loadcell_config(&ads);
+	Task_sleep(10);
+	ads1220_event(&ads);
+
+	ads1220_configure(&ads);
+	Task_sleep(10);
+	ads1220_event(&ads);
+
 	while(1)
 	{
+		/************ADS1220 TEST*************/
+		ads1220_periodic(&ads);
+		Task_sleep(10);
+		ads1220_event(&ads);
+		print_load_cell_value((float)(ads.data), PLUS_SIGN, 'G');
+		/**********END ADS1220 TEST***********/
+
 		// currently no event detected & reader was off
 		if(!event_ongoing || series_completed)
 		{
