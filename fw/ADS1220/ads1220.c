@@ -97,11 +97,15 @@ static void ads1220_send_config(struct Ads1220 *ads)
                      (ads->config.i2mux << 2) |
                      (ads->config.i1mux << 5));
   spi_submit(ads->spi_p, &(ads->spi_trans));
-
   //start continuous readout mode:
-  ads->spi_trans.output_length = 1;
-  ads->tx_buf[0] = ADS1220_START_SYNC;
-  spi_submit(ads->spi_p, &(ads->spi_trans));
+	ads->spi_trans.output_length = 1;
+	ads->spi_trans.input_length = 0;
+	ads->tx_buf[0] = ADS1220_START_SYNC;
+	ads->tx_buf[1] = 0;
+	ads->tx_buf[2] = 0; //reset the buffer
+	spi_submit(ads->spi_p, &(ads->spi_trans));
+
+
 
 }
 
@@ -129,6 +133,7 @@ void ads1220_read(struct Ads1220 *ads)
   if (ads->config.status == ADS1220_INITIALIZED && ads->spi_trans.status == SPITransDone) {
     ads->spi_trans.output_length = 0;
     ads->spi_trans.input_length = 3;
+    ads->tx_buf[0] = ADS1220_RDATA;
     spi_submit(ads->spi_p, &(ads->spi_trans));
   }
 }
@@ -165,3 +170,22 @@ void ads1220_event(struct Ads1220 *ads)
   }
 }
 
+void ads1220_start_conversion(struct Ads1220 *ads)
+{
+	//start continuous readout mode:
+	ads->spi_trans.output_length = 1;
+    ads->spi_trans.input_length = 0;
+	ads->tx_buf[0] = ADS1220_START_SYNC;
+	spi_submit(ads->spi_p, &(ads->spi_trans));
+}
+
+
+void ads1220_powerdown(struct Ads1220 *ads)
+{
+  if (ads->config.status == ADS1220_INITIALIZED) {
+    ads->spi_trans.output_length = 1;
+    ads->spi_trans.input_length = 0;
+    ads->tx_buf[0] = ADS1220_POWERDOWN;
+    spi_submit(ads->spi_p, &(ads->spi_trans));
+  }
+}

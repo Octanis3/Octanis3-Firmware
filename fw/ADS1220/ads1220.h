@@ -87,7 +87,10 @@ enum Ads1220SampleRate {
   ADS1220_RATE_20_HZ = 0,
   ADS1220_RATE_45_HZ,
   ADS1220_RATE_90_HZ,
-  ADS1220_RATE_175_HZ
+  ADS1220_RATE_175_HZ,
+  ADS1220_RATE_330_HZ,
+  ADS1220_RATE_600_HZ,
+  ADS1220_RATE_1000_HZ
 };
 
 // Conversion mode
@@ -102,6 +105,14 @@ enum Ads1220VRef {
   ADS1220_VREF_EXTERNAL_REF,
   ADS1220_VREF_EXTERNAL_AIN,
   ADS1220_VREF_VDD
+};
+
+//50/60Hz reject FIR filter
+enum Ads1220Filter {
+  ADS1220_FILTER_NONE = 0,
+  ADS1220_FILTER_50_60,
+  ADS1220_FILTER_50,
+  ADS1220_FILTER_60
 };
 
 // IDAC current setting
@@ -137,6 +148,7 @@ struct Ads1220Config {
   enum Ads1220SampleRate rate;    ///< data output rate
   enum Ads1220ConvMode conv;      ///< conversion mode
   enum Ads1220VRef vref;          ///< voltage ref
+  enum Ads1220Filter filter;		///< 50/60Hz filter
   enum Ads1220Idac idac;          ///< IDAC config
   enum Ads1220Imux i1mux;         ///< IDAC routing 1
   enum Ads1220Imux i2mux;         ///< IDAC routing 2
@@ -170,6 +182,9 @@ extern void ads1220_init(struct Ads1220 *ads, struct spi_periph *spi_p, uint8_t 
 extern void ads1220_configure(struct Ads1220 *ads);
 extern void ads1220_read(struct Ads1220 *ads);
 extern void ads1220_event(struct Ads1220 *ads);
+extern void ads1220_powerdown(struct Ads1220 *ads);
+extern void ads1220_start_conversion(struct Ads1220 *ads);
+
 
 /// convenience function: read or start configuration if not already initialized
 static inline void ads1220_periodic(struct Ads1220 *ads)

@@ -101,14 +101,15 @@ void ads1220_set_loadcell_config(struct Ads1220 *ads){
 	ads->config.mux = ADS1220_MUX_AIN1_AIN2;
 	ads->config.gain = ADS1220_GAIN_128;
 	ads->config.pga_bypass = 0;
-	ads->config.rate = ADS1220_RATE_20_HZ;
+	ads->config.rate = ADS1220_RATE_1000_HZ;
 	// todo: change operating mode to duty-cycle mode
-	ads->config.conv = ADS1220_CONTINIOUS_CONVERSION;
+	ads->config.conv = ADS1220_SINGLE_SHOT;
 	ads->config.vref = ADS1220_VREF_EXTERNAL_AIN;
 	ads->config.idac = ADS1220_IDAC_OFF;
 	ads->config.i1mux = ADS1220_IMUX_OFF;
 	ads->config.i2mux = ADS1220_IMUX_OFF;
 	ads->config.low_switch = 1;
+	ads->config.filter = ADS1220_FILTER_NONE; //At data rates of 5 SPS and 20 SPS, the filter can be configured to reject 50-Hz or 60-Hz line frequencies or to simultaneously reject 50 Hz and 60 Hz!!!
 }
 
 void load_cell_Task()
@@ -148,11 +149,16 @@ void load_cell_Task()
 	Task_sleep(10);
 	ads1220_event(&ads);
 
+	ads1220_periodic(&ads);
+
+
 	while(1)
 	{
 		/************ADS1220 TEST*************/
+		ads1220_start_conversion(&ads);
+		Task_sleep(2); //TODO: put semaphore and wait for READY signal!!
 		ads1220_periodic(&ads);
-		Task_sleep(10);
+		ads1220_powerdown(&ads);
 		ads1220_event(&ads);
 		print_load_cell_value((float)(ads.data), PLUS_SIGN, 'G');
 		/**********END ADS1220 TEST***********/
