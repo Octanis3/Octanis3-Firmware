@@ -29,6 +29,8 @@
  */
 
 #include "ads1220.h"
+#include "../../Board.h"
+
 
 // Commands
 #define ADS1220_WREG(_reg, _nb) ((1<<6)|(_reg<<2)|(_nb-1))
@@ -44,6 +46,11 @@
 #define ADS1220_CONF2 0x2
 #define ADS1220_CONF3 0x3
 
+// Tare variables
+#define ADS_TARE_TOLERANCE 1000 	// ADC counts --> 50 miligrams!
+
+int32_t ADS_OFFSET = -8663406;	// used for tare weight
+float ADS_SCALE = 2212.5;	// used to return weight in grams, kg, ounces, whatever
 
 // Init function
 void ads1220_init(struct Ads1220 *ads, struct spi_periph *spi_p, uint8_t slave_idx)
@@ -178,6 +185,61 @@ void ads1220_start_conversion(struct Ads1220 *ads)
 	ads->tx_buf[0] = ADS1220_START_SYNC;
 	spi_submit(ads->spi_p, &(ads->spi_trans));
 }
+
+int32_t ads1220_read_average(uint8_t times, int32_t* max_deviation, struct Ads1220 *ads)
+{
+	if (ads->config.status != ADS1220_INITIALIZED) {
+		ads1220_configure(ads);
+	}
+	ads1220_start_conversion(ads);
+	Task_sleep(1000/ADS_SLOW_SAMPLE_RATE+10); //TODO: put semaphore and wait for READY signal!!
+
+	ads1220_read(ads);
+	ads1220_event(ads);
+	int32_t value = ads->data;
+	int32_t sum = value;
+	int32_t max = sum;
+	int32_t min = sum;
+
+	uint8_t i;
+
+	for (i = 1; i < times; i++)
+	{
+		ads1220_start_conversion(ads);
+		Task_sleep(1000/ADS_SLOW_SAMPLE_RATE+10); //TODO: put semaphore and wait for READY signal!!
+
+		ads1220_read(ads);
+		ads1220_event(ads);
+		value = ads->data;
+		sum += value;
+		if(value>max)
+			max = value;
+		if(value<min)
+			min = value;
+	}
+
+	*max_deviation = (max-min);
+	return sum/times;
+}
+
+float ads1220_get_units(uint8_t times, float* max_deviation, struct Ads1220 *ads)
+{
+	int32_t max_dev_int = 0;
+	int32_t value = ads1220_read_average(times, &max_dev_int, ads) - ADS_OFFSET;
+
+	*max_deviation = (float)max_dev_int/ADS_SCALE;
+
+	return (float)value/ADS_SCALE;
+}
+
+int ads1220_tare(uint8_t times, struct Ads1220 *ads)
+{
+	int32_t tare_deviation;
+	ADS_OFFSET = ads1220_read_average(times, &tare_deviation, ads);
+	if(tare_deviation<ADS_TARE_TOLERANCE)
+		return 1;
+	else
+		return 0;}
 
 
 void ads1220_powerdown(struct Ads1220 *ads)

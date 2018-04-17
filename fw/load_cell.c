@@ -5,8 +5,19 @@
  *      Author: raffael
  */
 
+#include "load_cell.h"
+
+#ifdef USE_HX
 #include "HX711/HX711.h"
+#endif
+
+#ifdef USE_ADS
 #include "ADS1220/ads1220.h"
+
+struct Ads1220 ads;
+
+#endif
+
 #include "../Board.h"
 #include "uart_helper.h"
 
@@ -16,8 +27,15 @@
 #include <xdc/cfg/global.h> //needed for semaphore
 #include <ti/sysbios/knl/Semaphore.h>
 
-#define WEIGHT_THRESHOLD 100
-#define SAMPLE_RATE		HX_SAMPLE_RATE //Hz
+
+#define WEIGHT_THRESHOLD 100 // grams
+#ifdef USE_HX
+	#define SAMPLE_RATE		HX_SAMPLE_RATE //Hz
+#endif
+#ifdef USE_ADS
+	#define SAMPLE_RATE		ADS_SLOW_SAMPLE_RATE //Hz
+#endif
+
 #define MIN_EVENT_TIME 	10 //seconds
 #define N_AVERAGES		10
 #define EVENT_BUF_SIZE	SAMPLE_RATE*MIN_EVENT_TIME/N_AVERAGES //need to account for 10 averaging window already in place!
@@ -56,7 +74,12 @@ int load_cell_get_stable()
 
 	// fill circular buffer with new measurements
 	do{
+#ifdef USE_HX
 		meas_buf[tmp] = hx711_get_units(N_AVERAGES, &deviation);
+#endif
+#ifdef USE_ADS
+		meas_buf[tmp] = ads1220_get_units(N_AVERAGES, &deviation, &ads);
+#endif
 		if(meas_buf[tmp]<WEIGHT_THRESHOLD)
 		{
 			first_valid = 0;
@@ -116,14 +139,6 @@ void load_cell_Task()
 {
 	Task_sleep(1000); //wait until things are settled...
 
-	hx711_begin(nbox_loadcell_data, nbox_loadcell_clk, 128);
-
-	hx711_power_up();
-
-	Task_sleep(1000); //wait until things are settled...
-	//todo: check if tare is successful!!
-	hx711_tare(20);
-
 	//weight value
 	float value;
 
@@ -133,15 +148,28 @@ void load_cell_Task()
 
 	uint64_t owl_ID = 0;
 
+
+#ifdef USE_HX
+
+	hx711_begin(nbox_loadcell_data, nbox_loadcell_clk, 128);
+
 	hx711_power_up();
 
+	Task_sleep(1000); //wait until things are settled...
+	//todo: check if tare is successful!!
+	hx711_tare(20);
 
+	hx711_power_up();
+#endif
+
+#ifdef USE_ADS
 	spi1_init();
-	struct Ads1220 ads;
 	struct spi_periph ads_spi;
 
 	ads1220_init(&ads, &ads_spi, nbox_loadcell_spi_cs_n);
 	ads1220_set_loadcell_config(&ads);
+	ads.config.rate = ADS1220_RATE_20_HZ; //for tare, set to slow=exact mode
+
 	Task_sleep(10);
 	ads1220_event(&ads);
 
@@ -149,12 +177,23 @@ void load_cell_Task()
 	Task_sleep(10);
 	ads1220_event(&ads);
 
-	ads1220_periodic(&ads);
+	ads1220_tare(20, &ads);
 
+
+	ads.config.rate = ADS1220_RATE_1000_HZ; //for presence detection, set to fast=inexact mode
+	ads1220_configure(&ads);
+	ads1220_event(&ads);
+
+	ads1220_periodic(&ads);
+#endif
 
 	while(1)
 	{
-		/************ADS1220 TEST*************/
+		// currently no event detected & reader was off
+		if(!event_ongoing || series_completed)
+		{
+#ifdef USE_ADS
+		/************ADS1220 POLLING*************/
 		ads1220_start_conversion(&ads);
 		Task_sleep(2); //TODO: put semaphore and wait for READY signal!!
 		ads1220_periodic(&ads);
@@ -162,10 +201,9 @@ void load_cell_Task()
 		ads1220_event(&ads);
 		print_load_cell_value((float)(ads.data), PLUS_SIGN, 'G');
 		/**********END ADS1220 TEST***********/
+#endif
 
-		// currently no event detected & reader was off
-		if(!event_ongoing || series_completed)
-		{
+#if USE_HX
 			// hx711_power_up();
 
 			// check if bird is present:
@@ -173,6 +211,7 @@ void load_cell_Task()
 			value = hx711_get_units(1,&dummy_tol);
 
 			// hx711_power_down();
+#endif
 
 			char sign = PLUS_SIGN;
 			if(value<0)
@@ -196,6 +235,14 @@ void load_cell_Task()
 
 					if(rfid_get_id(&owl_ID))
 					{
+						// now start the weight measurement
+#ifdef USE_ADS
+						// change to slow = exact mode
+						ads.config.rate = ADS1220_RATE_20_HZ;
+						ads1220_configure(&ads);
+						ads1220_event(&ads);
+#endif
+
 						event_ongoing = 1;
 						series_completed = 0;
 					}
@@ -221,6 +268,14 @@ void load_cell_Task()
 			{
 				//log event!! + mark series completed, but keep event ongoing (in order to not count it twice)!
 				series_completed = 1;
+
+				// now start the weight measurement
+#ifdef USE_ADS
+				// change to slow = exact mode
+				ads.config.rate = ADS1220_RATE_1000_HZ; //for presence detection, set to fast=inexact mode
+				ads1220_configure(&ads);
+				ads1220_event(&ads);
+#endif
 			}
 			else
 			{

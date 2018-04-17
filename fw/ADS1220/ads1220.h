@@ -38,6 +38,9 @@
 //#include "math/pprz_algebra_int.h"
 #include "spi.h"
 
+#define ADS_SLOW_SAMPLE_RATE 20
+#define ADS_FAST_SAMPLE_RATE 1000
+
 // Conf status
 enum Ads1220ConfStatus {
   ADS1220_UNINIT = 0,
@@ -184,6 +187,9 @@ extern void ads1220_read(struct Ads1220 *ads);
 extern void ads1220_event(struct Ads1220 *ads);
 extern void ads1220_powerdown(struct Ads1220 *ads);
 extern void ads1220_start_conversion(struct Ads1220 *ads);
+
+extern float ads1220_get_units(uint8_t times, float* max_deviation, struct Ads1220 *ads);
+extern int ads1220_tare(uint8_t times, struct Ads1220 *ads);
 
 
 /// convenience function: read or start configuration if not already initialized

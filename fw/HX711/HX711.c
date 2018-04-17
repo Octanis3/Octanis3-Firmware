@@ -8,8 +8,8 @@
 uint8_t PD_SCK;		// Power Down and Serial Clock Input Pin
 uint8_t DOUT;  	// Serial Data Output Pin
 uint8_t GAIN = 1;		// amplification factor, default 128!
-int32_t OFFSET = -8663406;	// used for tare weight
-float SCALE = 2212.5;	// used to return weight in grams, kg, ounces, whatever
+int32_t HX_OFFSET = -8663406;	// used for tare weight
+float HX_SCALE = 2212.5;	// used to return weight in grams, kg, ounces, whatever
 
 void hx711_begin(uint8_t dout, uint8_t pd_sck, uint8_t gain) {
 	PD_SCK = pd_sck;
@@ -102,15 +102,15 @@ int32_t hx711_read_average(uint8_t times, int32_t* max_deviation) {
 }
 
 double hx711_get_value(uint8_t times, int32_t* max_deviation) {
-	return hx711_read_average(times, max_deviation) - OFFSET;
+	return hx711_read_average(times, max_deviation) - HX_OFFSET;
 }
 
 float hx711_get_units(uint8_t times, float* max_deviation) {
 	int32_t max_dev_int = 0;
 	int32_t value = hx711_get_value(times, &max_dev_int);
 
-	*max_deviation = max_dev_int/SCALE;
-	return value / SCALE;
+	*max_deviation = (float)max_dev_int/HX_SCALE;
+	return (float)value / HX_SCALE;
 }
 
 int hx711_tare(uint8_t times) {
@@ -124,19 +124,19 @@ int hx711_tare(uint8_t times) {
 }
 
 void hx711_set_scale(float scale) {
-	SCALE = scale;
+	HX_SCALE = scale;
 }
 
 float hx711_get_scale() {
-	return SCALE;
+	return HX_SCALE;
 }
 
 void hx711_set_offset(int32_t offset) {
-	OFFSET = offset;
+	HX_OFFSET = offset;
 }
 
 long hx711_get_offset() {
-	return OFFSET;
+	return HX_OFFSET;
 }
 
 void hx711_power_down() {
