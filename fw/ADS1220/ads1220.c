@@ -140,7 +140,10 @@ void ads1220_read(struct Ads1220 *ads)
   if (ads->config.status == ADS1220_INITIALIZED && ads->spi_trans.status == SPITransDone) {
     ads->spi_trans.output_length = 0;
     ads->spi_trans.input_length = 3;
-    ads->tx_buf[0] = ADS1220_RDATA;
+    //NOTE: SENDING THE RDATA COMMAND MAKES THAT THE DATA RE-STARTS ON THE NEXT BYTE --> SHOULD HAVE A READ LENGTH OF 4 IN THIS CASE!
+    ads->tx_buf[0] = 0;
+    ads->tx_buf[1] = 0;
+    ads->tx_buf[2] = 0;
     spi_submit(ads->spi_p, &(ads->spi_trans));
   }
 }
@@ -190,9 +193,10 @@ int32_t ads1220_read_average(uint8_t times, int32_t* max_deviation, struct Ads12
 {
 	if (ads->config.status != ADS1220_INITIALIZED) {
 		ads1220_configure(ads);
+		ads1220_event(ads);
 	}
-	ads1220_start_conversion(ads);
-	Task_sleep(1000/ADS_SLOW_SAMPLE_RATE+10); //TODO: put semaphore and wait for READY signal!!
+	//ads1220_start_conversion(ads);
+	Task_sleep(1000); //TODO: put semaphore and wait for READY signal!!
 
 	ads1220_read(ads);
 	ads1220_event(ads);
@@ -205,8 +209,8 @@ int32_t ads1220_read_average(uint8_t times, int32_t* max_deviation, struct Ads12
 
 	for (i = 1; i < times; i++)
 	{
-		ads1220_start_conversion(ads);
-		Task_sleep(1000/ADS_SLOW_SAMPLE_RATE+10); //TODO: put semaphore and wait for READY signal!!
+		//ads1220_start_conversion(ads);
+		Task_sleep(1000); //TODO: put semaphore and wait for READY signal!!
 
 		ads1220_read(ads);
 		ads1220_event(ads);

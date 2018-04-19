@@ -14,8 +14,6 @@
 #ifdef USE_ADS
 #include "ADS1220/ads1220.h"
 
-struct Ads1220 ads;
-
 #endif
 
 #include "../Board.h"
@@ -54,7 +52,7 @@ void print_load_cell_value(float value, char sign, char log_symbol)
 {
 	uint8_t strlen;
 	uint8_t weight_buf[20];
-	strlen = ui2a((unsigned long)(value*1000), 10, 1, HIDE_LEADING_ZEROS, &weight_buf[1]);
+	strlen = ui2a((unsigned long)(value), 10, 1, HIDE_LEADING_ZEROS, &weight_buf[1]);
 	weight_buf[0] = sign;
 
 	Semaphore_pend((Semaphore_Handle)semSerial,BIOS_WAIT_FOREVER);
@@ -62,7 +60,7 @@ void print_load_cell_value(float value, char sign, char log_symbol)
 	Semaphore_post((Semaphore_Handle)semSerial);
 }
 
-int load_cell_get_stable()
+int load_cell_get_stable(struct Ads1220 *ads)
 {
 	static float meas_buf[EVENT_BUF_SIZE] = {0.0,};
 	static int first_valid = 0;
@@ -78,7 +76,7 @@ int load_cell_get_stable()
 		meas_buf[tmp] = hx711_get_units(N_AVERAGES, &deviation);
 #endif
 #ifdef USE_ADS
-		meas_buf[tmp] = ads1220_get_units(N_AVERAGES, &deviation, &ads);
+		meas_buf[tmp] = ads1220_get_units(N_AVERAGES, &deviation, ads);
 #endif
 		if(meas_buf[tmp]<WEIGHT_THRESHOLD)
 		{
@@ -126,7 +124,7 @@ void ads1220_set_loadcell_config(struct Ads1220 *ads){
 	ads->config.pga_bypass = 0;
 	ads->config.rate = ADS1220_RATE_1000_HZ;
 	// todo: change operating mode to duty-cycle mode
-	ads->config.conv = ADS1220_SINGLE_SHOT;
+	ads->config.conv = ADS1220_CONTINIOUS_CONVERSION;
 	ads->config.vref = ADS1220_VREF_EXTERNAL_AIN;
 	ads->config.idac = ADS1220_IDAC_OFF;
 	ads->config.i1mux = ADS1220_IMUX_OFF;
@@ -165,6 +163,7 @@ void load_cell_Task()
 #ifdef USE_ADS
 	spi1_init();
 	struct spi_periph ads_spi;
+	struct Ads1220 ads;
 
 	ads1220_init(&ads, &ads_spi, nbox_loadcell_spi_cs_n);
 	ads1220_set_loadcell_config(&ads);
@@ -180,8 +179,8 @@ void load_cell_Task()
 	ads1220_tare(20, &ads);
 
 
-	ads.config.rate = ADS1220_RATE_1000_HZ; //for presence detection, set to fast=inexact mode
-	ads1220_configure(&ads);
+	//ads.config.rate = ADS1220_RATE_1000_HZ; //for presence detection, set to fast=inexact mode
+	//ads1220_configure(&ads);
 	ads1220_event(&ads);
 
 	ads1220_periodic(&ads);
@@ -195,15 +194,17 @@ void load_cell_Task()
 #ifdef USE_ADS
 		/************ADS1220 POLLING*************/
 		ads1220_start_conversion(&ads);
-		Task_sleep(2); //TODO: put semaphore and wait for READY signal!!
-		ads1220_periodic(&ads);
-		ads1220_powerdown(&ads);
 		ads1220_event(&ads);
+
+		Task_sleep(60); //TODO: put semaphore and wait for READY signal!!
+		ads1220_periodic(&ads);
+		ads1220_event(&ads);
+		ads1220_powerdown(&ads);
 		print_load_cell_value((float)(ads.data), PLUS_SIGN, 'G');
 		/**********END ADS1220 TEST***********/
 #endif
 
-#if USE_HX
+#ifdef USE_HX
 			// hx711_power_up();
 
 			// check if bird is present:
@@ -236,11 +237,11 @@ void load_cell_Task()
 					if(rfid_get_id(&owl_ID))
 					{
 						// now start the weight measurement
-#ifdef USE_ADS
+#ifdef USE_ADS/*
 						// change to slow = exact mode
 						ads.config.rate = ADS1220_RATE_20_HZ;
 						ads1220_configure(&ads);
-						ads1220_event(&ads);
+						ads1220_event(&ads);*/
 #endif
 
 						event_ongoing = 1;
@@ -264,17 +265,18 @@ void load_cell_Task()
 			// -->ID WAS DETECTED!
 
 			//measure weight again with 10 averages:
-			if(load_cell_get_stable())
+//**************************************************************if(load_cell_get_stable(&ads)) //TODO
+			if(0)
 			{
 				//log event!! + mark series completed, but keep event ongoing (in order to not count it twice)!
 				series_completed = 1;
 
 				// now start the weight measurement
-#ifdef USE_ADS
+#ifdef USE_ADS/*
 				// change to slow = exact mode
 				ads.config.rate = ADS1220_RATE_1000_HZ; //for presence detection, set to fast=inexact mode
 				ads1220_configure(&ads);
-				ads1220_event(&ads);
+				ads1220_event(&ads);*/
 #endif
 			}
 			else
