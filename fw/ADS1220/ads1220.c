@@ -50,7 +50,7 @@
 #define ADS_TARE_TOLERANCE 1000 	// ADC counts --> 50 miligrams!
 
 int32_t ADS_OFFSET = -8663406;	// used for tare weight
-float ADS_SCALE = 2212.5;	// used to return weight in grams, kg, ounces, whatever
+float ADS_SCALE = 1050;	// used to return weight in grams
 
 // Init function
 void ads1220_init(struct Ads1220 *ads, struct spi_periph *spi_p, uint8_t slave_idx)
@@ -84,7 +84,7 @@ void ads1220_init(struct Ads1220 *ads, struct spi_periph *spi_p, uint8_t slave_i
 
 
 // Configuration function called once before normal use
-static void ads1220_send_config(struct Ads1220 *ads)
+void ads1220_send_config(struct Ads1220 *ads)
 {
   ads->spi_trans.output_length = 5;
   ads->spi_trans.input_length = 0;
@@ -105,15 +105,36 @@ static void ads1220_send_config(struct Ads1220 *ads)
                      (ads->config.i1mux << 5));
   spi_submit(ads->spi_p, &(ads->spi_trans));
   //start continuous readout mode:
+  //TI recommends always sending a START/SYNC command immediately after the CM (continuous mode) bit is set to 1.
 	ads->spi_trans.output_length = 1;
 	ads->spi_trans.input_length = 0;
 	ads->tx_buf[0] = ADS1220_START_SYNC;
 	ads->tx_buf[1] = 0;
 	ads->tx_buf[2] = 0; //reset the buffer
 	spi_submit(ads->spi_p, &(ads->spi_trans));
+}
 
+// Configuration function called to start fast conversion; single-shot mode
+void ads1220_change_mode(struct Ads1220 *ads, enum Ads1220SampleRate rate, enum Ads1220ConvMode mode)
+{
+	ads->config.rate = rate; //for presence detection, set to fast=inexact & single shot mode
+	ads->config.conv = mode;
 
+	ads->spi_trans.output_length = 2;
+	ads->spi_trans.input_length = 0;
+	ads->tx_buf[0] = ADS1220_WREG(ADS1220_CONF1, 1);
+	ads->tx_buf[1] = (
+					 (ads->config.conv << 2) |
+					 (ads->config.rate << 5));
 
+	spi_submit(ads->spi_p, &(ads->spi_trans));
+	//start readout:
+	ads->spi_trans.output_length = 1;
+	ads->spi_trans.input_length = 0;
+	ads->tx_buf[0] = ADS1220_START_SYNC;
+	ads->tx_buf[1] = 0;
+	ads->tx_buf[2] = 0; //reset the buffer
+	spi_submit(ads->spi_p, &(ads->spi_trans));
 }
 
 // Configuration function called before normal use
@@ -187,6 +208,7 @@ void ads1220_start_conversion(struct Ads1220 *ads)
     ads->spi_trans.input_length = 0;
 	ads->tx_buf[0] = ADS1220_START_SYNC;
 	spi_submit(ads->spi_p, &(ads->spi_trans));
+    ads->spi_trans.status = SPITransDone;
 }
 
 int32_t ads1220_read_average(uint8_t times, int32_t* max_deviation, struct Ads1220 *ads)
@@ -236,14 +258,27 @@ float ads1220_get_units(uint8_t times, float* max_deviation, struct Ads1220 *ads
 	return (float)value/ADS_SCALE;
 }
 
+float ads1220_convert_units(struct Ads1220 *ads)
+{
+	return (float)(ads->data - ADS_OFFSET)/ADS_SCALE;
+}
+
 int ads1220_tare(uint8_t times, struct Ads1220 *ads)
 {
 	int32_t tare_deviation;
 	ADS_OFFSET = ads1220_read_average(times, &tare_deviation, ads);
 	if(tare_deviation<ADS_TARE_TOLERANCE)
+	{
 		return 1;
+
+	}
 	else
 		return 0;}
+
+void ads1220_set_raw_threshold(int32_t* raw_threshold, float weight_threshold)
+{
+	*raw_threshold = ADS_SCALE * weight_threshold + ADS_OFFSET;
+}
 
 
 void ads1220_powerdown(struct Ads1220 *ads)
@@ -253,5 +288,6 @@ void ads1220_powerdown(struct Ads1220 *ads)
     ads->spi_trans.input_length = 0;
     ads->tx_buf[0] = ADS1220_POWERDOWN;
     spi_submit(ads->spi_p, &(ads->spi_trans));
+    ads->spi_trans.status = SPITransDone;
   }
 }

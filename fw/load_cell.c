@@ -24,7 +24,8 @@
 
 #include <xdc/cfg/global.h> //needed for semaphore
 #include <ti/sysbios/knl/Semaphore.h>
-
+#include <xdc/runtime/Error.h>
+#include <xdc/runtime/System.h>
 
 #define WEIGHT_THRESHOLD 100 // grams
 #ifdef USE_HX
@@ -47,6 +48,9 @@
 
 #define WEIGHT_TOLERANCE 	0.1f		// maximum deviation from average value within one measurement series
 #define WEIGHT_MAX_CHANGE	0.015f	// maximum change
+
+Semaphore_Handle semLoadCellDRDY;
+
 
 void print_load_cell_value(float value, char sign, char log_symbol)
 {
@@ -138,7 +142,9 @@ void load_cell_Task()
 	Task_sleep(1000); //wait until things are settled...
 
 	//weight value
-	float value;
+	float value = 0;
+
+	int32_t raw_threshold = 0;
 
 	//storage for measurement series
 	char event_ongoing = 0;
@@ -161,9 +167,20 @@ void load_cell_Task()
 #endif
 
 #ifdef USE_ADS
+	/* Initialize the Data READY semaphore */
+	Semaphore_Params semParams;
+	Error_Block eb;
+	Error_init(&eb);
+	Semaphore_Params_init(&semParams);
+	semParams.mode = Semaphore_Mode_BINARY;
+	semLoadCellDRDY = Semaphore_create(0, &semParams, &eb);
+
+	GPIO_enableInt(nbox_loadcell_data_ready);
+
 	spi1_init();
 	struct spi_periph ads_spi;
 	struct Ads1220 ads;
+
 
 	ads1220_init(&ads, &ads_spi, nbox_loadcell_spi_cs_n);
 	ads1220_set_loadcell_config(&ads);
@@ -177,13 +194,12 @@ void load_cell_Task()
 	ads1220_event(&ads);
 
 	ads1220_tare(20, &ads);
+	ads1220_set_raw_threshold(&raw_threshold, (float)WEIGHT_THRESHOLD);
 
 
-	//ads.config.rate = ADS1220_RATE_1000_HZ; //for presence detection, set to fast=inexact mode
-	//ads1220_configure(&ads);
+	ads1220_change_mode(&ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT);
 	ads1220_event(&ads);
 
-	ads1220_periodic(&ads);
 #endif
 
 	while(1)
@@ -193,14 +209,16 @@ void load_cell_Task()
 		{
 #ifdef USE_ADS
 		/************ADS1220 POLLING*************/
+		Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
 		ads1220_start_conversion(&ads);
-		ads1220_event(&ads);
+		Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, BIOS_WAIT_FOREVER); // timeout 100 ms in case DRDY pin is not connected
 
-		Task_sleep(60); //TODO: put semaphore and wait for READY signal!!
 		ads1220_periodic(&ads);
 		ads1220_event(&ads);
 		ads1220_powerdown(&ads);
-		print_load_cell_value((float)(ads.data), PLUS_SIGN, 'G');
+		print_load_cell_value((float)(ads.data), PLUS_SIGN, 'A');
+		// TODO: remove conversion
+		value = ads1220_convert_units(&ads);
 		/**********END ADS1220 TEST***********/
 #endif
 
@@ -214,6 +232,7 @@ void load_cell_Task()
 			// hx711_power_down();
 #endif
 
+			// TODO: remove conversion
 			char sign = PLUS_SIGN;
 			if(value<0)
 			{
@@ -289,3 +308,8 @@ void load_cell_Task()
 }
 
 
+void load_cell_isr()
+{
+	//check interrupt source
+	Semaphore_post((Semaphore_Handle)semLoadCellDRDY);
+}

@@ -68,6 +68,7 @@ typedef enum nbox_GPIOName {
 	nbox_lightbarrier_ext,
 	nbox_lightbarrier_int,
 	nbox_lf_clk,
+	nbox_loadcell_data_ready,
 	nbox_lf_data,
 	nbox_lf_freq_sel,
 	nbox_loadcell_data,
@@ -78,7 +79,7 @@ typedef enum nbox_GPIOName {
     nbox_led_green,
 #endif
 //	nbox_led_ir,
-	nbox_loadcell_clk,
+//	nbox_loadcell_clk,
 	nbox_lf_modul,
 	nbox_loadcell_spi_cs_n,
 

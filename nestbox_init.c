@@ -54,6 +54,7 @@
 #include <ti/drivers/SPI.h>
 
 #include "fw/user_button.h"
+#include "fw/load_cell.h"
 #include "fw/lightbarrier.h"
 #include "fw/rfid_reader.h" //for precompiler assignments
 
@@ -116,6 +117,8 @@ GPIO_PinConfig gpioPinConfigs[] = {
 	GPIOMSP430_P1_3 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
 	/* NESTBOX_LF_CLK */
 	GPIOMSP430_P2_4 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
+	/* NESTBOX_LOADCELL_DRDY */
+	GPIOMSP430_P3_4 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
 	/* NESTBOX_LF_DATA */
 	GPIOMSP430_P4_3 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_NONE,
 	/* NESTBOX_LF_FREQ_SELECT */
@@ -136,8 +139,8 @@ GPIO_PinConfig gpioPinConfigs[] = {
 	 * --> directly modified at register level in lightbarrier task */
 //	GPIOMSP430_P1_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
-	/* NESTBOX_LOADCELL_CLK */
-	GPIOMSP430_P3_4 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
+//	/* NESTBOX_LOADCELL_CLK */
+//	GPIOMSP430_P3_4 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
 	/* NESTBOX_LF_MODUL */
 	GPIOMSP430_P1_2 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
 	/* NESTBOX_LOADCELL_SPI_CS_N */
@@ -156,6 +159,7 @@ GPIO_CallbackFxn gpioCallbackFunctions[] = {
 	lightbarrier_input_isr, /* lightbarrier detection routine */
 	lightbarrier_input_isr, /* lightbarrier detection routine */
 	lf_tag_read_isr,
+	load_cell_isr, /* Data ready pin for the ADS1220 load cell amplifier */
 };
 
 /* The device-specific GPIO_config structure */

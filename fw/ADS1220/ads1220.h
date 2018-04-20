@@ -189,8 +189,10 @@ extern void ads1220_powerdown(struct Ads1220 *ads);
 extern void ads1220_start_conversion(struct Ads1220 *ads);
 
 extern float ads1220_get_units(uint8_t times, float* max_deviation, struct Ads1220 *ads);
+float ads1220_convert_units(struct Ads1220 *ads);
 extern int ads1220_tare(uint8_t times, struct Ads1220 *ads);
-
+extern void ads1220_set_raw_threshold(int32_t* raw_threshold, float weight_threshold);
+extern void ads1220_change_mode(struct Ads1220 *ads, enum Ads1220SampleRate rate, enum Ads1220ConvMode mode);
 
 /// convenience function: read or start configuration if not already initialized
 static inline void ads1220_periodic(struct Ads1220 *ads)
