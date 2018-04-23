@@ -38,12 +38,22 @@
 #define LOG_DIR_8b_OFS				0xC // 1 byte "I", "O" or "U" in/out/unknown
 #define LOG_CRC_8b_OFS				0xD // 1 byte CRC (for int16 alignment)
 
-#define LOG_ENTRY_8b_LEN		0xE
-#define LOG_ENTRY_16b_LEN	0x7
+// offsets of the second block for weight measurement records:
+#define LOG_WEIGHT_16b_OFS			0x0 // weight measurement number goes here
+#define LOG_STDDEV_16b_OFS			0x1 // tolerance of the weight measurement here
+#define LOG_TEMP_16b_OFS				0x2 // temperature at time of the measurement goes here
+#define LOG CRC2_16b_OFS				0x3 // CRC of the weight measurement data goes here
+
+#define LOG_ENTRY_8b_LEN				0xE
+#define LOG_ENTRY_WEIGHT_8b_LEN		0x8 // length of the second part of the logging (storing the weight measurement)
+
+#define LOG_ENTRY_16b_LEN			0x7
+#define LOG_ENTRY_WEIGHT_16b_LEN		0x4 // length of the second part of the logging (storing the weight measurement)
+
 
 #define T_PHASE_2			86400 //after 24hours, all events get logged
 
-#define OUTPUT_BUF_LEN		LOG_ENTRY_8b_LEN+2+2 // adding two ',' and two digits for decimal time stamp rep.
+#define OUTPUT_BUF_LEN		LOG_ENTRY_8b_LEN+2+2 // adding two ',' and two digits for decimal time stamp rep. +5 for weight
 
 unsigned int* FRAM_offset_ptr;
 unsigned int* FRAM_read_ptr;
@@ -86,7 +96,7 @@ void log_startup()
 	log_initialized = 1;
 }
 
-int log_write_new_entry(uint32_t timestamp, uint64_t uid, uint8_t inout)
+int log_write_new_entry(uint32_t timestamp, uint64_t uid, uint8_t inout, uint16_t weight)
 {
 	FRAM_offset_ptr = (unsigned int*)LOG_NEXT_POS_OFS; // pointer should be already initialized at startup, but just to be sure...
 	unsigned int* FRAM_write_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); // = base address plus *FRAM_offset_ptr
@@ -110,11 +120,29 @@ int log_write_new_entry(uint32_t timestamp, uint64_t uid, uint8_t inout)
 		inout_c = 'I';
 	else if(inout == 0)
 		inout_c = 'O';
+	else if(inout == 'W')
+	{
+		inout_c = 'W';
+	}
 
 	*((unsigned char*)FRAM_write_ptr+LOG_DIR_8b_OFS) = inout_c;
 	//TODO: calculate some sort of CRC.
 
-	*FRAM_offset_ptr += LOG_ENTRY_8b_LEN;                 // Increment write index
+	*FRAM_offset_ptr += LOG_ENTRY_8b_LEN;                 // Increment write index //TODO: why not the 16bit value??
+
+	if(inout_c == 'W')
+	{
+		FRAM_write_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); // = base address plus *FRAM_offset_ptr
+		//TODO: on the next block, write down the weight value.
+		*((uint16_t*)FRAM_write_ptr+LOG_WEIGHT_16b_OFS) = weight;
+
+		*FRAM_offset_ptr += LOG_ENTRY_WEIGHT_8b_LEN;                 // Increment write index
+
+		return LOG_ENTRY_8b_LEN + LOG_ENTRY_WEIGHT_8b_LEN;
+	}
+
+
+
 
 	return LOG_ENTRY_8b_LEN;
 }
@@ -189,11 +217,26 @@ void log_send_data_via_uart()
 		strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_LSB_OFS), 16, 1,PRINT_LEADING_ZEROS, outbuffer); //the second 32 bits
 		outbuffer[strlen] = ',';
 		outbuffer[strlen+1] = *((uint8_t*)FRAM_read_ptr+LOG_DIR_8b_OFS);
+		// TODO: treat weight and light barrier event differently
 		uart_serial_write(&debug_uart, outbuffer, strlen+2);
-		uart_serial_putc(&debug_uart, '\n');
 
 		//increment pointer to next memory location
 		FRAM_read_ptr += LOG_ENTRY_16b_LEN;
+
+		if(outbuffer[strlen+1] == 'W') //this is a weight measurement record --> continue reading
+		{
+			//TODO:
+			strlen = ui2a(*((uint16_t*)FRAM_read_ptr+LOG_WEIGHT_16b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
+			outbuffer[strlen] = ',';
+
+			uart_serial_write(&debug_uart, outbuffer, strlen+1);
+
+			//increment pointer to next memory location
+			FRAM_read_ptr += LOG_ENTRY_WEIGHT_16b_LEN;
+		}
+
+		uart_serial_putc(&debug_uart, '\n');
+
 	}
 
 	uart_serial_write(&debug_uart, end_string, sizeof(end_string));

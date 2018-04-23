@@ -173,7 +173,7 @@ void lightBarrier_Task()
 				}
     			}
 			// --> create logging event
-			log_write_new_entry(lb_status.timestamp, tag_id, lb_status.direction);
+			log_write_new_entry(lb_status.timestamp, tag_id, lb_status.direction, 0);
 
     		}
     		else
@@ -190,7 +190,7 @@ void lightBarrier_Task()
 				// readout failed --> turn off reader
 				rfid_stop_detection();
 			}
-			log_write_new_entry(lb_status.timestamp, tag_id, lb_status.direction);
+			log_write_new_entry(lb_status.timestamp, tag_id, lb_status.direction, 0);
     		}
 
     		// reset state

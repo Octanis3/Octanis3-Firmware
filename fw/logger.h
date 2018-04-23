@@ -11,7 +11,7 @@
 #include <stdint.h>
 
 void log_startup();
-int log_write_new_entry(uint32_t timestamp, uint64_t uid, uint8_t inout);
+int log_write_new_entry(uint32_t timestamp, uint64_t uid, uint8_t inout, uint16_t weight);
 
 void log_send_data_via_uart();
 void log_send_lb_state();

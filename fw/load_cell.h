@@ -11,6 +11,11 @@
 //#define USE_HX
 #define USE_ADS
 
+#include <xdc/cfg/global.h> //needed for semaphore
+#include <ti/sysbios/knl/Semaphore.h>
+
+// Semaphore_Handle semLoadCellDRDY;
+
 void load_cell_Task();
 
 

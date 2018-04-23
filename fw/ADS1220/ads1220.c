@@ -31,6 +31,10 @@
 #include "ads1220.h"
 #include "../../Board.h"
 
+#include "../load_cell.h"
+
+extern Semaphore_Handle semLoadCellDRDY;
+
 
 // Commands
 #define ADS1220_WREG(_reg, _nb) ((1<<6)|(_reg<<2)|(_nb-1))
@@ -106,12 +110,7 @@ void ads1220_send_config(struct Ads1220 *ads)
   spi_submit(ads->spi_p, &(ads->spi_trans));
   //start continuous readout mode:
   //TI recommends always sending a START/SYNC command immediately after the CM (continuous mode) bit is set to 1.
-	ads->spi_trans.output_length = 1;
-	ads->spi_trans.input_length = 0;
-	ads->tx_buf[0] = ADS1220_START_SYNC;
-	ads->tx_buf[1] = 0;
-	ads->tx_buf[2] = 0; //reset the buffer
-	spi_submit(ads->spi_p, &(ads->spi_trans));
+	 ads1220_start_conversion(ads);
 }
 
 // Configuration function called to start fast conversion; single-shot mode
@@ -129,12 +128,7 @@ void ads1220_change_mode(struct Ads1220 *ads, enum Ads1220SampleRate rate, enum 
 
 	spi_submit(ads->spi_p, &(ads->spi_trans));
 	//start readout:
-	ads->spi_trans.output_length = 1;
-	ads->spi_trans.input_length = 0;
-	ads->tx_buf[0] = ADS1220_START_SYNC;
-	ads->tx_buf[1] = 0;
-	ads->tx_buf[2] = 0; //reset the buffer
-	spi_submit(ads->spi_p, &(ads->spi_trans));
+	ads1220_start_conversion(ads);
 }
 
 // Configuration function called before normal use
@@ -146,11 +140,13 @@ void ads1220_configure(struct Ads1220 *ads)
       ads->spi_trans.input_length = 0;
       ads->tx_buf[0] = ADS1220_RESET;
       spi_submit(ads->spi_p, &(ads->spi_trans));
-      ads->config.status = ADS1220_SEND_RESET;
-    }
-  } else if (ads->config.status == ADS1220_INITIALIZING) { // Configuring but not yet initialized
-    if (ads->spi_trans.status == SPITransSuccess || ads->spi_trans.status == SPITransDone) {
-      ads1220_send_config(ads); // do config
+      ads->config.status = ADS1220_SEND_RESET;}
+      if (ads->spi_trans.status == SPITransSuccess || ads->spi_trans.status == SPITransDone) {
+    	  	  ads1220_send_config(ads); // do config
+    	 	}
+      if (ads->spi_trans.status == SPITransSuccess || ads->spi_trans.status == SPITransDone) {
+          ads->config.status = ADS1220_INITIALIZED;
+          ads->spi_trans.status = SPITransDone;
     }
   }
 }
@@ -213,12 +209,14 @@ void ads1220_start_conversion(struct Ads1220 *ads)
 
 int32_t ads1220_read_average(uint8_t times, int32_t* max_deviation, struct Ads1220 *ads)
 {
-	if (ads->config.status != ADS1220_INITIALIZED) {
-		ads1220_configure(ads);
-		ads1220_event(ads);
+	if(ads->config.conv != ADS1220_CONTINIOUS_CONVERSION)
+	{
+		ads1220_change_mode(ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION);
+		// this function includes the START/SYNC command, so data will be ready continuously.
 	}
-	//ads1220_start_conversion(ads);
-	Task_sleep(1000); //TODO: put semaphore and wait for READY signal!!
+
+	Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
+	Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, 100); // timeout 100 ms in case DRDY pin is not connected
 
 	ads1220_read(ads);
 	ads1220_event(ads);
@@ -231,8 +229,7 @@ int32_t ads1220_read_average(uint8_t times, int32_t* max_deviation, struct Ads12
 
 	for (i = 1; i < times; i++)
 	{
-		//ads1220_start_conversion(ads);
-		Task_sleep(1000); //TODO: put semaphore and wait for READY signal!!
+		Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, 100); // timeout 100 ms in case DRDY pin is not connected
 
 		ads1220_read(ads);
 		ads1220_event(ads);
