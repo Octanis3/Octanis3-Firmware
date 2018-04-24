@@ -48,7 +48,8 @@
 #define T_RFID_RETRY		10000 	//ms
 #define T_LOADCELL_POLL	1000 	//ms
 
-#define WEIGHT_TOLERANCE 	5.0f		// maximum deviation from average value within one measurement series
+#define SAMPLE_TOLERANCE 	5.0f		// maximum variation of the sampled values within N_AVERAGES samples
+#define WEIGHT_TOLERANCE 	1.0f		// maximum deviation from average value within one measurement series
 #define WEIGHT_MAX_CHANGE	0.15f	// maximum change within one "event"
 
 Semaphore_Handle semLoadCellDRDY;
@@ -60,8 +61,14 @@ typedef enum weightResultStatus_
 	STABLE
 } weightResultStatus;
 
-void print_load_cell_value(float value, char sign, char log_symbol)
+void print_load_cell_value(float value, char log_symbol)
 {
+	char sign = PLUS_SIGN;
+	if(value<0)
+	{
+		sign = MINUS_SIGN;
+		value = -value;
+	}
 	uint8_t strlen;
 	uint8_t weight_buf[20];
 	strlen = ui2a((unsigned long)(value), 10, 1, HIDE_LEADING_ZEROS, &weight_buf[1]);
@@ -92,7 +99,7 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 #ifdef USE_ADS
 		meas_buf[tmp] = ads1220_get_units(N_AVERAGES, &deviation, ads);
 #endif
-		print_load_cell_value(meas_buf[tmp], PLUS_SIGN, 'X');
+		print_load_cell_value(meas_buf[tmp], 'X');
 
 		if(meas_buf[tmp]<(float)WEIGHT_THRESHOLD)
 		{
@@ -100,7 +107,7 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 			first_invalid = 0;
 			return OWL_LEFT;
 		}
-		if(deviation > WEIGHT_TOLERANCE)
+		if(deviation > SAMPLE_TOLERANCE)
 			continue;
 
 		tmp = tmp + 1;
@@ -143,15 +150,15 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 		ads->tolerance = tol;
 	}
 
-	if(tol < WEIGHT_MAX_CHANGE)
+	if(tol < WEIGHT_TOLERANCE)
 	{
-		print_load_cell_value(average, PLUS_SIGN, 'S');
+		print_load_cell_value(average, 'S');
 		return STABLE;
 	}
 
 	else
 	{
-		print_load_cell_value(average, PLUS_SIGN, 'A');
+		print_load_cell_value(average, 'A');
 		return UNSTABLE;
 	}
 }
@@ -163,6 +170,7 @@ void ads1220_set_loadcell_config(struct Ads1220 *ads){
 	ads->config.rate = ADS1220_RATE_1000_HZ;
 	// todo: change operating mode to duty-cycle mode
 	ads->config.conv = ADS1220_CONTINIOUS_CONVERSION;
+	ads->config.temp_sensor = ADS1220_TEMPERATURE_DISABLED;
 	ads->config.vref = ADS1220_VREF_EXTERNAL_AIN;
 	ads->config.idac = ADS1220_IDAC_OFF;
 	ads->config.i1mux = ADS1220_IMUX_OFF;
@@ -231,7 +239,7 @@ void load_cell_Task()
 	ads1220_set_raw_threshold(&raw_threshold, (float)WEIGHT_THRESHOLD);
 
 
-	ads1220_change_mode(&ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT);
+	ads1220_change_mode(&ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT, ADS1220_TEMPERATURE_DISABLED);
 
 #endif
 
@@ -244,12 +252,13 @@ void load_cell_Task()
 		/************ADS1220 POLLING*************/
 		Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
 		ads1220_start_conversion(&ads);
+		Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
 		Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, BIOS_WAIT_FOREVER); // timeout 100 ms in case DRDY pin is not connected
 
 		ads1220_periodic(&ads);
 		ads1220_event(&ads);
 		ads1220_powerdown(&ads);
-		print_load_cell_value((float)(ads.data), PLUS_SIGN, 'D');
+		print_load_cell_value((float)(ads.data), 'D');
 		// TODO: remove conversion
 		value = ads1220_convert_units(&ads);
 		/**********END ADS1220 TEST***********/
@@ -265,16 +274,8 @@ void load_cell_Task()
 			// hx711_power_down();
 #endif
 
-			// TODO: remove conversion
-			char sign = PLUS_SIGN;
-			if(value<0)
-			{
-				value = -value;
-				sign = MINUS_SIGN;
-			}
-
 			//print the inexact weight value: (TODO:remove)
-			print_load_cell_value(value, sign, 'W');
+			print_load_cell_value(value, 'W');
 
 			if((ads.data)>raw_threshold)
 			{
@@ -291,7 +292,9 @@ void load_cell_Task()
 						// now start the weight measurement
 #ifdef USE_ADS
 						// change to slow = exact mode
-						ads1220_change_mode(&ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION);
+						ads1220_change_mode(&ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION, ADS1220_TEMPERATURE_DISABLED);
+						ads.stable_weight = 0;
+						ads.tolerance = SAMPLE_TOLERANCE;
 #endif
 
 						event_ongoing = 1;
@@ -315,6 +318,7 @@ void load_cell_Task()
 			// -->ID WAS DETECTED!
 
 			//measure weight again with 10 averages:
+
 			weightResultStatus res = load_cell_get_stable(&ads);
 			if(res == STABLE || res == OWL_LEFT)
 			{
@@ -322,10 +326,20 @@ void load_cell_Task()
 				series_completed = 1;
 				uint16_t weight = (uint16_t)(ads.stable_weight * 1000);
 				uint16_t tol = (uint16_t)(ads.tolerance * 1000);
-				uint16_t temp = (uint16_t)(ads.temperature * 1000);
 
-				tol = 123;
-				temp = 456;
+				// measure temperature
+				ads1220_change_mode(&ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION, ADS1220_TEMPERATURE_ENABLED);
+
+				Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, BIOS_WAIT_FOREVER); // timeout 100 ms in case DRDY pin is not connected
+
+				ads1220_read(&ads);
+				ads1220_event(&ads);
+
+				ads1220_convert_temperature(&ads);
+
+				uint16_t temp = (uint16_t)((ads.temperature+273.15) * 10); //deci kelvins
+
+				print_load_cell_value(ads.temperature*100, 'T');
 
 				char log_char = 'X';
 				if(res == STABLE)
@@ -333,10 +347,12 @@ void load_cell_Task()
 
 				log_write_new_entry(Seconds_get(), owl_ID,log_char, weight, tol, temp);
 
-				// now start the weight measurement
+				// stop the weight measurement
 #ifdef USE_ADS
+
+
 				// change to fast = inexact mode
-				ads1220_change_mode(&ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT);
+				ads1220_change_mode(&ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT, ADS1220_TEMPERATURE_DISABLED);
 #endif
 			}
 //			else if(res == OWL_LEFT)

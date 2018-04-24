@@ -235,8 +235,7 @@ void log_send_data_via_uart()
 			uart_serial_write(&debug_uart, outbuffer, strlen+1);
 			//print temperature
 			strlen = ui2a(*((uint16_t*)FRAM_read_ptr+LOG_TEMP_16b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
-			outbuffer[strlen] = ',';
-			uart_serial_write(&debug_uart, outbuffer, strlen+1);
+			uart_serial_write(&debug_uart, outbuffer, strlen);
 
 			//increment pointer to next memory location
 			FRAM_read_ptr += LOG_ENTRY_WEIGHT_16b_LEN;

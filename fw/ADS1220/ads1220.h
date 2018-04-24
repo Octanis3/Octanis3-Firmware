@@ -102,6 +102,12 @@ enum Ads1220ConvMode {
   ADS1220_CONTINIOUS_CONVERSION
 };
 
+// Conversion mode
+enum Ads1220TempSensorMode {
+  ADS1220_TEMPERATURE_DISABLED = 0,
+  ADS1220_TEMPERATURE_ENABLED
+};
+
 // Voltage reference
 enum Ads1220VRef {
   ADS1220_VREF_INTERNAL = 0,
@@ -150,6 +156,7 @@ struct Ads1220Config {
   bool pga_bypass;              ///< bypass PGA (PGA enabled = 0)
   enum Ads1220SampleRate rate;    ///< data output rate
   enum Ads1220ConvMode conv;      ///< conversion mode
+  enum Ads1220TempSensorMode temp_sensor; ///< enable temperature sensor
   enum Ads1220VRef vref;          ///< voltage ref
   enum Ads1220Filter filter;		///< 50/60Hz filter
   enum Ads1220Idac idac;          ///< IDAC config
@@ -176,7 +183,7 @@ struct Ads1220 {
   // Config
   struct Ads1220Config config;                  ///< configuration
   // Data
-  uint32_t data;                                ///< raw ADC value
+  int32_t data;                                ///< raw ADC value
   float stable_weight;
   float tolerance;
   float temperature;
@@ -191,11 +198,13 @@ extern void ads1220_event(struct Ads1220 *ads);
 extern void ads1220_powerdown(struct Ads1220 *ads);
 extern void ads1220_start_conversion(struct Ads1220 *ads);
 
+extern void ads1220_convert_temperature(struct Ads1220 *ads);
+
 extern float ads1220_get_units(uint8_t times, float* max_deviation, struct Ads1220 *ads);
 float ads1220_convert_units(struct Ads1220 *ads);
 extern int ads1220_tare(uint8_t times, struct Ads1220 *ads);
 extern void ads1220_set_raw_threshold(int32_t* raw_threshold, float weight_threshold);
-extern void ads1220_change_mode(struct Ads1220 *ads, enum Ads1220SampleRate rate, enum Ads1220ConvMode mode);
+extern void ads1220_change_mode(struct Ads1220 *ads, enum Ads1220SampleRate rate, enum Ads1220ConvMode mode, enum Ads1220TempSensorMode temp);
 
 /// convenience function: read or start configuration if not already initialized
 static inline void ads1220_periodic(struct Ads1220 *ads)

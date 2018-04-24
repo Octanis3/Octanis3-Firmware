@@ -98,6 +98,7 @@ void ads1220_send_config(struct Ads1220 *ads)
                      (ads->config.gain << 1) |
                      (ads->config.mux << 4));
   ads->tx_buf[2] = (
+		  	  	  	(ads->config.temp_sensor << 1) |
                      (ads->config.conv << 2) |
                      (ads->config.rate << 5));
   ads->tx_buf[3] = (
@@ -114,15 +115,17 @@ void ads1220_send_config(struct Ads1220 *ads)
 }
 
 // Configuration function called to start fast conversion; single-shot mode
-void ads1220_change_mode(struct Ads1220 *ads, enum Ads1220SampleRate rate, enum Ads1220ConvMode mode)
+void ads1220_change_mode(struct Ads1220 *ads, enum Ads1220SampleRate rate, enum Ads1220ConvMode mode, enum Ads1220TempSensorMode temp)
 {
 	ads->config.rate = rate; //for presence detection, set to fast=inexact & single shot mode
 	ads->config.conv = mode;
+	ads->config.temp_sensor = temp;
 
 	ads->spi_trans.output_length = 2;
 	ads->spi_trans.input_length = 0;
 	ads->tx_buf[0] = ADS1220_WREG(ADS1220_CONF1, 1);
 	ads->tx_buf[1] = (
+					(ads->config.temp_sensor << 1) |
 					 (ads->config.conv << 2) |
 					 (ads->config.rate << 5));
 
@@ -165,6 +168,21 @@ void ads1220_read(struct Ads1220 *ads)
   }
 }
 
+void ads1220_convert_temperature(struct Ads1220 *ads)
+{
+	ads->data = (ads->data)>>10;
+	if(ads->rx_buf[0] & 0x80) //negative number!
+	{
+		ads->data = ads->data - 1;
+		ads->data = ~(ads->data);
+		ads->temperature = (float)(ads->data) * (-0.03125);
+	}
+	else
+	{
+		ads->temperature = (float)(ads->data) * (0.03125);
+	}
+}
+
 // Check end of transaction
 void ads1220_event(struct Ads1220 *ads)
 {
@@ -172,10 +190,14 @@ void ads1220_event(struct Ads1220 *ads)
     if (ads->spi_trans.status == SPITransFailed) {
       ads->spi_trans.status = SPITransDone;
     } else if (ads->spi_trans.status == SPITransSuccess) {
-      // Successfull reading of 24bits adc
-      ads->data = (uint32_t)(((uint32_t)(ads->rx_buf[0]) << 16) | ((uint32_t)(ads->rx_buf[1]) << 8) | (ads->rx_buf[2]));
-      ads->data_available = true;
-      ads->spi_trans.status = SPITransDone;
+		// Successfull reading of 24bits adc
+		ads->data = (int32_t)(((uint32_t)(ads->rx_buf[0]) << 16) | ((uint32_t)(ads->rx_buf[1]) << 8) | (ads->rx_buf[2]));
+   		if(ads->rx_buf[0] & 0x80) //negative number!
+    		{
+   			ads->data = ads->data | 0xFF000000; //account for the two's complement minus sign.
+    		}
+		ads->data_available = true;
+		ads->spi_trans.status = SPITransDone;
     }
   } else if (ads->config.status == ADS1220_SEND_RESET) { // Reset ads1220 before configuring
     if (ads->spi_trans.status == SPITransFailed) {
@@ -211,7 +233,7 @@ int32_t ads1220_read_average(uint8_t times, int32_t* max_deviation, struct Ads12
 {
 	if(ads->config.conv != ADS1220_CONTINIOUS_CONVERSION)
 	{
-		ads1220_change_mode(ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION);
+		ads1220_change_mode(ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION, ADS1220_TEMPERATURE_DISABLED);
 		// this function includes the START/SYNC command, so data will be ready continuously.
 	}
 
