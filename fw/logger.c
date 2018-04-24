@@ -96,7 +96,7 @@ void log_startup()
 	log_initialized = 1;
 }
 
-int log_write_new_entry(uint32_t timestamp, uint64_t uid, uint8_t inout, uint16_t weight)
+int log_write_new_entry(uint32_t timestamp, uint64_t uid, uint8_t inout, uint16_t weight, uint16_t stdev, uint16_t temp)
 {
 	FRAM_offset_ptr = (unsigned int*)LOG_NEXT_POS_OFS; // pointer should be already initialized at startup, but just to be sure...
 	unsigned int* FRAM_write_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); // = base address plus *FRAM_offset_ptr
@@ -121,28 +121,27 @@ int log_write_new_entry(uint32_t timestamp, uint64_t uid, uint8_t inout, uint16_
 	else if(inout == 0)
 		inout_c = 'O';
 	else if(inout == 'W')
-	{
 		inout_c = 'W';
-	}
+	else if(inout == 'X')
+		inout_c = 'X';
 
 	*((unsigned char*)FRAM_write_ptr+LOG_DIR_8b_OFS) = inout_c;
 	//TODO: calculate some sort of CRC.
 
 	*FRAM_offset_ptr += LOG_ENTRY_8b_LEN;                 // Increment write index //TODO: why not the 16bit value??
 
-	if(inout_c == 'W')
+	if(inout_c == 'W' || inout_c == 'X')
 	{
 		FRAM_write_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); // = base address plus *FRAM_offset_ptr
 		//TODO: on the next block, write down the weight value.
 		*((uint16_t*)FRAM_write_ptr+LOG_WEIGHT_16b_OFS) = weight;
+		*((uint16_t*)FRAM_write_ptr+LOG_STDDEV_16b_OFS) = stdev;
+		*((uint16_t*)FRAM_write_ptr+LOG_TEMP_16b_OFS) = temp;
 
 		*FRAM_offset_ptr += LOG_ENTRY_WEIGHT_8b_LEN;                 // Increment write index
 
 		return LOG_ENTRY_8b_LEN + LOG_ENTRY_WEIGHT_8b_LEN;
 	}
-
-
-
 
 	return LOG_ENTRY_8b_LEN;
 }
@@ -223,12 +222,20 @@ void log_send_data_via_uart()
 		//increment pointer to next memory location
 		FRAM_read_ptr += LOG_ENTRY_16b_LEN;
 
-		if(outbuffer[strlen+1] == 'W') //this is a weight measurement record --> continue reading
+		if(outbuffer[strlen+1] == 'W' || outbuffer[strlen+1] == 'X') //this is a weight measurement record --> continue reading
 		{
-			//TODO:
+			uart_serial_putc(&debug_uart, ',');
+			//print weight
 			strlen = ui2a(*((uint16_t*)FRAM_read_ptr+LOG_WEIGHT_16b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
 			outbuffer[strlen] = ',';
-
+			uart_serial_write(&debug_uart, outbuffer, strlen+1);
+			//print stdev
+			strlen = ui2a(*((uint16_t*)FRAM_read_ptr+LOG_STDDEV_16b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
+			outbuffer[strlen] = ',';
+			uart_serial_write(&debug_uart, outbuffer, strlen+1);
+			//print temperature
+			strlen = ui2a(*((uint16_t*)FRAM_read_ptr+LOG_TEMP_16b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
+			outbuffer[strlen] = ',';
 			uart_serial_write(&debug_uart, outbuffer, strlen+1);
 
 			//increment pointer to next memory location

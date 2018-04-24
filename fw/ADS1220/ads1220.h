@@ -179,6 +179,7 @@ struct Ads1220 {
   uint32_t data;                                ///< raw ADC value
   float stable_weight;
   float tolerance;
+  float temperature;
   volatile bool data_available;               ///< data ready flag
 };
 

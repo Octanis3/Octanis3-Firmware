@@ -316,31 +316,40 @@ void load_cell_Task()
 
 			//measure weight again with 10 averages:
 			weightResultStatus res = load_cell_get_stable(&ads);
-			if(res == STABLE)
+			if(res == STABLE || res == OWL_LEFT)
 			{
 				//log event!! + mark series completed, but keep event ongoing (in order to not count it twice)!
 				series_completed = 1;
 				uint16_t weight = (uint16_t)(ads.stable_weight * 1000);
-				log_write_new_entry(Seconds_get(), owl_ID,'W', weight);
+				uint16_t tol = (uint16_t)(ads.tolerance * 1000);
+				uint16_t temp = (uint16_t)(ads.temperature * 1000);
+
+				tol = 123;
+				temp = 456;
+
+				char log_char = 'X';
+				if(res == STABLE)
+					log_char = 'W';
+
+				log_write_new_entry(Seconds_get(), owl_ID,log_char, weight, tol, temp);
 
 				// now start the weight measurement
 #ifdef USE_ADS
 				// change to fast = inexact mode
 				ads1220_change_mode(&ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT);
-
 #endif
 			}
-			else if(res == OWL_LEFT)
-			{
-				// owl has left the perch...
-				series_completed = 1;
-				log_write_new_entry(Seconds_get(), owl_ID,'W', 0);
-#ifdef USE_ADS
-				// change to fast = inexact mode
-				ads1220_change_mode(&ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT);
-#endif
-				Task_sleep(T_LOADCELL_POLL);
-			}
+//			else if(res == OWL_LEFT)
+//			{
+//				// owl has left the perch...
+//				series_completed = 1;
+//				log_write_new_entry(Seconds_get(), owl_ID,'W', 0);
+//#ifdef USE_ADS
+//				// change to fast = inexact mode
+//				ads1220_change_mode(&ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT);
+//#endif
+//				Task_sleep(T_LOADCELL_POLL);
+//			}
 			else if(res == UNSTABLE) // owl is still on the perch, but not stable
 			{
 				Task_sleep(T_LOADCELL_POLL);
