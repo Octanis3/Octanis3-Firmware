@@ -155,9 +155,10 @@ void log_send_lb_state()
 
 }
 
-const uint8_t start_string[] = "#================== start FRAM logs ===================\n";
-const uint8_t title_row[] = "time [s],RFID UID,direction\n";
-const uint8_t end_string[] = "#================== end FRAM logs ===================\n";
+const uint8_t start_string[] = "#=========== start FRAM logs =========\n";
+const uint8_t title_row[] = "time [s],RFID UID,event type, [weight], [tolerance], [temperature]\n";
+const uint8_t end_string[] = "#========== end FRAM logs ===========\n";
+const uint8_t phase_two_string[] = "#========== STARTING PHASE TWO =========\n";
 
 
 void log_send_data_via_uart()
@@ -254,7 +255,7 @@ void log_send_data_via_uart()
 
 uint8_t log_phase_two()
 {
-	return phase_two;
+	return phase_two>0;
 }
 
 //called periodically
@@ -270,7 +271,7 @@ Void cron_quick_clock(UArg arg){
 	{
 		if(phase_two == 0)
 		{
-			phase_two = 1;
+			phase_two = 2;
 			rfid_start_detection();
 		}
 	}
@@ -288,6 +289,13 @@ void log_Task()
 //		uart_serial_print_event('S', &stat, 1);
 //		Semaphore_post((Semaphore_Handle)semSerial);
 		Task_sleep(1000);
+
+		if(phase_two == 2)
+		{
+			uart_serial_write(&debug_uart, phase_two_string, sizeof(phase_two_string));
+			phase_two = 1;
+		}
+
 //		Semaphore_pend((Semaphore_Handle)semSerial,BIOS_WAIT_FOREVER);
 	}
 }

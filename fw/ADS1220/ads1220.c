@@ -54,7 +54,7 @@ extern Semaphore_Handle semLoadCellDRDY;
 #define ADS_TARE_TOLERANCE 1000 	// ADC counts --> 50 miligrams!
 
 int32_t ADS_OFFSET = -8663406;	// used for tare weight
-float ADS_SCALE = 1050;	// used to return weight in grams
+float ADS_SCALE = 1000;	// used to return weight in grams
 
 // Init function
 void ads1220_init(struct Ads1220 *ads, struct spi_periph *spi_p, uint8_t slave_idx)

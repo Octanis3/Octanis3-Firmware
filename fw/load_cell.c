@@ -49,7 +49,7 @@
 #define T_LOADCELL_POLL	1000 	//ms
 
 #define SAMPLE_TOLERANCE 	5.0f		// maximum variation of the sampled values within N_AVERAGES samples
-#define WEIGHT_TOLERANCE 	1.0f		// maximum deviation from average value within one measurement series
+#define WEIGHT_TOLERANCE 	0.2f		// maximum deviation from average value within one measurement series
 #define WEIGHT_MAX_CHANGE	0.15f	// maximum change within one "event"
 
 Semaphore_Handle semLoadCellDRDY;
@@ -99,7 +99,7 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 #ifdef USE_ADS
 		meas_buf[tmp] = ads1220_get_units(N_AVERAGES, &deviation, ads);
 #endif
-		print_load_cell_value(meas_buf[tmp], 'X');
+		print_load_cell_value(meas_buf[tmp]*1000, 'X');
 
 		if(meas_buf[tmp]<(float)WEIGHT_THRESHOLD)
 		{
@@ -253,7 +253,7 @@ void load_cell_Task()
 		Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
 		ads1220_start_conversion(&ads);
 		Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
-		Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, BIOS_WAIT_FOREVER); // timeout 100 ms in case DRDY pin is not connected
+		Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, 100); // timeout 100 ms in case DRDY pin is not connected
 
 		ads1220_periodic(&ads);
 		ads1220_event(&ads);
@@ -275,19 +275,20 @@ void load_cell_Task()
 #endif
 
 			//print the inexact weight value: (TODO:remove)
-			print_load_cell_value(value, 'W');
+			print_load_cell_value(value*1000, 'W');
 
 			if((ads.data)>raw_threshold)
 			{
 				if(event_ongoing==0)
 				{
-					rfid_start_detection();
-					Semaphore_pend((Semaphore_Handle)semLoadCell,RFID_TIMEOUT);
-
 					if(!log_phase_two())
+					{
+						rfid_start_detection();
+						Semaphore_pend((Semaphore_Handle)semLoadCell,RFID_TIMEOUT);
 						rfid_stop_detection();
+					}
 
-					if(rfid_get_id(&owl_ID))
+					if(rfid_get_id(&owl_ID) || log_phase_two())
 					{
 						// now start the weight measurement
 #ifdef USE_ADS
@@ -320,17 +321,17 @@ void load_cell_Task()
 			//measure weight again with 10 averages:
 
 			weightResultStatus res = load_cell_get_stable(&ads);
-			if(res == STABLE || res == OWL_LEFT)
+			if((res == STABLE && (!log_phase_two())) || res == OWL_LEFT)
 			{
 				//log event!! + mark series completed, but keep event ongoing (in order to not count it twice)!
 				series_completed = 1;
-				uint16_t weight = (uint16_t)(ads.stable_weight * 1000);
+				uint16_t weight = (uint16_t)(ads.stable_weight * 10);
 				uint16_t tol = (uint16_t)(ads.tolerance * 1000);
 
 				// measure temperature
 				ads1220_change_mode(&ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION, ADS1220_TEMPERATURE_ENABLED);
 
-				Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, BIOS_WAIT_FOREVER); // timeout 100 ms in case DRDY pin is not connected
+				Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, 100); // timeout 100 ms in case DRDY pin is not connected
 
 				ads1220_read(&ads);
 				ads1220_event(&ads);
