@@ -250,7 +250,6 @@ void load_cell_Task()
 		{
 #ifdef USE_ADS
 		/************ADS1220 POLLING*************/
-		Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
 		ads1220_start_conversion(&ads);
 		Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
 		Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, 100); // timeout 100 ms in case DRDY pin is not connected
@@ -321,6 +320,22 @@ void load_cell_Task()
 			//measure weight again with 10 averages:
 
 			weightResultStatus res = load_cell_get_stable(&ads);
+
+			// measure temperature
+			ads1220_change_mode(&ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION, ADS1220_TEMPERATURE_ENABLED);
+			Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
+			Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, 100); // timeout 100 ms in case DRDY pin is not connected
+
+			ads1220_read(&ads);
+			ads1220_event(&ads);
+
+			ads1220_convert_temperature(&ads);
+
+			uint16_t temp = (uint16_t)((ads.temperature+273.15) * 10); //deci kelvins
+
+			print_load_cell_value(ads.temperature*100, 'T');
+			ads1220_change_mode(&ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION, ADS1220_TEMPERATURE_DISABLED);
+
 			if((res == STABLE && (!log_phase_two())) || res == OWL_LEFT)
 			{
 				//log event!! + mark series completed, but keep event ongoing (in order to not count it twice)!
@@ -328,19 +343,6 @@ void load_cell_Task()
 				uint16_t weight = (uint16_t)(ads.stable_weight * 10);
 				uint16_t tol = (uint16_t)(ads.tolerance * 1000);
 
-				// measure temperature
-				ads1220_change_mode(&ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION, ADS1220_TEMPERATURE_ENABLED);
-
-				Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, 100); // timeout 100 ms in case DRDY pin is not connected
-
-				ads1220_read(&ads);
-				ads1220_event(&ads);
-
-				ads1220_convert_temperature(&ads);
-
-				uint16_t temp = (uint16_t)((ads.temperature+273.15) * 10); //deci kelvins
-
-				print_load_cell_value(ads.temperature*100, 'T');
 
 				char log_char = 'X';
 				if(res == STABLE)
@@ -350,8 +352,6 @@ void load_cell_Task()
 
 				// stop the weight measurement
 #ifdef USE_ADS
-
-
 				// change to fast = inexact mode
 				ads1220_change_mode(&ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT, ADS1220_TEMPERATURE_DISABLED);
 #endif
