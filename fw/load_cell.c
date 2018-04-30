@@ -48,9 +48,10 @@
 #define T_RFID_RETRY		10000 	//ms
 #define T_LOADCELL_POLL	1000 	//ms
 
-#define SAMPLE_TOLERANCE 	5.0f		// maximum variation of the sampled values within N_AVERAGES samples
-#define WEIGHT_TOLERANCE 	0.2f		// maximum deviation from average value within one measurement series
-#define WEIGHT_MAX_CHANGE	0.15f	// maximum change within one "event"
+#define SAMPLE_TOLERANCE 	2.0f		// maximum variation of the sampled values within N_AVERAGES samples
+#define WEIGHT_TOLERANCE 	0.1f		// maximum deviation from average value within one measurement series
+#define WEIGHT_MAX_CHANGE	0.015f	// maximum change within one "event"
+// TODO: above values should be in %FS
 
 Semaphore_Handle semLoadCellDRDY;
 
