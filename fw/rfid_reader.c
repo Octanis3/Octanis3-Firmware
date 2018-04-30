@@ -299,22 +299,31 @@ void rfid_Task()
 			/* Check the tag type found */
 			if (NewTagDetected == true)
 			{
-//				uart_serial_write(&debug_uart, (uint8_t*)LastUIDFound, UID_LENGTH);
-//
-				uint32_t timestamp = Seconds_get();
-//				uart_serial_write(&debug_uart, (uint8_t*)timestamp, TIMESTAMP_LENGTH);
+				if(GPIO_read(door_store_new_uid) == 0)
+				{ // store new UID:
+					if(!log_check_ID(*(uint32_t*)LastUIDFound))
+					{
+						// store to flash
+						log_write_new_entry(*(uint32_t*)LastUIDFound); //TODO: UID is an array casted into a uint32 --> wrong byte order!
+					}
 
-				static uint8_t in_out = 0;
-				in_out = !in_out;
-//				uart_serial_write(&debug_uart, &in_out, 1);
+				}
+				else // try to open door:
+				{
+					if(log_check_ID(*(uint32_t*)LastUIDFound))
+					{
+						log_open_door();
 
-				GPIO_write(Board_led_green,1);
-				GPIO_toggle(Board_led_blue);
-				Task_sleep(100);
-				GPIO_toggle(Board_led_blue);
+						GPIO_write(Board_led_green,1);
+						GPIO_toggle(Board_led_blue);
+						Task_sleep(100);
+						GPIO_toggle(Board_led_blue);
+					}
+				}
 
-				// log to flash
-				log_write_new_entry(timestamp, *(uint32_t*)LastUIDFound, in_out); //TODO: UID is an array casted into a uint32 --> wrong byte order!
+
+
+
 
 
 			}

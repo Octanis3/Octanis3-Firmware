@@ -115,6 +115,9 @@ GPIO_PinConfig gpioPinConfigs[] = {
 #endif
 	/* NESTBOX_SPI_NFC_IRQ_N */
 	GPIOMSP430_P3_6 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
+	/* DOOR_WRITE_NEW_ID */
+	GPIOMSP430_P1_1 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_NONE,
+
 
     /* Output pins */
 #ifdef LAUNCHPAD_PINDEF

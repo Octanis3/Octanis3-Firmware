@@ -18,13 +18,13 @@
 /* Note: the allocated storage space is 8 kB large, which is enough for 819 entries */
 
 
-#define LOG_TIME_32b_OFS			0x0 // 32 bit epoch timestamp
-#define LOG_UID_32b_OFS			0x1 // 32 bit UID
-#define LOG_DIR_8b_OFS			0x8 // 1 byte "I", "O" or "U" in/out/unknown
-#define LOG_CRC_8b_OFS			0x9 // 1 byte CRC (for int16 alignment)
+//#define LOG_TIME_32b_OFS			0x0 // 32 bit epoch timestamp
+#define LOG_UID_32b_OFS			0x0 // 32 bit UID
+//#define LOG_DIR_8b_OFS			0x8 // 1 byte "I", "O" or "U" in/out/unknown
+//#define LOG_CRC_8b_OFS			0x9 // 1 byte CRC (for int16 alignment)
 
-#define LOG_ENTRY_8b_LEN		0xA
-#define LOG_ENTRY_16b_LEN	0x5
+#define LOG_ENTRY_8b_LEN		0x4
+#define LOG_ENTRY_16b_LEN	0x2
 
 
 #define OUTPUT_BUF_LEN		10 // to send a 32bit value as string
@@ -32,6 +32,13 @@
 
 static int ui2a(unsigned long num, unsigned long base, int uc,uint8_t* buffer);
 int intToStr(unsigned long x, uint8_t* buffer, int d);
+
+const uint8_t found_string[] = "Found UID in memory: ";
+const uint8_t new_uid_string[] = "Stored UID to memory: ";
+const uint8_t not_found_string[] = "UID NOT in memory. \n";
+
+const uint8_t open_door_string[] = "DOOR OPEN! \n";
+
 
 unsigned int* FRAM_offset_ptr;
 unsigned int* FRAM_read_ptr;
@@ -53,7 +60,7 @@ void log_startup()
 
 }
 
-int log_write_new_entry(uint32_t timestamp, uint32_t uid, uint8_t inout)
+int log_write_new_entry(uint32_t uid)
 {
 	FRAM_offset_ptr = (unsigned int*)LOG_NEXT_POS_OFS; // pointer should be already initialized at startup, but just to be sure...
 	unsigned int* FRAM_write_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); // = base address plus *FRAM_offset_ptr
@@ -67,17 +74,16 @@ int log_write_new_entry(uint32_t timestamp, uint32_t uid, uint8_t inout)
 	}
 	// else, continue...
 
-	*((uint32_t*)FRAM_write_ptr+LOG_TIME_32b_OFS) = timestamp;
+//	*((uint32_t*)FRAM_write_ptr+LOG_TIME_32b_OFS) = timestamp;
 	*((uint32_t*)FRAM_write_ptr+LOG_UID_32b_OFS) = uid;
+	uint8_t outbuffer[OUTPUT_BUF_LEN];
 
-	unsigned char inout_c = 'U';
-	if(inout == 1)
-		inout_c = 'I';
-	else if(inout == 0)
-		inout_c = 'O';
 
-	*((unsigned char*)FRAM_write_ptr+LOG_DIR_8b_OFS) = inout_c;
-	//TODO: calculate some sort of CRC.
+	uart_serial_write(&debug_uart, new_uid_string, sizeof(new_uid_string));
+	//send out UID and I/O:
+	int strlen = ui2a(*((uint32_t*)FRAM_write_ptr+LOG_UID_32b_OFS), 16, 1, outbuffer);
+	outbuffer[strlen] = '\n';
+	uart_serial_write(&debug_uart, outbuffer, strlen+1);
 
 	*FRAM_offset_ptr += LOG_ENTRY_8b_LEN;                 // Increment write index
 
@@ -126,16 +132,10 @@ void log_send_data_via_uart()
 	uint8_t outbuffer[OUTPUT_BUF_LEN];
 	while(FRAM_read_ptr < FRAM_read_end_ptr)
 	{
-		//send out time stamp:
-		int strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_TIME_32b_OFS), 10, 1, outbuffer);
-		uart_serial_write(&debug_uart, outbuffer, strlen);
-		uart_serial_putc(&debug_uart, ',');
-
 		//send out UID and I/O:
-		strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_OFS), 16, 1, outbuffer);
+		int strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_OFS), 16, 1, outbuffer);
 		outbuffer[strlen] = ',';
-		outbuffer[strlen+1] = *((uint8_t*)FRAM_read_ptr+LOG_DIR_8b_OFS);
-		uart_serial_write(&debug_uart, outbuffer, strlen+2);
+		uart_serial_write(&debug_uart, outbuffer, strlen+1);
 		uart_serial_putc(&debug_uart, '\n');
 
 		//increment pointer to next memory location
@@ -145,6 +145,46 @@ void log_send_data_via_uart()
 	//TODO: optional, reset the *LOG_NEXT_POS_OFS to zero.
 
 }
+
+void log_open_door()
+{
+	uart_serial_write(&debug_uart, open_door_string, sizeof(open_door_string));
+
+}
+
+int log_check_ID(uint32_t uid)
+{
+	uart_debug_open();
+
+	unsigned int* FRAM_read_end_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); //points to the end of the valid stored data
+	FRAM_read_ptr = (unsigned int*)LOG_START_POS; // points to start of logged data.
+
+	uint8_t outbuffer[OUTPUT_BUF_LEN];
+	while(FRAM_read_ptr < FRAM_read_end_ptr)
+	{
+		//check if UID is in memory:
+		if(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_OFS) == uid)
+		{
+			uart_serial_write(&debug_uart, found_string, sizeof(found_string));
+			//send out UID and I/O:
+			int strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_OFS), 16, 1, outbuffer);
+			outbuffer[strlen] = '\n';
+			uart_serial_write(&debug_uart, outbuffer, strlen+1);
+
+			return 1;
+		}
+
+		//increment pointer to next memory location
+		FRAM_read_ptr += LOG_ENTRY_16b_LEN;
+	}
+
+	uart_serial_write(&debug_uart, not_found_string, sizeof(not_found_string));
+	return 0;
+
+	//TODO: optional, reset the *LOG_NEXT_POS_OFS to zero.
+
+}
+
 
 
 static int ui2a(unsigned long num, unsigned long base, int uc,uint8_t* buffer)
