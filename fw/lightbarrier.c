@@ -55,11 +55,11 @@ void lightBarrier_init()
     // previously configured port settings
 
     CSCTL0_H = CSKEY >> 8;                    // Unlock CS registers
-    // CSCTL1 = DCORSEL_L | DCOFSEL_4;           // Set DCO = 16 MHz
+    // CSCTL1 = DCORSEL_L | DCOFSEL_4;        // Default DCO frequency = 8 MHz
 
     // SELA__LFXTCLK needed for real time clock!!
     CSCTL2 = SELA__LFXTCLK | SELS__DCOCLK | SELM__DCOCLK;// Set SMCLK=DCO, rest = default config
-    // CSCTL3 |= DIVS__0;                     // Set divide by 0
+    // CSCTL3 |= DIVS__0;                     // Default SMCLK, ACLK and MCLK: divide by 0!
     CSCTL0_H = 0;                             // Lock CS registers
 
     // Configure Timer0_A

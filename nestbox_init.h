@@ -49,8 +49,13 @@
 extern "C" {
 #endif
 
-//#define VERBOSE 1
+//#define VERBOSE 		1
 #define LAUNCHPAD_PINDEF 1
+
+//#define MLX_READER		1
+#ifndef MLX_READER
+	#define EM_READER		1
+#endif
 
 #define LF_RFID //TODO: remove all references to this
 
@@ -67,9 +72,14 @@ typedef enum nbox_GPIOName {
 	nbox_button = 0,
 	nbox_lightbarrier_ext,
 	nbox_lightbarrier_int,
-	nbox_lf_clk,
 	nbox_loadcell_data_ready,
+#ifdef EM_READER
 	nbox_lf_data,
+	nbox_lf_clk,
+#else
+	nbox_lf_clk,
+	nbox_lf_data,
+#endif
 	nbox_lf_freq_sel,
 	nbox_loadcell_data,
 

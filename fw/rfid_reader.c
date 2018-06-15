@@ -5,6 +5,7 @@
  *      Author: raffael
  */
 
+#include "em4095_lib/EM4095.h"
 #include "rfid_reader.h"
 #include "MLX90109_library/mlx90109.h"
 #include "MLX90109_library/mlx90109_params.h"
@@ -94,15 +95,29 @@ void rfid_start_detection()
 {
 	lf_tagdata.valid = 0;
 	mlx90109_activate_reader(&mlx_dev);
+	em4095_startRfidCapture();
 }
 
 void rfid_stop_detection()
 {
+	em4095_stopRfidCapture();
 	mlx90109_disable_reader(&mlx_dev, &lf_tagdata);
 }
 
+volatile uint8_t last_bit = 0;
+volatile uint16_t last_timer_val = 0;
+static uint16_t timediff = 0;
+
+//one bit period = 62.5 cycles = shortest interval
+//mid interval = 94 cycles
+//longest interval = 125 cycles
+
+const uint16_t threshold_short = 78;
+const uint16_t threshold_long = 109;
+
 void lf_tag_read_isr()
 {
+#ifdef MLX_READER
 //	int cnt = mlx_dev.counter;
 //	mlx_dev.int_time[cnt] = TA3R;
 	if(mlx90109_read(&mlx_dev)==MLX90109_DATA_OK)
@@ -156,7 +171,51 @@ void lf_tag_read_isr()
 //		}
 //
 //		mlx_dev.int_time[cnt] = (TA3R-mlx_dev.int_time[cnt]);
+#else
+	// for EM reader, this is the data pin with CCR!!!
+	timediff = last_timer_val - TB0CCR2;
+	if(timediff > threshold_long)
+	{//01
+		//this is for sure a one preceded by a zero
+		last_bit = 1;
+		if(em4095_read(&mlx_dev, 0)==MLX90109_DATA_OK)
+			Semaphore_post((Semaphore_Handle)semReader);
 
+		if(em4095_read(&mlx_dev, 1)==MLX90109_DATA_OK)
+			Semaphore_post((Semaphore_Handle)semReader);
+	}
+	else if(timediff < threshold_short)
+	{
+		if(last_bit == 1)
+		{//1
+			if(em4095_read(&mlx_dev, 1)==MLX90109_DATA_OK)
+				Semaphore_post((Semaphore_Handle)semReader);
+		}
+		else
+		{//0
+			if(em4095_read(&mlx_dev, 0)==MLX90109_DATA_OK)
+				Semaphore_post((Semaphore_Handle)semReader);
+		}
+	}
+	else
+	{
+		if(last_bit == 1)
+		{//00
+			if(em4095_read(&mlx_dev, 0)==MLX90109_DATA_OK)
+				Semaphore_post((Semaphore_Handle)semReader);
+			if(em4095_read(&mlx_dev, 0)==MLX90109_DATA_OK)
+				Semaphore_post((Semaphore_Handle)semReader);
+			last_bit = 0;
+		}
+		else
+		{//(0)1
+			if(em4095_read(&mlx_dev, 1)==MLX90109_DATA_OK)
+				Semaphore_post((Semaphore_Handle)semReader);
+			last_bit = 1;
+		}
+
+	}
+#endif
 }
 
 
