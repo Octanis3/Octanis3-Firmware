@@ -108,9 +108,9 @@ volatile uint8_t last_bit = 0;
 volatile uint16_t last_timer_val = 0;
 static uint16_t timediff = 0;
 
-//one bit period = 62.5 cycles = shortest interval
-//mid interval = 94 cycles
-//longest interval = 125 cycles
+//one bit period = 500us = 62.5 cycles = shortest interval
+//mid interval = 750us = 94 cycles
+//longest interval = 1000us = 125 cycles
 
 const uint16_t threshold_short = 78;
 const uint16_t threshold_long = 109;
@@ -173,8 +173,14 @@ void lf_tag_read_isr()
 //		mlx_dev.int_time[cnt] = (TA3R-mlx_dev.int_time[cnt]);
 #else
 	// for EM reader, this is the data pin with CCR!!!
-	timediff = last_timer_val - TB0CCR2;
-	if(timediff > threshold_long)
+	timediff = TB0CCR2 - last_timer_val;
+	last_timer_val = TB0CCR2;
+
+	if(timediff > 2000)
+	{
+		timediff = 0xFFFF - timediff;
+	}
+	else if(timediff > threshold_long)
 	{//01
 		//this is for sure a one preceded by a zero
 		last_bit = 1;

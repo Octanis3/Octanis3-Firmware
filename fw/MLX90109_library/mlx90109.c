@@ -95,8 +95,11 @@ void mlx90109_activate_reader(mlx90109_t *dev)
 
 	time_on = Timestamp_get32();
 	GPIO_write(dev->p.modu, 1); //turns ON CW field
+
+#ifdef MLX_READER
 	// enable clock interrupt
 	GPIO_enableInt(nbox_lf_clk);
+#endif
 }
 
 #define MLX_OUTPUT_BUF_LEN 20

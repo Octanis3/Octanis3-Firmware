@@ -44,7 +44,7 @@ void em4095_startRfidCapture() {
   state = STATE_INIT;
   TB0EX0 = TBIDEX__8; // extended division factor: 8 --> get 1 MHz
   TB0CTL = TBSSEL__SMCLK + CNTL__16 + ID__8 + MC__CONTINUOUS + TBCLR; // division factor --> get 125 kHz
-  TB0CCTL2 = CM_1 + CCIE + SCS + CCIS_0 + CAP;   // CM_1 = rising edge, CCIS_0 = CCIxA, CAPture mode, synchronous capture; interrupt enable
+  TB0CCTL2 = CM_2 + CCIE + SCS + CCIS_0 + CAP;   // CM_2 = falling!!! edge, CCIS_0 = CCIxA, CAPture mode, synchronous capture; interrupt enable
 
   //TODO: check if overflow detection is necessary.
 
