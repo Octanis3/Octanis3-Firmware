@@ -221,6 +221,12 @@ void ads1220_event(struct Ads1220 *ads)
 
 void ads1220_start_conversion(struct Ads1220 *ads)
 {
+	// turn on analog supply:
+	GPIO_write(nbox_loadcell_ldo_enable, 1);
+	GPIO_write(nbox_loadcell_exc_a_p, 0); //pmos, turn on
+	GPIO_write(nbox_loadcell_exc_b_n, 1); //nmos, turn on
+	//TODO: check if delay is needed!
+
 	//start continuous readout mode:
 	ads->spi_trans.output_length = 1;
     ads->spi_trans.input_length = 0;
@@ -309,4 +315,10 @@ void ads1220_powerdown(struct Ads1220 *ads)
     spi_submit(ads->spi_p, &(ads->spi_trans));
     ads->spi_trans.status = SPITransDone;
   }
+  	// turn OFF analog supply:
+//	GPIO_write(nbox_loadcell_ldo_enable, 0);
+//	GPIO_write(nbox_loadcell_exc_a_p, 1); //pmos, turn off
+//	GPIO_write(nbox_loadcell_exc_b_p, 1); //pmos, turn off
+//	GPIO_write(nbox_loadcell_exc_a_n, 0); //nmos, turn off
+//	GPIO_write(nbox_loadcell_exc_b_n, 0); //nmos, turn off
 }

@@ -29,8 +29,6 @@ void user_button_Task()
 		log_send_data_via_uart();
 
 		rfid_start_detection();
-		GPIO_toggle(nbox_loadcell_ldo_enable);
-		GPIO_toggle(nbox_5v_enable);
 
 		Task_sleep(1000); //avoid too many subsequent memory readouts
 		GPIO_enableInt(Board_button);

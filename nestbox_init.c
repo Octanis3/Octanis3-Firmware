@@ -138,11 +138,6 @@ GPIO_PinConfig gpioPinConfigs[] = {
 	/* NESTBOX_LF_DATA */
 	GPIOMSP430_P4_3 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_NONE,
 #endif
-	/* NESTBOX_LF_FREQ_SELECT */
-	GPIOMSP430_P3_5 | GPIO_CFG_IN_PD | GPIO_CFG_IN_INT_NONE,
-	/* NESTBOX_LOADCELL_DATA */ //!! only needed for HX711
-	GPIOMSP430_P3_6 | GPIO_CFG_IN_PD | GPIO_CFG_IN_INT_NONE, //TODO: change back to pull up! load cell data pin must be low to stat that it is "ready".
-
 
     /************ Output pins ***********/
 #ifdef LAUNCHPAD_PINDEF

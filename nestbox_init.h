@@ -80,9 +80,6 @@ typedef enum nbox_GPIOName {
 	nbox_lf_clk,
 	nbox_lf_data,
 #endif
-	nbox_lf_freq_sel,
-	nbox_loadcell_data,
-
 	//outputs
     nbox_led_blue,
 #ifndef LAUNCHPAD_PINDEF
