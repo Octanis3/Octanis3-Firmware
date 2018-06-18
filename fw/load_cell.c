@@ -176,7 +176,7 @@ void ads1220_set_loadcell_config(struct Ads1220 *ads){
 	ads->config.idac = ADS1220_IDAC_OFF;
 	ads->config.i1mux = ADS1220_IMUX_OFF;
 	ads->config.i2mux = ADS1220_IMUX_OFF;
-	ads->config.low_switch = 0; // Switch is always open (default)
+	ads->config.low_switch = 1; // Switch is closed after START/SYNC command
 	ads->config.filter = ADS1220_FILTER_NONE; //At data rates of 5 SPS and 20 SPS, the filter can be configured to reject 50-Hz or 60-Hz line frequencies or to simultaneously reject 50 Hz and 60 Hz!!!
 }
 
@@ -219,6 +219,12 @@ void load_cell_Task()
 	semLoadCellDRDY = Semaphore_create(0, &semParams, &eb);
 
 	GPIO_enableInt(nbox_loadcell_data_ready);
+
+	// turn on analog supply:
+	GPIO_write(nbox_loadcell_ldo_enable, 1);
+	GPIO_write(nbox_loadcell_exc_a_p, 0); //pmos, turn on
+	GPIO_write(nbox_loadcell_exc_b_n, 1); //nmos, turn on
+	//TODO: check if delay is needed!
 
 	spi1_init();
 	struct spi_periph ads_spi;

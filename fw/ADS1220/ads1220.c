@@ -54,7 +54,7 @@ extern Semaphore_Handle semLoadCellDRDY;
 #define ADS_TARE_TOLERANCE 1000 	// ADC counts --> 50 miligrams!
 
 int32_t ADS_OFFSET = -8663406;	// used for tare weight
-float ADS_SCALE = 1000;	// used to return weight in grams
+float ADS_SCALE = 1000;	// used to return weight in grams //
 
 // Init function
 void ads1220_init(struct Ads1220 *ads, struct spi_periph *spi_p, uint8_t slave_idx)
@@ -221,12 +221,6 @@ void ads1220_event(struct Ads1220 *ads)
 
 void ads1220_start_conversion(struct Ads1220 *ads)
 {
-	// turn on analog supply:
-	GPIO_write(nbox_loadcell_ldo_enable, 1);
-	GPIO_write(nbox_loadcell_exc_a_p, 0); //pmos, turn on
-	GPIO_write(nbox_loadcell_exc_b_n, 1); //nmos, turn on
-	//TODO: check if delay is needed!
-
 	//start continuous readout mode:
 	ads->spi_trans.output_length = 1;
     ads->spi_trans.input_length = 0;
