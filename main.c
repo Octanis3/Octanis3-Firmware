@@ -40,6 +40,7 @@
 #include "fw/user_button.h"
 #include "fw/logger.h"
 #include "fw/load_cell.h"
+#include "fw/battery_monitor.h"
 
 /* Board Header file */
 #include "Board.h"
@@ -72,6 +73,11 @@ Char log_task_Stack[LOG_TASKSTACKSIZE];
 Task_Struct load_cell_task_Struct;
 Char load_cell_task_Stack[LOAD_CELL_TASKSTACKSIZE];
 
+// battery task
+#define BATTERY_TASKSTACKSIZE   512
+Task_Struct bat_task_Struct;
+Char bat_task_Stack[BATTERY_TASKSTACKSIZE];
+
 /*
  *  ======== main ========
  */
@@ -82,6 +88,7 @@ int main(void)
     Task_Params button_taskParams;
     Task_Params log_taskParams;
     Task_Params load_cell_taskParams;
+    Task_Params bat_taskParams;
 
 
     // disable interrupts if an interrupt could lead to
@@ -121,14 +128,14 @@ int main(void)
 	Task_Params_init(&button_taskParams);
 	button_taskParams.stackSize = BUTTON_TASKSTACKSIZE;
 	button_taskParams.stack = &button_task_Stack;
-	button_taskParams.priority = 3; // <--- MUST HAVE LOWER PRIORITY, OTHERWISE THE SPI POLLING MAY GET IT STUCK AND HANG OTHER TASKS.
+	button_taskParams.priority = 3;
 	Task_construct(&button_task_Struct, (Task_FuncPtr)user_button_Task, &button_taskParams, NULL);
 
 	/* Construct logging Task  thread */
 	Task_Params_init(&log_taskParams);
 	log_taskParams.stackSize = LOG_TASKSTACKSIZE;
 	log_taskParams.stack = &log_task_Stack;
-	log_taskParams.priority = 4; //
+	log_taskParams.priority = 4;
 	Task_construct(&log_task_Struct, (Task_FuncPtr)log_Task, &log_taskParams, NULL);
 
 	/* Construct load cell Task  thread */
@@ -137,6 +144,13 @@ int main(void)
 	load_cell_taskParams.stack = &load_cell_task_Stack;
 	load_cell_taskParams.priority = 2; //
 	Task_construct(&load_cell_task_Struct, (Task_FuncPtr)load_cell_Task, &load_cell_taskParams, NULL);
+
+	/* Construct battery monitoring Task  thread */
+	Task_Params_init(&bat_taskParams);
+	log_taskParams.stackSize = BATTERY_TASKSTACKSIZE;
+	log_taskParams.stack = &bat_task_Stack;
+	log_taskParams.priority = 5; //most important task, but with low duty cycle
+	Task_construct(&bat_task_Struct, (Task_FuncPtr)battery_Task, &bat_taskParams, NULL);
 
     /* Turn on user LED  */
     GPIO_write(Board_led_green, Board_LED_ON);
