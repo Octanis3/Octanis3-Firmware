@@ -54,7 +54,7 @@ Task_Struct lb_task_Struct;
 Char lb_task_Stack[LB_TASKSTACKSIZE];
 
 // RFID reader task
-#define RFID_TASKSTACKSIZE   4096
+#define RFID_TASKSTACKSIZE   2048
 Task_Struct rfid_task_Struct;
 Char rfid_task_Stack[RFID_TASKSTACKSIZE];
 

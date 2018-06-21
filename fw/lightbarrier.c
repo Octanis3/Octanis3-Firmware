@@ -112,7 +112,7 @@ void lightBarrier_turn_on()
 
 void lightBarrier_Task()
 {
-    lightBarrier_init();
+//    lightBarrier_init();
 
 	GPIO_write(Board_led_blue,0);
 	GPIO_write(Board_led_green,0);

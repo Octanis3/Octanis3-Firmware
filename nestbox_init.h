@@ -98,6 +98,7 @@ typedef enum nbox_GPIOName {
 	nbox_loadcell_ldo_enable,
 	nbox_5v_enable,
 	nbox_wifi_enable,
+	nbox_sdcard_enable,
     nbox_GPIOCOUNT
 } nbox_GPIOName;
 

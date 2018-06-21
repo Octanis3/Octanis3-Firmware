@@ -94,6 +94,7 @@ int rfid_get_id(uint64_t* id)
 void rfid_start_detection()
 {
 	lf_tagdata.valid = 0;
+	GPIO_write(nbox_5v_enable,1);
 	mlx90109_activate_reader(&mlx_dev);
 	em4095_startRfidCapture();
 }
@@ -102,6 +103,7 @@ void rfid_stop_detection()
 {
 	em4095_stopRfidCapture();
 	mlx90109_disable_reader(&mlx_dev, &lf_tagdata);
+	GPIO_write(nbox_5v_enable,0);
 }
 
 volatile uint8_t last_bit = 0;

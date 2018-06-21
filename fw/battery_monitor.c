@@ -83,23 +83,24 @@ void ADC_update()
 void goto_deepsleep(char lowbat)
 {
 	//TODO
-	timer0_A_stop(); //stop timer to make it possible to turn off SMCLK.
+//	timer0_A_stop(); //stop timer to make it possible to turn off SMCLK.
 
 	//todo: write stored data to flash before power down
 
 	//todo: power off all modules
+
 
 	__bis_SR_register(LPM4_bits + GIE);        // Enter LPM0 w/ interrupts
 }
 
 void battery_Task()
 {
-	ADC_init();
+//	ADC_init();
 
 	while(1)
 	{
 		//Test battery status every 5 minutes
-		ADC_update();
+//		ADC_update();
 
 
 		Task_sleep(10000); //300000
@@ -108,22 +109,22 @@ void battery_Task()
 
 
 
-// ADC interrupt after all values are read.
-void ADC_ISR()
-{
-	//write the battery voltage value to the buffer
-	ADC_val += ADC12MEM0;
-
-	if(++ADC_summing < ANALOG_NUM_AVG)
-	{
-		//start another conversion series
-		ADC12CTL0 |= ADC12ENC + ADC12SC;
-	}
-	else
-	{
-		//stop ADC (automatic)
-		ADC12CTL0 &= ~ADC12ENC;
-		//wake up CPU
-//		__bic_SR_register_on_exit(CPUOFF);        // Clear CPUOFF bit from 0(SR)
-	}
-}
+//// ADC interrupt after all values are read.
+//void ADC_ISR()
+//{
+//	//write the battery voltage value to the buffer
+//	ADC_val += ADC12MEM0;
+//
+//	if(++ADC_summing < ANALOG_NUM_AVG)
+//	{
+//		//start another conversion series
+//		ADC12CTL0 |= ADC12ENC + ADC12SC;
+//	}
+//	else
+//	{
+//		//stop ADC (automatic)
+//		ADC12CTL0 &= ~ADC12ENC;
+//		//wake up CPU
+////		__bic_SR_register_on_exit(CPUOFF);        // Clear CPUOFF bit from 0(SR)
+//	}
+//}
