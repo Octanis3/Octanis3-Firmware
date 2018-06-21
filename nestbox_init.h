@@ -50,7 +50,7 @@ extern "C" {
 #endif
 
 //#define VERBOSE 		1
-//#define LAUNCHPAD_PINDEF 1
+// #define LAUNCHPAD_PINDEF 1
 
 //#define MLX_READER		1
 #ifndef MLX_READER
@@ -97,8 +97,9 @@ typedef enum nbox_GPIOName {
 #endif
 	nbox_loadcell_ldo_enable,
 	nbox_5v_enable,
-	nbox_wifi_enable,
-	nbox_sdcard_enable,
+	nbox_wifi_enable_n,
+	nbox_sdcard_enable_n,
+	nbox_vbat_test_enable,
     nbox_GPIOCOUNT
 } nbox_GPIOName;
 

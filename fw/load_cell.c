@@ -222,8 +222,8 @@ void load_cell_Task()
 
 	// turn on analog supply:
 	GPIO_write(nbox_loadcell_ldo_enable, 1);
-	GPIO_write(nbox_loadcell_exc_a_p, 0); //pmos, turn on
-	GPIO_write(nbox_loadcell_exc_b_n, 1); //nmos, turn on
+//	GPIO_write(nbox_loadcell_exc_a_p, 0); //pmos, turn on
+//	GPIO_write(nbox_loadcell_exc_b_n, 1); //nmos, turn on
 	//TODO: check if delay is needed!
 
 	spi1_init();
@@ -264,7 +264,7 @@ void load_cell_Task()
 		ads1220_periodic(&ads);
 		ads1220_event(&ads);
 		ads1220_powerdown(&ads);
-		print_load_cell_value((float)(ads.data), 'D');
+//		print_load_cell_value((float)(ads.data), 'D');
 		// TODO: remove conversion
 		value = ads1220_convert_units(&ads);
 		/**********END ADS1220 TEST***********/
@@ -281,7 +281,7 @@ void load_cell_Task()
 #endif
 
 			//print the inexact weight value: (TODO:remove)
-			print_load_cell_value(value*1000, 'W');
+//			print_load_cell_value(value*1000, 'W');
 
 			if((ads.data)>raw_threshold)
 			{
@@ -383,6 +383,10 @@ void load_cell_Task()
 
 }
 
+void load_cell_deep_sleep()
+{
+	spi1_arch_close();
+}
 
 void load_cell_isr()
 {

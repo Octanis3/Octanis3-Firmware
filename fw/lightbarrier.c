@@ -51,9 +51,6 @@ void lightBarrier_init()
     P1SEL0 |= BIT0;                    // P1.0 and P1.1 options select
 #endif
 
-    // Disable the GPIO power-on default high-impedance mode to activate
-    // previously configured port settings
-
     CSCTL0_H = CSKEY >> 8;                    // Unlock CS registers
     // CSCTL1 = DCORSEL_L | DCOFSEL_4;        // Default DCO frequency = 8 MHz
 

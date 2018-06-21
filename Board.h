@@ -50,7 +50,7 @@ extern "C" {
 /* TI-RTOS Header files */
 #include <ti/drivers/GPIO.h>
 #include <ti/drivers/SPI.h>
-// #include <ti/drivers/UART.h>
+ #include <ti/drivers/UART.h>
 // #include <ti/drivers/Watchdog.h>
 
 #define Board_initGeneral           nbox_initGeneral
@@ -76,7 +76,7 @@ extern "C" {
 
 //#define Board_USBDEVICE             	0
 
-//#define Board_UART_lora             nbox_UARTA0
+//#define Board_UART_esp             nbox_UARTA0
 #define Board_UART_debug            nbox_UARTA1
 
 

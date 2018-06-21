@@ -464,6 +464,11 @@ static inline uint8_t get_transaction_signature(struct spi_transaction *t)
 //}
 //
 
+// close the UART:
+void spi1_arch_close()
+{
+	SPI_close(nestbox_spi_handle);
+}
 
 /******************************************************************************
  *

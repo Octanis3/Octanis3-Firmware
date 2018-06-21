@@ -129,7 +129,7 @@ GPIO_PinConfig gpioPinConfigs[] = {
 	GPIOMSP430_P3_4 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
 #ifdef EM_READER
 	/* NESTBOX_LF_DATA !!!! THIS HAS CHANGED NOW */
-	GPIOMSP430_P1_5 | GPIO_CFG_IN_NOPULL | GPIO_CFG_IN_INT_RISING,
+	GPIOMSP430_P1_5 | GPIO_CFG_IN_NOPULL | GPIO_CFG_IN_INT_NONE,
 	/* NESTBOX_LF_CLK !!!! THIS HAS CHANGED NOW */
 	GPIOMSP430_P4_3 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_NONE,
 #else
@@ -172,12 +172,14 @@ GPIO_PinConfig gpioPinConfigs[] = {
 #endif
 	/* NESTBOX_LOADCELL_LDO_EN */
 	GPIOMSP430_PJ_1 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
-	/* NESTBOX_LOADCELL_5V_EN */
+	/* NESTBOX_5V_EN */
 	GPIOMSP430_PJ_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 	/* NESTBOX_WIFI_ENABLE_N */
 	GPIOMSP430_PJ_3 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
 	/* NESTBOX_SD_ENABLE_N */
 	GPIOMSP430_PJ_2 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
+	/* NESTBOX_VBAT_TEST_ENABLE */
+	GPIOMSP430_P2_7 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 };
 
 /*
@@ -192,7 +194,7 @@ GPIO_CallbackFxn gpioCallbackFunctions[] = {
 	lightbarrier_input_isr, /* lightbarrier detection routine */
 	lightbarrier_input_isr, /* lightbarrier detection routine */
 	load_cell_isr, /* Data ready pin for the ADS1220 load cell amplifier */
-	lf_tag_read_isr,
+//	lf_tag_read_isr,
 };
 
 /* The device-specific GPIO_config structure */

@@ -18,6 +18,9 @@
 
 void load_cell_Task();
 
+void print_load_cell_value(float value, char log_symbol);
+
+void load_cell_deep_sleep();
 
 void load_cell_isr();
 

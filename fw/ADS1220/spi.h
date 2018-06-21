@@ -187,6 +187,9 @@ struct spi_periph {
 extern struct spi_periph spi1;
 extern void spi1_init(void);
 
+extern void spi1_arch_close();
+
+
 /** Architecture dependent SPI0 initialization.
  * Must be implemented by underlying architecture
  */
