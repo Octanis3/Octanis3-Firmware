@@ -26,7 +26,7 @@ volatile uint8_t ADC_summing = 0;
 
 #define BAT_FS		(BAT_FULL_16-BAT_EMPTY_16)
 
-#define BAT_N_MEAS_BELOW_THRESHOLD		5	// if measured N times a voltage below threshold, turn off everything!
+#define BAT_N_MEAS_BELOW_THRESHOLD		15	// if measured N times a voltage below threshold, turn off everything!
 #define BAT_TEST_INTERVAL				1000 //milliseconds
 
 //enum adc_status_{
@@ -103,8 +103,8 @@ void goto_deepsleep()
 	GPIO_write(nbox_wifi_enable_n, 1);
 	GPIO_write(nbox_sdcard_enable_n, 1);
 	GPIO_write(nbox_5v_enable, 0);
-	GPIO_write(nbox_loadcell_ldo_enable, 0);
-
+	GPIO_write(nbox_loadcell_ldo_enable, 0); // LDO UNUSED; BECAUSE WHEN OFF, THIS DRAWS TOO MUCH CURRENT!!
+											// LDO itself consumes ca 10uA when ON, unconnected!
 	//disable ADC (saves nothing on top of LPM4)
 	ADC12CTL0 &= ~ADC12ON;
 
@@ -127,9 +127,8 @@ void goto_deepsleep()
 	//disable all serial ports (makes it worse!):
 //	load_cell_deep_sleep();
 //	UART_close(Board_UART_debug);
-
-	__bic_SR_register(GIE);
-	__bis_SR_register(LPM4_bits);        // Enter LPM0 w/ interrupts
+	//__bic_SR_register(GIE);
+	__bis_SR_register(LPM4_bits);        // Enter LPM0 with interrupts
 }
 
 void battery_Task()

@@ -73,6 +73,8 @@ typedef enum nbox_GPIOName {
 	nbox_lightbarrier_ext,
 	nbox_lightbarrier_int,
 	nbox_loadcell_data_ready,
+	nbox_pir_in1,
+	nbox_pir_in2,
 #ifdef EM_READER
 	nbox_lf_data,
 	nbox_lf_clk,
@@ -85,21 +87,27 @@ typedef enum nbox_GPIOName {
 #ifndef LAUNCHPAD_PINDEF
     nbox_led_green,
 #endif
-//	nbox_led_ir,
+	nbox_led_ir,
 //	nbox_loadcell_clk,
 	nbox_lf_modul,
 	nbox_loadcell_spi_cs_n,
 	nbox_loadcell_exc_a_p,
 	nbox_loadcell_exc_a_n,
-	nbox_loadcell_exc_b_p,
 #ifndef LAUNCHPAD_PINDEF
+	nbox_loadcell_exc_b_p,
 	nbox_loadcell_exc_b_n,
 #endif
 	nbox_loadcell_ldo_enable,
 	nbox_5v_enable,
+/*	nbox_5v_pwm_enable, /* Burst Mode Select. PWM must be driven HIGH during start-up.
+						* When VOUT is in regulation, the PWM pin may be driven LOW
+						* to command Burst Mode operation. Applying a voltage below
+						* 400mV enables Burst Mode operation, providing a significant
+						* efficiency improve- ment at light loads*/
 	nbox_wifi_enable_n,
 	nbox_sdcard_enable_n,
 	nbox_vbat_test_enable,
+	nbox_pir_enable,
     nbox_GPIOCOUNT
 } nbox_GPIOName;
 

@@ -12,6 +12,6 @@
 void lightBarrier_Task();
 
 void lightbarrier_input_isr(unsigned int index);
-
+void pir_isr(unsigned int index);
 
 #endif /* FW_LIGHTBARRIER_H_ */
