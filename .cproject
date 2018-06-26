@@ -29,6 +29,8 @@
 								<listOptionValue builtIn="false" value="OUTPUT_TYPE=rtscApplication:executable"/>
 								<listOptionValue builtIn="false" value="PRODUCTS=com.ti.rtsc.TIRTOSmsp430:2.20.0.06;"/>
 								<listOptionValue builtIn="false" value="PRODUCT_MACRO_IMPORTS={&quot;com.ti.rtsc.TIRTOSmsp430&quot;:[&quot;${COM_TI_RTSC_TIRTOSMSP430_INCLUDE_PATH}&quot;,&quot;${COM_TI_RTSC_TIRTOSMSP430_LIBRARY_PATH}&quot;,&quot;${COM_TI_RTSC_TIRTOSMSP430_LIBRARIES}&quot;,&quot;${COM_TI_RTSC_TIRTOSMSP430_SYMBOLS}&quot;]}"/>
+								<listOptionValue builtIn="false" value="MPU_OPTION__LINKER=enabled:false;"/>
+								<listOptionValue builtIn="false" value="IPE_OPTION__LINKER=enabled:false;"/>
 							</option>
 							<option id="com.ti.ccstudio.buildDefinitions.core.OPT_CODEGEN_VERSION.96899324" name="Compiler version" superClass="com.ti.ccstudio.buildDefinitions.core.OPT_CODEGEN_VERSION" value="16.9.0.LTS" valueType="string"/>
 							<targetPlatform id="com.ti.ccstudio.buildDefinitions.MSP430_16.9.exe.targetPlatformDebug.880884534" name="Platform" superClass="com.ti.ccstudio.buildDefinitions.MSP430_16.9.exe.targetPlatformDebug"/>
@@ -37,7 +39,6 @@
 								<option id="com.ti.ccstudio.buildDefinitions.MSP430_16.9.compilerID.DEFINE.404510020" name="Pre-define NAME (--define, -D)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_16.9.compilerID.DEFINE" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="${COM_TI_RTSC_TIRTOSMSP430_SYMBOLS}"/>
 									<listOptionValue builtIn="false" value="__MSP430FR5969__"/>
-									<listOptionValue builtIn="false" value="_MPU_ENABLE"/>
 									<listOptionValue builtIn="false" value="ccs"/>
 									<listOptionValue builtIn="false" value="MSP430WARE"/>
 								</option>
@@ -66,6 +67,9 @@
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP430_16.9.compilerID.ADVICE__POWER_SEVERITY.859755511" name="Set error category for ULP power rules (--advice:power_severity)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_16.9.compilerID.ADVICE__POWER_SEVERITY" useByScannerDiscovery="false" value="com.ti.ccstudio.buildDefinitions.MSP430_16.9.compilerID.ADVICE__POWER_SEVERITY.suppress" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP430_16.9.compilerID.ABI.14040200" name="Application binary interface (--abi)" superClass="com.ti.ccstudio.buildDefinitions.MSP430_16.9.compilerID.ABI" useByScannerDiscovery="false" value="com.ti.ccstudio.buildDefinitions.MSP430_16.9.compilerID.ABI.eabi" valueType="enumerated"/>
+								<option id="com.ti.ccstudio.buildDefinitions.MSP430_16.9.compilerID.KEEP_ASM.1172825621" superClass="com.ti.ccstudio.buildDefinitions.MSP430_16.9.compilerID.KEEP_ASM" value="true" valueType="boolean"/>
+								<option id="com.ti.ccstudio.buildDefinitions.MSP430_16.9.compilerID.ASM_LISTING.1319463254" superClass="com.ti.ccstudio.buildDefinitions.MSP430_16.9.compilerID.ASM_LISTING" value="true" valueType="boolean"/>
+								<option id="com.ti.ccstudio.buildDefinitions.MSP430_16.9.compilerID.SOURCE_INTERLIST.1679561368" superClass="com.ti.ccstudio.buildDefinitions.MSP430_16.9.compilerID.SOURCE_INTERLIST" value="com.ti.ccstudio.buildDefinitions.MSP430_16.9.compilerID.SOURCE_INTERLIST.C_SRC_INTERLIST" valueType="enumerated"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_16.9.compiler.inputType__C_SRCS.1982423662" name="C Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_16.9.compiler.inputType__C_SRCS"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_16.9.compiler.inputType__CPP_SRCS.1443135450" name="C++ Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_16.9.compiler.inputType__CPP_SRCS"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.MSP430_16.9.compiler.inputType__ASM_SRCS.106628886" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.MSP430_16.9.compiler.inputType__ASM_SRCS"/>

@@ -29,7 +29,7 @@
 #include <xdc/runtime/Error.h>
 #include <xdc/runtime/System.h>
 
-#define WEIGHT_THRESHOLD 100 // grams
+#define WEIGHT_THRESHOLD 1000 // grams
 #ifdef USE_HX
 	#define SAMPLE_RATE		HX_SAMPLE_RATE //Hz
 #endif
@@ -51,6 +51,8 @@
 #define SAMPLE_TOLERANCE 	2.0f		// maximum variation of the sampled values within N_AVERAGES samples
 #define WEIGHT_TOLERANCE 	0.1f		// maximum deviation from average value within one measurement series
 #define WEIGHT_MAX_CHANGE	0.015f	// maximum change within one "event"
+
+#define RAW_THRESHOLD       220000
 // TODO: above values should be in %FS
 
 Semaphore_Handle semLoadCellDRDY;
@@ -170,7 +172,7 @@ void ads1220_set_loadcell_config(struct Ads1220 *ads){
 	ads->config.pga_bypass = 0;
 	ads->config.rate = ADS1220_RATE_1000_HZ;
 	// todo: change operating mode to duty-cycle mode
-	ads->config.conv = ADS1220_CONTINIOUS_CONVERSION;
+	ads->config.conv = ADS1220_SINGLE_SHOT;
 	ads->config.temp_sensor = ADS1220_TEMPERATURE_DISABLED;
 	ads->config.vref = ADS1220_VREF_EXTERNAL_AIN; // this will be toggled with AC excitation
 	ads->config.idac = ADS1220_IDAC_OFF;
@@ -221,7 +223,7 @@ void load_cell_Task()
 	GPIO_enableInt(nbox_loadcell_data_ready);
 
 	// turn on analog supply:
-	GPIO_write(nbox_loadcell_ldo_enable, 1);
+	//GPIO_write(nbox_loadcell_ldo_enable, 1);
 //	GPIO_write(nbox_loadcell_exc_a_p, 0); //pmos, turn on
 //	GPIO_write(nbox_loadcell_exc_b_n, 1); //nmos, turn on
 	//TODO: check if delay is needed!
@@ -233,7 +235,7 @@ void load_cell_Task()
 
 	ads1220_init(&ads, &ads_spi, nbox_loadcell_spi_cs_n);
 	ads1220_set_loadcell_config(&ads);
-	ads.config.rate = ADS1220_RATE_20_HZ; //for tare, set to slow=exact mode
+	//ads.config.rate = ADS1220_RATE_20_HZ; //for tare, set to slow=exact mode
 
 	Task_sleep(10);
 	ads1220_event(&ads);
@@ -264,9 +266,9 @@ void load_cell_Task()
 		ads1220_periodic(&ads);
 		ads1220_event(&ads);
 		ads1220_powerdown(&ads);
-//		print_load_cell_value((float)(ads.data), 'D');
+		print_load_cell_value((float)(ads.data), 'D');
 		// TODO: remove conversion
-		value = ads1220_convert_units(&ads);
+		// value = ads1220_convert_units(&ads);
 		/**********END ADS1220 TEST***********/
 #endif
 
@@ -283,7 +285,8 @@ void load_cell_Task()
 			//print the inexact weight value: (TODO:remove)
 //			print_load_cell_value(value*1000, 'W');
 
-			if((ads.data)>raw_threshold)
+            if((ads.data)>RAW_THRESHOLD)
+//			if((ads.data)>raw_threshold)
 			{
 				if(event_ongoing==0)
 				{
