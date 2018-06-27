@@ -85,6 +85,13 @@ int rfid_get_id(uint64_t* id)
 	if(lf_tagdata.valid)
 	{
 		*id = lf_tagdata.tagId;
+		if(lf_tagdata.tagId == CALIB162_UID)
+		    return 162;
+        if(lf_tagdata.tagId == CALIB595_UID)
+            return 595;
+        if(lf_tagdata.tagId == CALIB379_UID)
+            return 379;
+		//else
 		return 1;
 	}
 	else

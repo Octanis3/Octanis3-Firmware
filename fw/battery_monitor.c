@@ -27,7 +27,7 @@ volatile uint8_t ADC_summing = 0;
 #define BAT_FS		(BAT_FULL_16-BAT_EMPTY_16)
 
 #define BAT_N_MEAS_BELOW_THRESHOLD		15	// if measured N times a voltage below threshold, turn off everything!
-#define BAT_TEST_INTERVAL				1000 //milliseconds
+#define BAT_TEST_INTERVAL				30000 //milliseconds
 
 //enum adc_status_{
 //	IDLE, 	//not in use, and not to be triggered

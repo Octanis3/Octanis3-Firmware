@@ -54,7 +54,7 @@ extern Semaphore_Handle semLoadCellDRDY;
 #define ADS_TARE_TOLERANCE 1000 	// ADC counts --> 50 miligrams!
 
 int32_t ADS_OFFSET = -8663406;	// used for tare weight
-float ADS_SCALE = 100;	// used to return weight in grams //
+float ADS_SCALE = 1000;	// used to return weight in grams //
 
 // Init function
 void ads1220_init(struct Ads1220 *ads, struct spi_periph *spi_p, uint8_t slave_idx)
@@ -235,9 +235,10 @@ int32_t ads1220_read_average(uint8_t times, int32_t* max_deviation, struct Ads12
 
 	if(ads->config.conv == ADS1220_CONTINIOUS_CONVERSION)
 	{
-		ads1220_change_mode(ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT, ADS1220_TEMPERATURE_DISABLED);
+		ads1220_change_mode(ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION, ADS1220_TEMPERATURE_DISABLED);
 		// this function includes the START/SYNC command, so data will be ready continuously.
 	}
+    GPIO_enableInt(nbox_loadcell_data_ready);
 
 	Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
 	Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, 100); // timeout 100 ms in case DRDY pin is not connected
@@ -273,6 +274,7 @@ int32_t ads1220_read_average(uint8_t times, int32_t* max_deviation, struct Ads12
 		if(value<min)
 			min = value;
 	}
+    GPIO_disableInt(nbox_loadcell_data_ready);
 
 	*max_deviation = (max-min);
 	return sum/times;

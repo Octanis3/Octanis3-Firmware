@@ -68,6 +68,7 @@ extern "C" {
 #else
 	#define Board_led_green     		nbox_led_blue
 #endif
+#define Board_led_red               Board_led_green
 
 #define Board_LED_ON					nbox_LED_ON
 #define Board_LED_OFF				nbox_LED_OFF

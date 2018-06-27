@@ -10,6 +10,10 @@
 
 #include "Board.h"
 
+#define CALIB162_UID    0x59004529B6
+#define CALIB595_UID    0x580053A0AF
+#define CALIB379_UID    0x5800538D57
+
 #define UID_LENGTH 4
 #define TIMESTAMP_LENGTH 4
 

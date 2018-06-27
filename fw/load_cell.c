@@ -29,7 +29,7 @@
 #include <xdc/runtime/Error.h>
 #include <xdc/runtime/System.h>
 
-#define WEIGHT_THRESHOLD 1000 // grams
+#define WEIGHT_THRESHOLD 100 // grams
 #ifdef USE_HX
 	#define SAMPLE_RATE		HX_SAMPLE_RATE //Hz
 #endif
@@ -44,18 +44,21 @@
 #define PLUS_SIGN 		' '
 #define MINUS_SIGN		'-'
 
-#define RFID_TIMEOUT		3000 	//ms
-#define T_RFID_RETRY		10000 	//ms
+#define RFID_TIMEOUT		200 	//ms
+#define T_RFID_RETRY		1000 	//ms
 #define T_LOADCELL_POLL	1000 	//ms
 
 #define SAMPLE_TOLERANCE 	2.0f		// maximum variation of the sampled values within N_AVERAGES samples
-#define WEIGHT_TOLERANCE 	0.1f		// maximum deviation from average value within one measurement series
+#define WEIGHT_TOLERANCE 	1.0f		// maximum deviation from average value within one measurement series
 #define WEIGHT_MAX_CHANGE	0.015f	// maximum change within one "event"
 
 #define RAW_THRESHOLD       220000
 // TODO: above values should be in %FS
 
 Semaphore_Handle semLoadCellDRDY;
+
+float WEIGHT_SLOPE = 1.0;
+float WEIGHT_Y0 = 0;
 
 typedef enum weightResultStatus_
 {
@@ -102,7 +105,7 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 #ifdef USE_ADS
 		meas_buf[tmp] = ads1220_get_units(N_AVERAGES, &deviation, ads);
 #endif
-		print_load_cell_value(meas_buf[tmp]*1000, 'X');
+		//print_load_cell_value(meas_buf[tmp]*1000, 'X');
 
 		if(meas_buf[tmp]<(float)WEIGHT_THRESHOLD)
 		{
@@ -151,17 +154,23 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 	{
 		ads->stable_weight = average;
 		ads->tolerance = tol;
+        GPIO_write(Board_led_blue,1);
+        Task_sleep(200);
+        GPIO_write(Board_led_blue,0);
 	}
 
 	if(tol < WEIGHT_TOLERANCE)
 	{
-		print_load_cell_value(average, 'S');
+		//print_load_cell_value(average, 'S');
+		GPIO_write(Board_led_blue,1);
+        Task_sleep(2000);
+        GPIO_write(Board_led_blue,0);
 		return STABLE;
 	}
 
 	else
 	{
-		print_load_cell_value(average, 'A');
+		//print_load_cell_value(average, 'A');
 		return UNSTABLE;
 	}
 }
@@ -170,7 +179,7 @@ void ads1220_set_loadcell_config(struct Ads1220 *ads){
 	ads->config.mux = ADS1220_MUX_AIN1_AIN2;
 	ads->config.gain = ADS1220_GAIN_128;
 	ads->config.pga_bypass = 0;
-	ads->config.rate = ADS1220_RATE_1000_HZ;
+	ads->config.rate = ADS1220_RATE_20_HZ;
 	// todo: change operating mode to duty-cycle mode
 	ads->config.conv = ADS1220_SINGLE_SHOT;
 	ads->config.temp_sensor = ADS1220_TEMPERATURE_DISABLED;
@@ -196,6 +205,11 @@ void load_cell_Task()
 	char series_completed = 0;
 
 	uint64_t owl_ID = 0;
+	int rfid_type = 0;
+	float calib163 = 0;
+	float calib379 = 0;
+	float calib595 = 0;
+
 
 
 #ifdef USE_HX
@@ -296,12 +310,20 @@ void load_cell_Task()
 						Semaphore_pend((Semaphore_Handle)semLoadCell,RFID_TIMEOUT);
 						rfid_stop_detection();
 					}
+					rfid_type = rfid_get_id(&owl_ID);
 
-					if(rfid_get_id(&owl_ID) || log_phase_two())
+					if(rfid_type>0 || log_phase_two())
 					{
 						// now start the weight measurement
+
+					    //indicate calibration mode if calib UID detected:
+					    if(rfid_type > 1)
+					        GPIO_write(Board_led_blue,1);
+
 #ifdef USE_ADS
 						// change to slow = exact mode
+					    GPIO_disableInt(nbox_loadcell_data_ready);
+
 						ads1220_change_mode(&ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION, ADS1220_TEMPERATURE_DISABLED);
 						ads.stable_weight = 0;
 						ads.tolerance = SAMPLE_TOLERANCE;
@@ -333,6 +355,8 @@ void load_cell_Task()
 
 			// measure temperature
 			ads1220_change_mode(&ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION, ADS1220_TEMPERATURE_ENABLED);
+            GPIO_enableInt(nbox_loadcell_data_ready);
+
 			Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
 			Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, 100); // timeout 100 ms in case DRDY pin is not connected
 
@@ -344,19 +368,79 @@ void load_cell_Task()
 			uint16_t temp = (uint16_t)((ads.temperature+273.15) * 10); //deci kelvins
 
 			print_load_cell_value(ads.temperature*100, 'T');
+            GPIO_disableInt(nbox_loadcell_data_ready);
+
 			ads1220_change_mode(&ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION, ADS1220_TEMPERATURE_DISABLED);
 
 			if((res == STABLE && (!log_phase_two())) || res == OWL_LEFT)
 			{
 				//log event!! + mark series completed, but keep event ongoing (in order to not count it twice)!
 				series_completed = 1;
-				uint16_t weight = (uint16_t)(ads.stable_weight * 10);
-				uint16_t tol = (uint16_t)(ads.tolerance * 1000);
+				uint16_t weight = (uint16_t)(ads.stable_weight * WEIGHT_SLOPE + WEIGHT_Y0);
+				uint16_t tol = (uint16_t)(ads.tolerance * WEIGHT_SLOPE);
 
 
 				char log_char = 'X';
 				if(res == STABLE)
 					log_char = 'W';
+
+				if(rfid_type > 1)
+                {
+				    owl_ID = 0xCA71B;
+				    GPIO_write(Board_led_blue,0);
+				    switch(rfid_type)
+				    {
+				        case 162:
+				            calib163 = ads.stable_weight;
+				            break;
+				        case 379:
+				            calib379 = ads.stable_weight;
+				            break;
+				        case 595:
+				            calib595 = ads.stable_weight;
+				            break;
+				        default:
+				            break;
+				     }
+
+				    if(calib163>0 && calib595>0 && calib379>0)
+				    {
+				        //calibration done
+				        float slope=(595-163)/(calib595-calib163);
+				        float b = 163 - slope*calib163;
+
+				        // check if 3rd point lays on the line
+				        float midpoint = slope*calib379 + b;
+				        if((midpoint - 379)>1 || (379 - midpoint)>1)
+				        {
+				            //bad calibration:
+				            int i=0;
+				            for(i=0;i<10;i++)
+				            {
+                                GPIO_write(Board_led_red,1);
+                                Task_sleep(200);
+                                GPIO_write(Board_led_red,0);
+                                Task_sleep(200);
+                            }
+				        }
+				        else
+				        {
+				            //good calibration:
+				            int i=0;
+                            for(i=0;i<5;i++)
+                            {
+                                Task_sleep(200);
+                                GPIO_write(Board_led_blue,1);
+                                Task_sleep(200);
+                                GPIO_write(Board_led_blue,0);
+                            }
+
+                            WEIGHT_SLOPE = slope;
+                            WEIGHT_Y0 = b;
+				        }
+				    }
+
+                }
 
 				log_write_new_entry(Seconds_get(), owl_ID,log_char, weight, tol, temp);
 
@@ -364,6 +448,8 @@ void load_cell_Task()
 #ifdef USE_ADS
 				// change to fast = inexact mode
 				ads1220_change_mode(&ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT, ADS1220_TEMPERATURE_DISABLED);
+                GPIO_enableInt(nbox_loadcell_data_ready);
+
 #endif
 			}
 //			else if(res == OWL_LEFT)
