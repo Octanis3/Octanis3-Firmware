@@ -156,7 +156,7 @@ void log_send_lb_state()
 }
 
 const uint8_t start_string[] = "#=========== start FRAM logs =========\n";
-const uint8_t title_row[] = "time [s],RFID UID,event type, [weight], [tolerance], [temperature]\n";
+const uint8_t title_row[] = "time [s],RFID UID,event type, weight [g], tolerance [mg], temperature [1/10 K]\n";
 const uint8_t end_string[] = "#========== end FRAM logs ===========\n";
 const uint8_t phase_two_string[] = "#========== STARTING PHASE TWO =========\n";
 

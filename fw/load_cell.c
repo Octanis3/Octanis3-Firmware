@@ -280,7 +280,7 @@ void load_cell_Task()
 		ads1220_periodic(&ads);
 		ads1220_event(&ads);
 		ads1220_powerdown(&ads);
-		print_load_cell_value((float)(ads.data), 'D');
+		//print_load_cell_value((float)(ads.data), 'D');
 		// TODO: remove conversion
 		// value = ads1220_convert_units(&ads);
 		/**********END ADS1220 TEST***********/
@@ -367,7 +367,7 @@ void load_cell_Task()
 
 			uint16_t temp = (uint16_t)((ads.temperature+273.15) * 10); //deci kelvins
 
-			print_load_cell_value(ads.temperature*100, 'T');
+			//print_load_cell_value(ads.temperature*100, 'T');
             GPIO_disableInt(nbox_loadcell_data_ready);
 
 			ads1220_change_mode(&ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION, ADS1220_TEMPERATURE_DISABLED);
@@ -377,7 +377,7 @@ void load_cell_Task()
 				//log event!! + mark series completed, but keep event ongoing (in order to not count it twice)!
 				series_completed = 1;
 				uint16_t weight = (uint16_t)(ads.stable_weight * WEIGHT_SLOPE + WEIGHT_Y0);
-				uint16_t tol = (uint16_t)(ads.tolerance * WEIGHT_SLOPE);
+				uint16_t tol = (uint16_t)(ads.tolerance * WEIGHT_SLOPE*1000);
 
 
 				char log_char = 'X';
@@ -411,7 +411,7 @@ void load_cell_Task()
 
 				        // check if 3rd point lays on the line
 				        float midpoint = slope*calib379 + b;
-				        if((midpoint - 379)>1 || (379 - midpoint)>1)
+				        if((midpoint - 379)>2 || (379 - midpoint)>2)
 				        {
 				            //bad calibration:
 				            int i=0;
