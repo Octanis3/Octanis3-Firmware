@@ -235,6 +235,59 @@ void nbox_initGPIO(void)
     GPIO_init();
 }
 
+///*
+// *  =============================== SDSPI ===============================
+// */
+///* Place into subsections to allow the TI linker to remove items properly */
+//#if defined(__TI_COMPILER_VERSION__)
+//#pragma DATA_SECTION(SDSPI_config, ".const:SDSPI_config")
+//#pragma DATA_SECTION(sdspiEUSCIBHWAttrsV1, ".const:sdspiEUSCIBHWAttrsV1")
+//#endif
+//
+//#include <ti/drivers/SDSPI.h>
+//#include <ti/drivers/sdspi/SDSPIEUSCIB.h>
+//
+//SDSPIEUSCIB_Object sdspiEUSCIBObjects[nbox_SDSPICOUNT];
+//
+//const SDSPIEUSCIB_HWAttrsV1 sdspiEUSCIBHWAttrsV1[nbox_SDSPICOUNT] = {
+//    {
+//        .baseAddr = EUSCI_B0_BASE,
+//        .clockSource = EUSCI_B_SPI_CLOCKSOURCE_SMCLK,
+//
+//        .portSCK = GPIO_PORT_P2,
+//        .pinSCK = GPIO_PIN2,
+//        .pinSCKModeFunction = GPIO_SECONDARY_MODULE_FUNCTION,
+//
+//        .portMISO = GPIO_PORT_P1,
+//        .pinMISO = GPIO_PIN7,
+//        .pinMISOModeFunction = GPIO_SECONDARY_MODULE_FUNCTION,
+//
+//        .portMOSI = GPIO_PORT_P1,
+//        .pinMOSI = GPIO_PIN6,
+//        .pinMOSIModeFunction = GPIO_SECONDARY_MODULE_FUNCTION,
+//
+//        .portCS = GPIO_PORT_P3,
+//        .pinCS = GPIO_PIN4
+//    }
+//};
+//
+//const SDSPI_Config SDSPI_config[] = {
+//    {
+//        .fxnTablePtr = &SDSPIEUSCIB_fxnTable,
+//        .object = &sdspiEUSCIBObjects[0],
+//        .hwAttrs = &sdspiEUSCIBHWAttrsV1[0]
+//    },
+//    {NULL, NULL, NULL}
+//};
+
+///*
+// *  ======== MSP_EXP430FR5969_initSDSPI ========
+// */
+//void nbox_initSDSPI(void)
+//{
+//    SDSPI_init();
+//}
+
 
 /*
  *  =============================== SPI ===============================

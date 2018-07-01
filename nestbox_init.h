@@ -111,6 +111,17 @@ typedef enum nbox_GPIOName {
     nbox_GPIOCOUNT
 } nbox_GPIOName;
 
+
+/*!
+ *  @def    MSP_EXP430FR5969_SDSPIName
+ *  @brief  Enum of SDSPI names on the MSP_EXP430FR5969 dev board
+ */
+typedef enum nbox_SDSPIName {
+    nbox_SDSPIB0 = 0,
+
+    nbox_SDSPICOUNT
+} nbox_SDSPIName;
+
 /*!
  *  @def    nbox_SPIName
  *  @brief  Enum of SPI names on the nbox dev board

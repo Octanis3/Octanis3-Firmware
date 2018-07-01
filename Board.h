@@ -58,7 +58,7 @@ extern "C" {
 #define Board_initSPI               nbox_initSPI
 #define Board_initUART              nbox_initUART
 #define Board_initWatchdog          nbox_initWatchdog
-
+//#define Board_initSDSPI             nbox_initSDSPI
 
 #define Board_button           		nbox_button
 

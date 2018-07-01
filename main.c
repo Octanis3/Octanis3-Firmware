@@ -107,6 +107,7 @@ int main(void)
     Board_initGeneral();
     Board_initGPIO();
     Board_initSPI();
+//    Board_initSDSPI();
     Board_initUART();
     // Board_initWatchdog();
 
