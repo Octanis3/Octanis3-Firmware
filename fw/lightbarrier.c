@@ -43,13 +43,8 @@ void lightBarrier_init()
 	// make sure IR LED port is off
 
     // Configure GPIO
-#ifdef LAUNCHPAD_PINDEF
-    P1DIR |= BIT1;                     // P1.0 and P1.1 output
-    P1SEL0 |= BIT1;                    // P1.0 and P1.1 options select
-#else
     P1DIR |= BIT0;                     // P1.0 and P1.1 output
     P1SEL0 |= BIT0;                    // P1.0 and P1.1 options select
-#endif
 
     CSCTL0_H = CSKEY >> 8;                    // Unlock CS registers
     // CSCTL1 = DCORSEL_L | DCOFSEL_4;        // Default DCO frequency = 8 MHz
@@ -109,6 +104,8 @@ void lightBarrier_turn_on()
     TA0CCTL1 = OUTMOD_7;                      // CCR1 reset/set
 #endif
 }
+
+#ifdef LIGHTBARRIER_VERSION
 
 void lightBarrier_Task()
 {
@@ -215,10 +212,11 @@ void lightBarrier_Task()
 
     }
 }
-
+#endif
 
 void lightbarrier_input_isr(unsigned int index)
 {
+#ifdef LIGHTBARRIER_VERSION
 //	//check interrupt source
 	if(index == nbox_lightbarrier_ext)
 	{
@@ -262,9 +260,7 @@ void lightbarrier_input_isr(unsigned int index)
 	}
 
 	lb_status.event_counter = lb_status.event_counter+1;
-}
-
-void pir_isr(unsigned int index)
-{
-	__bic_SR_register(LPM4_bits);
+#else
+    GPIO_disableInt(nbox_lightbarrier_ext);
+#endif
 }

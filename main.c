@@ -41,6 +41,7 @@
 #include "fw/logger.h"
 #include "fw/load_cell.h"
 #include "fw/battery_monitor.h"
+#include "fw/PIR_wakeup.h"
 
 /* Board Header file */
 #include "Board.h"
@@ -48,10 +49,12 @@
 //to set the CPU frequency.
 #include <ti/sysbios/knl/Clock.h>
 
+#ifdef LIGHTBARRIER_VERSION
 // light barrier task
 #define LB_TASKSTACKSIZE   512
 Task_Struct lb_task_Struct;
 Char lb_task_Stack[LB_TASKSTACKSIZE];
+#endif
 
 // RFID reader task
 #define RFID_TASKSTACKSIZE   2048
@@ -78,18 +81,25 @@ Char load_cell_task_Stack[LOAD_CELL_TASKSTACKSIZE];
 Task_Struct bat_task_Struct;
 Char bat_task_Stack[BATTERY_TASKSTACKSIZE];
 
+// PIR wakeup task
+#define PIR_WAKEUP_TASKSTACKSIZE   512
+Task_Struct PIR_wakeup_task_Struct;
+Char PIR_wakeup_task_Stack[PIR_WAKEUP_TASKSTACKSIZE];
+
 /*
  *  ======== main ========
  */
 int main(void)
 {
+#ifdef LIGHTBARRIER_VERSION
     Task_Params lb_taskParams;
+#endif
     Task_Params rfid_taskParams;
     Task_Params button_taskParams;
     Task_Params log_taskParams;
     Task_Params load_cell_taskParams;
     Task_Params bat_taskParams;
-
+    Task_Params PIR_wakeup_taskParams;
 
     // disable interrupts if an interrupt could lead to
 	// another call to Clock_tickReconfig or if interrupt
@@ -110,12 +120,14 @@ int main(void)
     Board_initUART();
     // Board_initWatchdog();
 
+#ifdef LIGHTBARRIER_VERSION
     /* Construct ligthBarrier Task  thread */
 	Task_Params_init(&lb_taskParams);
 	lb_taskParams.stackSize = LB_TASKSTACKSIZE;
 	lb_taskParams.stack = &lb_task_Stack;
 	lb_taskParams.priority = 2;
 	Task_construct(&lb_task_Struct, (Task_FuncPtr)lightBarrier_Task, &lb_taskParams, NULL);
+#endif
 
 	/* Construct rfidReader Task  thread */
 	Task_Params_init(&rfid_taskParams);
@@ -151,6 +163,13 @@ int main(void)
 	log_taskParams.stack = &bat_task_Stack;
 	log_taskParams.priority = 5; //most important task, but with low duty cycle
 	Task_construct(&bat_task_Struct, (Task_FuncPtr)battery_Task, &bat_taskParams, NULL);
+
+	/* Construct PIR_wakeup Task  thread */
+    Task_Params_init(&PIR_wakeup_taskParams);
+    PIR_wakeup_taskParams.stackSize = PIR_WAKEUP_TASKSTACKSIZE;
+    PIR_wakeup_taskParams.stack = &PIR_wakeup_task_Stack;
+    PIR_wakeup_taskParams.priority = 5; //
+    Task_construct(&PIR_wakeup_task_Struct, (Task_FuncPtr)PIR_wakeup_Task, &PIR_wakeup_taskParams, NULL);
 
     /* Turn on user LED  */
     GPIO_write(Board_led_green, Board_LED_ON);

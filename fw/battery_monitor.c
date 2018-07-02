@@ -65,7 +65,6 @@ void ADC_init()
 
 void ADC_update()
 {
-	int i;
 	//reset buffer
 	ADC_summing = 0;
 	ADC_val = 0;

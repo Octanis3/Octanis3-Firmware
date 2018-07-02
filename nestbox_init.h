@@ -70,6 +70,7 @@ extern "C" {
 typedef enum nbox_GPIOName {
     //inputs
 	nbox_button = 0,
+
 	nbox_lightbarrier_ext,
 	nbox_lightbarrier_int,
 	nbox_loadcell_data_ready,

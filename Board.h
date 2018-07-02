@@ -61,6 +61,7 @@ extern "C" {
 
 
 #define Board_button           		nbox_button
+#define PIR_pin                     nbox_pir_in1
 
 #define Board_led_blue          		nbox_led_blue
 #ifndef LAUNCHPAD_PINDEF

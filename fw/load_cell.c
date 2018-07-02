@@ -89,7 +89,7 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 {
 	static float meas_buf[EVENT_BUF_SIZE] = {0.0,};
 	static int first_valid = 0;
-	static int first_invalid = 0;
+//	static int first_invalid = 0;
 
 	int i = 0;
 	int tmp = first_valid;
@@ -110,7 +110,7 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 		if(meas_buf[tmp]<(float)WEIGHT_THRESHOLD)
 		{
 			first_valid = 0;
-			first_invalid = 0;
+//			first_invalid = 0;
 			return OWL_LEFT;
 		}
 		if(deviation > SAMPLE_TOLERANCE)
@@ -196,7 +196,7 @@ void load_cell_Task()
 	Task_sleep(1000); //wait until things are settled...
 
 	//weight value
-	float value = 0;
+//	float value = 0;
 
 	int32_t raw_threshold = 0;
 

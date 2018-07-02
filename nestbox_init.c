@@ -55,6 +55,7 @@
 
 #include "fw/user_button.h"
 #include "fw/load_cell.h"
+#include "fw/PIR_wakeup.h"
 #include "fw/lightbarrier.h"
 #include "fw/rfid_reader.h" //for precompiler assignments
 
@@ -213,8 +214,8 @@ GPIO_CallbackFxn gpioCallbackFunctions[] = {
 	lightbarrier_input_isr, /* lightbarrier detection routine */
 	lightbarrier_input_isr, /* lightbarrier detection routine */
 	load_cell_isr, /* Data ready pin for the ADS1220 load cell amplifier */
-	pir_isr,
-	pir_isr,
+	PIR_wakeup_isr,
+	PIR_wakeup_isr,
 //	lf_tag_read_isr,
 };
 

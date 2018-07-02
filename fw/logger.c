@@ -253,6 +253,12 @@ void log_send_data_via_uart()
 
 }
 
+const uint8_t PIR_trigger[] = "PIR triggered\n";
+
+void log_send_PIR() {
+    uart_serial_write(&debug_uart, PIR_trigger, sizeof(PIR_trigger));
+}
+
 uint8_t log_phase_two()
 {
 	return phase_two>0;
