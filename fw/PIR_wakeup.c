@@ -37,7 +37,7 @@ void PIR_wakeup_Task()
 		log_send_PIR(int_pin);
 
 		Task_sleep(1000); //avoid too many subsequent memory readouts
-		int_pir = 0;
+		int_pin = 0;
 		GPIO_enableInt(PIR_pin);
 
 	}
