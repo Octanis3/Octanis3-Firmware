@@ -257,8 +257,8 @@ const uint8_t PIR_trigger_in[] = "PIR inside triggered\n";
 const uint8_t PIR_trigger_out[] = "PIR outside triggered\n";
 
 void log_send_PIR(unsigned int pin) {
-    uint8_t string = (pin != 0 && pin == nbox_pir_in1) ? PIR_trigger_in : PIR_trigger_out;
-    uart_serial_write(&debug_uart, string, sizeof(string));
+    uint8_t log_message = (pin != 0 && pin == nbox_pir_in1) ? PIR_trigger_in : PIR_trigger_out;
+    uart_serial_write(&debug_uart, log_message, sizeof(log_message));
 }
 
 uint8_t log_phase_two()
