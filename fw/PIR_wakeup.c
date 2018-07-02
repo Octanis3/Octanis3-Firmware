@@ -7,8 +7,8 @@
 
 
 /*
- * Interupt pin : P1_5
- * PWM pin      : P1_1
+ * Interupt pin 1 : P3_0
+ * Interupt pin 2 : P3_1
  */
 
 #include <ti/drivers/GPIO.h>
@@ -23,6 +23,8 @@
 #include <xdc/cfg/global.h> //needed for semaphore
 #include <ti/sysbios/knl/Semaphore.h>
 
+unsigned int int_pin = 0;
+
 void PIR_wakeup_Task()
 {
 	GPIO_enableInt(PIR_pin);
@@ -32,9 +34,10 @@ void PIR_wakeup_Task()
 		Semaphore_pend((Semaphore_Handle)semPIRwakeup, BIOS_WAIT_FOREVER);
 
 		//Send out data on serial port
-		log_send_PIR();
+		log_send_PIR(int_pin);
 
 		Task_sleep(1000); //avoid too many subsequent memory readouts
+		int_pir = 0;
 		GPIO_enableInt(PIR_pin);
 
 	}
@@ -45,7 +48,7 @@ void PIR_wakeup_isr(unsigned int index)
 {
 //	button_pressed = 1;
 	GPIO_disableInt(PIR_pin);
-
+	int_pin = index;
 	//check interrupt source
 	Semaphore_post((Semaphore_Handle)semPIRwakeup);
 }
