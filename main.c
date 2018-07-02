@@ -39,6 +39,7 @@
 #include "fw/rfid_reader.h"
 #include "fw/user_button.h"
 #include "fw/logger.h"
+#include "fw/PIR_wakeup.h"
 
 /* Board Header file */
 #include "Board.h"
@@ -71,6 +72,11 @@ Char button_task_Stack[BUTTON_TASKSTACKSIZE];
 Task_Struct log_task_Struct;
 Char log_task_Stack[LOG_TASKSTACKSIZE];
 
+// PIR wakeup task
+#define PIR_WAKEUP_TASKSTACKSIZE   512
+Task_Struct PIR_wakeup_task_Struct;
+Char PIR_wakeup_task_Stack[PIR_WAKEUP_TASKSTACKSIZE];
+
 /*
  *  ======== heartBeatFxn ========
  *  Toggle the Board_led_green. The Task_sleep is determined by arg0 which
@@ -94,6 +100,7 @@ int main(void)
     Task_Params rfid_taskParams;
     Task_Params button_taskParams;
     Task_Params log_taskParams;
+    Task_Params PIR_wakeup_taskParams;
 
     // disable interrupts if an interrupt could lead to
 	// another call to Clock_tickReconfig or if interrupt
@@ -143,12 +150,19 @@ int main(void)
 	button_taskParams.priority = 3; // <--- MUST HAVE LOWER PRIORITY, OTHERWISE THE SPI POLLING MAY GET IT STUCK AND HANG OTHER TASKS.
 	Task_construct(&button_task_Struct, (Task_FuncPtr)user_button_Task, &button_taskParams, NULL);
 
-	/* Construct userButton Task  thread */
+	/* Construct log Task  thread */
 	Task_Params_init(&log_taskParams);
 	log_taskParams.stackSize = LOG_TASKSTACKSIZE;
 	log_taskParams.stack = &log_task_Stack;
 	log_taskParams.priority = 4; //
 	Task_construct(&log_task_Struct, (Task_FuncPtr)log_Task, &log_taskParams, NULL);
+
+	/* Construct PIR_wakeup Task  thread */
+    Task_Params_init(&PIR_wakeup_taskParams);
+    PIR_wakeup_taskParams.stackSize = PIR_WAKEUP_TASKSTACKSIZE;
+    PIR_wakeup_taskParams.stack = &PIR_wakeup_task_Stack;
+    PIR_wakeup_taskParams.priority = 5; //
+    Task_construct(&PIR_wakeup_task_Struct, (Task_FuncPtr)PIR_wakeup_Task, &PIR_wakeup_taskParams, NULL);
 
 
     /* Turn on user LED  */

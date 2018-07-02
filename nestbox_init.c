@@ -54,6 +54,7 @@
 #include <ti/drivers/SPI.h>
 
 #include "fw/user_button.h"
+#include "fw/PIR_wakeup.h"
 #include "fw/lightbarrier.h"
 #include "fw/rfid_reader.h" //for precompiler assignments
 
@@ -114,6 +115,8 @@ GPIO_PinConfig gpioPinConfigs[] = {
 #else
     GPIOMSP430_P4_2 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
 #endif
+    /* NESTBOX PIR_WAKEUP */
+    GPIOMSP430_P1_5 | GPIO_CFG_IN_PD | GPIO_CFG_IN_INT_RISING,
 	/* NESTBOX_SPI_NFC_IRQ_N */
 	GPIOMSP430_P3_6 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
 	/* NESTBOX_LIGHTBARRIER_IN_EXT */
@@ -155,10 +158,6 @@ GPIO_PinConfig gpioPinConfigs[] = {
 #endif
 	/* NESTBOX_LF_MODUL */
 	GPIOMSP430_P1_2 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
-	/* NESTBOX_LF_MODE */
-	GPIOMSP430_P3_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
-	/* NESTBOX_LF_SPEED */
-	GPIOMSP430_P1_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
 
 };
 
@@ -171,6 +170,7 @@ GPIO_PinConfig gpioPinConfigs[] = {
  */
 GPIO_CallbackFxn gpioCallbackFunctions[] = {
 	user_button_isr,  /* nestbox user button */
+	PIR_wakeup_isr, /* PIR_wakeup */
 	nfc_wakeup_isr, /* lightbarrier interrupt pin */
 	lightbarrier_input_isr, /* lightbarrier detection routine */
 	lightbarrier_input_isr, /* lightbarrier detection routine */

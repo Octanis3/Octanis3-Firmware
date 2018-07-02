@@ -15,6 +15,7 @@ int log_write_new_entry(uint32_t timestamp, uint64_t uid, uint8_t inout);
 
 void log_send_data_via_uart();
 void log_send_lb_state();
+void log_send_PIR();
 
 uint8_t log_phase_two();
 

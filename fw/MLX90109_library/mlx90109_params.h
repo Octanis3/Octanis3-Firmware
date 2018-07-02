@@ -43,10 +43,10 @@ extern "C" {
 #define MLX90109_PARAM_DATA_PIN   	   nbox_lf_data//(GPIO_PIN(PORT_C, 14))
 #endif
 #ifndef MLX90109_PARAM_MODE_PIN
-#define MLX90109_PARAM_MODE_PIN		  nbox_lf_mode
+#define MLX90109_PARAM_MODE_PIN		  NULL
 #endif
 #ifndef MLX90109_PARAM_DATASELECT_PIN
-#define MLX90109_PARAM_DATASELECT_PIN nbox_lf_speed
+#define MLX90109_PARAM_DATASELECT_PIN NULL
 #endif
 #ifndef MLX90109_PARAM_MODU_PIN
 #define MLX90109_PARAM_MODU_PIN   nbox_lf_modul

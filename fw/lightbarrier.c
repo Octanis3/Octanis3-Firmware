@@ -43,13 +43,8 @@ void lightBarrier_init()
 	// make sure IR LED port is off
 
     // Configure GPIO
-#ifdef LAUNCHPAD_PINDEF
-    P1DIR |= BIT1;                     // P1.0 and P1.1 output
-    P1SEL0 |= BIT1;                    // P1.0 and P1.1 options select
-#else
     P1DIR |= BIT0;                     // P1.0 and P1.1 output
     P1SEL0 |= BIT0;                    // P1.0 and P1.1 options select
-#endif
 
     // Disable the GPIO power-on default high-impedance mode to activate
     // previously configured port settings
@@ -67,14 +62,9 @@ void lightBarrier_init()
     								// which is the center frequency of the IR receiver
 
 
-#ifdef LAUNCHPAD_PINDEF
-    TA0CCTL2 = OUTMOD_7;                      // CCR1 reset/set
-    TA0CCR2 = 50;//105;                            // CCR1 PWM duty cycle: 50%. test if we can make it lower!
-#else
     TA0CCTL1 = OUTMOD_7;                      // CCR1 reset/set
     TA0CCR1 = 50;//105;                            // CCR1 PWM duty cycle: 50%. test if we can make it lower!
-#endif
-    TA0CTL = TASSEL__SMCLK | MC__UP | TACLR;  // SMCLK, up mode, clear TAR
+
 
     TA3CTL = TASSEL__SMCLK | MC__CONTINUOUS | TACLR;  // SMCLK, up mode, clear TAR
 
