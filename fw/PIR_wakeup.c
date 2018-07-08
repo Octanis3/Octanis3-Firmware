@@ -14,6 +14,7 @@
 #include <ti/drivers/GPIO.h>
 
 #include "PIR_wakeup.h"
+#include "load_cell.h"
 #include "logger.h"
 #include "../Board.h"
 
@@ -34,10 +35,12 @@ void PIR_wakeup_Task()
 		Semaphore_pend((Semaphore_Handle)semPIRwakeup, BIOS_WAIT_FOREVER);
 
 		//Send out data on serial port
-		log_send_PIR(int_pin);
+		print_load_cell_value(int_pin, 'I');
 
-		Task_sleep(1000); //avoid too many subsequent memory readouts
+		Task_sleep(10); //avoid too many subsequent memory readouts
 		int_pin = 0;
+        Semaphore_reset((Semaphore_Handle)semPIRwakeup,0);
+
 		GPIO_enableInt(PIR_pin);
 
 	}
