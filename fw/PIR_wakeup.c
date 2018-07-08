@@ -28,7 +28,9 @@ unsigned int int_pin = 0;
 
 void PIR_wakeup_Task()
 {
-	GPIO_enableInt(PIR_pin);
+	GPIO_enableInt(nbox_pir_in1);
+    GPIO_enableInt(nbox_pir_in2);
+
 
 	while(1)
 	{
@@ -37,11 +39,11 @@ void PIR_wakeup_Task()
 		//Send out data on serial port
 		print_load_cell_value(int_pin, 'I');
 
-		Task_sleep(10); //avoid too many subsequent memory readouts
-		int_pin = 0;
+//		Task_sleep(10); //avoid too many subsequent memory readouts
         Semaphore_reset((Semaphore_Handle)semPIRwakeup,0);
 
-		GPIO_enableInt(PIR_pin);
+        GPIO_enableInt(nbox_pir_in1);
+        GPIO_enableInt(nbox_pir_in2);
 
 	}
 }
@@ -50,8 +52,9 @@ void PIR_wakeup_Task()
 void PIR_wakeup_isr(unsigned int index)
 {
 //	button_pressed = 1;
-	GPIO_disableInt(PIR_pin);
-	int_pin = index;
+    GPIO_disableInt(nbox_pir_in1);
+    GPIO_disableInt(nbox_pir_in2);
+    int_pin = index;
 	//check interrupt source
 	Semaphore_post((Semaphore_Handle)semPIRwakeup);
 }

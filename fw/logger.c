@@ -51,7 +51,7 @@
 #define LOG_ENTRY_WEIGHT_16b_LEN		0x4 // length of the second part of the logging (storing the weight measurement)
 
 
-#define T_PHASE_2			86400 //after 24hours, all events get logged
+#define T_PHASE_2			518400 //after 6 days, all events get logged
 
 #define OUTPUT_BUF_LEN		LOG_ENTRY_8b_LEN+2+2 // adding two ',' and two digits for decimal time stamp rep. +5 for weight
 

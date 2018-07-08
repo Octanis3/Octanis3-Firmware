@@ -105,7 +105,7 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 #ifdef USE_ADS
 		meas_buf[tmp] = ads1220_get_units(N_AVERAGES, &deviation, ads);
 #endif
-		//print_load_cell_value(meas_buf[tmp]*1000, 'X');
+		print_load_cell_value(meas_buf[tmp]*1000, 'X');
 
 		if(meas_buf[tmp]<(float)WEIGHT_THRESHOLD)
 		{
@@ -161,7 +161,7 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 
 	if(tol < WEIGHT_TOLERANCE)
 	{
-		//print_load_cell_value(average, 'S');
+		print_load_cell_value(average, 'S');
 		GPIO_write(Board_led_blue,1);
         Task_sleep(2000);
         GPIO_write(Board_led_blue,0);
@@ -170,7 +170,7 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 
 	else
 	{
-		//print_load_cell_value(average, 'A');
+		print_load_cell_value(average, 'A');
 		return UNSTABLE;
 	}
 }
@@ -280,7 +280,6 @@ void load_cell_Task()
 		ads1220_periodic(&ads);
 		ads1220_event(&ads);
 		ads1220_powerdown(&ads);
-		//print_load_cell_value((float)(ads.data), 'D');
 		// TODO: remove conversion
 		// value = ads1220_convert_units(&ads);
 		/**********END ADS1220 TEST***********/
@@ -306,6 +305,8 @@ void load_cell_Task()
 				{
 					if(!log_phase_two())
 					{
+					    print_load_cell_value((float)(ads.data), 'D');
+
 						rfid_start_detection();
 						Semaphore_pend((Semaphore_Handle)semLoadCell,RFID_TIMEOUT);
 						rfid_stop_detection();
@@ -367,7 +368,7 @@ void load_cell_Task()
 
 			uint16_t temp = (uint16_t)((ads.temperature+273.15) * 10); //deci kelvins
 
-			//print_load_cell_value(ads.temperature*100, 'T');
+			print_load_cell_value(ads.temperature*100, 'T');
             GPIO_disableInt(nbox_loadcell_data_ready);
 
 			ads1220_change_mode(&ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION, ADS1220_TEMPERATURE_DISABLED);
