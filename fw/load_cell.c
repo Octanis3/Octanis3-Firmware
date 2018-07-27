@@ -52,7 +52,7 @@
 #define WEIGHT_TOLERANCE 	1.0f		// maximum deviation from average value within one measurement series
 #define WEIGHT_MAX_CHANGE	0.015f	// maximum change within one "event"
 
-#define RAW_THRESHOLD       220000
+#define RAW_THRESHOLD       180000
 // TODO: above values should be in %FS
 
 Semaphore_Handle semLoadCellDRDY;
@@ -105,7 +105,7 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 #ifdef USE_ADS
 		meas_buf[tmp] = ads1220_get_units(N_AVERAGES, &deviation, ads);
 #endif
-		print_load_cell_value(meas_buf[tmp]*1000, 'X');
+		print_load_cell_value(meas_buf[tmp] * WEIGHT_SLOPE + WEIGHT_Y0, 'X');
 
 		if(meas_buf[tmp]<(float)WEIGHT_THRESHOLD)
 		{
@@ -161,7 +161,7 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 
 	if(tol < WEIGHT_TOLERANCE)
 	{
-		print_load_cell_value(average, 'S');
+		print_load_cell_value(average * WEIGHT_SLOPE + WEIGHT_Y0, 'S');
 		GPIO_write(Board_led_blue,1);
         Task_sleep(2000);
         GPIO_write(Board_led_blue,0);
@@ -170,7 +170,7 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 
 	else
 	{
-		print_load_cell_value(average, 'A');
+		print_load_cell_value(average * WEIGHT_SLOPE + WEIGHT_Y0, 'A');
 		return UNSTABLE;
 	}
 }
@@ -297,6 +297,8 @@ void load_cell_Task()
 
 			//print the inexact weight value: (TODO:remove)
 //			print_load_cell_value(value*1000, 'W');
+            print_load_cell_value((float)(ads.data), 'D');
+
 
             if((ads.data)>RAW_THRESHOLD)
 //			if((ads.data)>raw_threshold)
@@ -305,8 +307,6 @@ void load_cell_Task()
 				{
 					if(!log_phase_two())
 					{
-					    print_load_cell_value((float)(ads.data), 'D');
-
 						rfid_start_detection();
 						Semaphore_pend((Semaphore_Handle)semLoadCell,RFID_TIMEOUT);
 						rfid_stop_detection();

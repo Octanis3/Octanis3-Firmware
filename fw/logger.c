@@ -59,7 +59,7 @@ unsigned int* FRAM_offset_ptr;
 unsigned int* FRAM_read_ptr;
 
 unsigned int log_initialized = 0;
-static unsigned int phase_two = 0;
+const unsigned int phase_two = 0;
 
 void log_startup()
 {
@@ -263,7 +263,7 @@ void log_send_PIR(unsigned int pin) {
 
 uint8_t log_phase_two()
 {
-	return phase_two>0;
+	return 0;//phase_two>0;
 }
 
 //called periodically
@@ -275,14 +275,14 @@ Void cron_quick_clock(UArg arg){
 	if(log_initialized)
 		(*(uint32_t*)LOG_TIMESTAMP) = Seconds_get();
 
-	if(Seconds_get() > T_PHASE_2)
-	{
-		if(phase_two == 0)
-		{
-			phase_two = 2;
-			rfid_start_detection();
-		}
-	}
+//	if(Seconds_get() > T_PHASE_2)
+//	{
+//		if(phase_two == 0)
+//		{
+//			phase_two = 2;
+//			rfid_start_detection();
+//		}
+//	}
 }
 
 void log_Task()
@@ -298,11 +298,11 @@ void log_Task()
 //		Semaphore_post((Semaphore_Handle)semSerial);
 		Task_sleep(1000);
 
-		if(phase_two == 2)
-		{
-			uart_serial_write(&debug_uart, phase_two_string, sizeof(phase_two_string));
-			phase_two = 1;
-		}
+//		if(phase_two == 2)
+//		{
+//			uart_serial_write(&debug_uart, phase_two_string, sizeof(phase_two_string));
+//			phase_two = 1;
+//		}
 
 //		Semaphore_pend((Semaphore_Handle)semSerial,BIOS_WAIT_FOREVER);
 	}
