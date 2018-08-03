@@ -63,6 +63,7 @@ typedef struct {
 	uint16_t last_timestamp;
 	uint8_t tagId[10];			/**< EM4100 only: 2x4 version bits + 8x4 data bits*/
 	uint8_t id_counter;
+	uint8_t vertical_crc[4];
 } mlx90109_t;
 
 /**
