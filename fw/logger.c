@@ -12,6 +12,9 @@
 #include <msp430.h>
 #include "rfid_reader.h"
 
+#include "ADS1220/spi.h"
+
+
 
 #include <xdc/cfg/global.h> //needed for semaphore
 #include <ti/sysbios/knl/Semaphore.h>
@@ -285,10 +288,254 @@ Void cron_quick_clock(UArg arg){
 //	}
 }
 
+
+extern SPI_Handle  nestbox_spi_handle;
+int sd_spi_is_initialized = 0;
+
+Bool sd_spi_send_command(unsigned char cmd, uint32_t arg, uint8_t crc, uint8_t* response, unsigned int readlen)
+{
+    SPI_Transaction     spiTransaction;
+    Bool                transferOK;
+
+    uint8_t txBuf[6];
+    uint8_t rxBuf[6];
+
+    txBuf[0] = cmd;
+    txBuf[1] = arg>>24;
+    txBuf[2] = arg>>16;
+    txBuf[3] = arg>>8;
+    txBuf[4] = arg;
+    txBuf[5] = crc;
+
+    // send command: "init and go to SPI mode":
+    // Init and go to SPI mode: ]r:10 [0x40 0x00 0x00 0x00 0x00 0x95 r:8]
+
+    spiTransaction.count = 6;
+    spiTransaction.txBuf = txBuf;
+    spiTransaction.rxBuf = rxBuf;
+
+    spi_slave_select(nbox_spi_cs_n);
+    transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
+
+    // receive response:
+    spiTransaction.count = 1;
+    txBuf[0] = 0xff;
+    spiTransaction.txBuf = txBuf;
+    spiTransaction.rxBuf = rxBuf;
+
+    unsigned int i=0;
+    for(i = 0; i<readlen; i++)
+    {
+        SPI_transfer(nestbox_spi_handle, &spiTransaction);
+        response[i] = rxBuf[0];
+    }
+    spi_slave_unselect(nbox_spi_cs_n);
+
+    return transferOK;
+}
+
+#define CMD8    0x48
+#define CMD16   0x50
+#define CMD17   0x51
+#define CMD55   0x77
+#define CMD58   0x7A
+#define ACMD41  0x69 // must be preceded by CMD55 !
+
+/* inspired by http://codeandlife.com/2012/04/25/simple-fat-and-sd-tutorial-part-3/ */
+int sd_spi_init()
+{
+    SPI_Transaction     spiTransaction;
+    Bool                transferOK;
+    uint8_t     txBuf[14] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
+    uint8_t     rxBuf[14] = {0xff,};
+
+    unsigned int i = 0;
+    // send command: "init and go to SPI mode":
+    // Init and go to SPI mode: ]r:10 [0x40 0x00 0x00 0x00 0x00 0x95 r:8]
+
+    spiTransaction.count = 8;
+    spiTransaction.txBuf = txBuf;
+    spiTransaction.rxBuf = rxBuf;
+
+    spi_slave_unselect(nbox_spi_cs_n);
+    transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
+    if (!transferOK) {
+        return 0;/* Error in SPI transfer or transfer is already in progress */
+    }
+    memcpy(txBuf, (const unsigned char[]){0x40, 0x00, 0x00, 0x00, 0x00, 0x95, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, sizeof txBuf);
+
+
+    for(i=0; i<10; i++)
+    {
+        spiTransaction.count = 14;
+        spiTransaction.txBuf = txBuf;
+        spiTransaction.rxBuf = rxBuf;
+
+        spi_slave_select(nbox_spi_cs_n);
+        transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
+        spi_slave_unselect(nbox_spi_cs_n);
+        if (!transferOK) {
+            return 0;/* Error in SPI transfer or transfer is already in progress */
+        }
+        if(rxBuf[7] == 1) // TODO: change to check all bytes!
+            break;
+        Task_sleep(100);
+    }
+
+    if(i==10)
+        return -1;
+
+    // CMD8 to read version of SD card
+    // according to https://openlabpro.com/guide/interfacing-microcontrollers-with-sd-card/
+    sd_spi_send_command(CMD8, 0x000001AA, 0x87, rxBuf, 4);
+
+//    memcpy(txBuf, (const unsigned char[]){CMD8, 0x00, 0x00, 0x01, 0xAA, 0x87, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, sizeof txBuf);
+//
+//
+//    for(i=0; i<10; i++)
+//    {
+//        spiTransaction.count = 14;
+//        spiTransaction.txBuf = txBuf;
+//        spiTransaction.rxBuf = rxBuf;
+//
+//        spi_slave_select(nbox_spi_cs_n);
+//        transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
+//        spi_slave_unselect(nbox_spi_cs_n);
+//        if (!transferOK) {
+//            return 0;/* Error in SPI transfer or transfer is already in progress */
+//        }
+//        Task_sleep(100);
+//    }
+
+    for(i=0; i<10; i++)
+    {
+        sd_spi_send_command(CMD55, 0, 0x01, rxBuf, 4);
+        sd_spi_send_command(ACMD41, 0x40000000, 0x01, rxBuf, 4);
+        if(rxBuf[0] == 0 || rxBuf[1] == 0 || rxBuf[2] == 0 || rxBuf[3] == 0)
+            break;
+    }
+
+    if(i == 10)
+        return -2;
+
+//    // Initialize card: [0x41 0x00 0x00 0x00 0x00 0xFF r:8]
+//    memcpy(txBuf, (const unsigned char[]){0x41, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, sizeof txBuf);
+//    spiTransaction.count = 14;
+//    spiTransaction.txBuf = txBuf;
+//    spiTransaction.rxBuf = rxBuf;
+//    spi_slave_select(nbox_spi_cs_n);
+//    transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
+//    spi_slave_unselect(nbox_spi_cs_n);
+//
+//    if(rxBuf[6] == 0 || rxBuf[7] == 0 || rxBuf[8] == 0 || rxBuf[9] == 0 || rxBuf[10] == 0 || rxBuf[11] == 0 || rxBuf[12] == 0 || rxBuf[13] == 0)
+//    {
+//        //good response
+//        sd_spi_is_initialized = 1;
+//    }
+//    else
+//    {
+//        unsigned char response = 0xff;
+//        spiTransaction.count = 1;
+//        spiTransaction.txBuf = &(txBuf[8]);
+//        spiTransaction.rxBuf = &response;
+//
+//        for(i=0; i<100; i++)
+//        {
+//           spi_slave_select(nbox_spi_cs_n);
+//           transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
+//           spi_slave_unselect(nbox_spi_cs_n);
+//           if(response == 0x00)
+//           {
+//               sd_spi_is_initialized = 1;
+//               break;
+//           }
+//           Task_sleep(10);
+//        }
+//    }
+//    spi_slave_unselect(nbox_spi_cs_n);
+//
+//    if(i==100)
+//        return -2;
+
+    //Set transfer size: [0x50 0x00 0x00 0x02 0x00 0xFF r:8]
+    sd_spi_send_command(CMD16, 0x00000200, 0xff, rxBuf, 6);
+
+//    memcpy(txBuf, (const unsigned char[]){0x50, 0x00, 0x00, 0x02, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, sizeof txBuf);
+//    spiTransaction.count = 14;
+//    spiTransaction.txBuf = txBuf;
+//    spiTransaction.rxBuf = rxBuf;
+//
+//    spi_slave_select(nbox_spi_cs_n);
+//    transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
+//    spi_slave_unselect(nbox_spi_cs_n);
+
+    int j=0;
+    for (j=0; j<100; j++) //read 100 sectors
+    {
+
+
+        //Read sector: [0x51 0x00 0x00 0x00 0x00 0xFF r:520]
+        sd_spi_send_command(CMD17, j, 0xff, rxBuf, 1);
+
+          memcpy(txBuf, (const unsigned char[]){0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, 8);
+    //    spiTransaction.count = 14;
+    //    spiTransaction.txBuf = txBuf;
+    //    spiTransaction.rxBuf = rxBuf;
+    //
+    //    spi_slave_select(nbox_spi_cs_n);
+    //    transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
+    //    //TODO: wait for 0x00 response!
+
+        spiTransaction.txBuf = txBuf;
+        spiTransaction.rxBuf = rxBuf;
+        spiTransaction.count = 1; //read 1 Byte at a time until 0 is detected
+
+        spi_slave_select(nbox_spi_cs_n);
+
+        //wait for a 0x00 to arrive
+        for(i=0; i<10; i++)
+        {
+            transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
+            if(rxBuf[0] == 0)
+                break;
+        }
+
+        //wait for a 0xFE to arrive
+        for(i=0; i<10; i++)
+        {
+            transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
+            if(rxBuf[0] == 0xFE)
+                break;
+        }
+
+        for(i=0; i<64; i++)
+        {
+            spiTransaction.count = 8; //read 8 Byte at a time
+            spiTransaction.txBuf = txBuf;
+            spiTransaction.rxBuf = rxBuf;
+            spi_slave_select(nbox_spi_cs_n);
+            transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
+            spi_slave_unselect(nbox_spi_cs_n);
+
+            uart_serial_write(&debug_uart, rxBuf, 8);
+        }
+        Task_sleep(100);
+    }
+
+    if (!transferOK) {
+        return 0;/* Error in SPI transfer or transfer is already in progress */
+    }
+    return 1;
+}
+
 void log_Task()
 {
 	Task_sleep(5000); //wait until UART is initialized
 	uart_start_debug_prints();
+
+    Task_sleep(10000); //wait until UART is initialized
+
+	sd_spi_init();
 
 	while(1)
 	{

@@ -75,6 +75,7 @@ extern "C" {
 #define Board_LED_OFF				nbox_LED_OFF
 
 #define Board_SPI0                  	nbox_SPI
+#define nbox_spi_cs_n                 nbox_sdcard_enable_n
 
 //#define Board_USBDEVICE             	0
 

@@ -170,10 +170,10 @@ bool spi_submit(struct spi_periph *p, struct spi_transaction *t)
 	spiTransaction.txBuf = t->output_buf;
 	spiTransaction.rxBuf = t->input_buf;
 
-	SpiSlaveSelect(nbox_loadcell_spi_cs_n);
+	//SpiSlaveSelect(nbox_loadcell_spi_cs_n);
 	transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
 	//if(keep_selected == 0)
-		SpiSlaveUnselect(nbox_loadcell_spi_cs_n);
+	//	SpiSlaveUnselect(nbox_loadcell_spi_cs_n);
 
 
 	if (!transferOK) {
@@ -483,9 +483,10 @@ void spi1_arch_init(void)
 	SPI_Params_init(&spiParams);
 	spiParams.transferMode = SPI_MODE_BLOCKING;
 	spiParams.transferCallbackFxn = NULL;
-	spiParams.frameFormat = SPI_POL0_PHA1; // ADS1220: Only SPI mode 1 (CPOL = 0, CPHA = 1) is supported.
+	spiParams.frameFormat = SPI_POL0_PHA0; //currently set for SD card mode 0
+	//default for ADS1220 --> SPI_POL0_PHA1; // ADS1220: Only SPI mode 1 (CPOL = 0, CPHA = 1) is supported.
 	spiParams.mode = SPI_MASTER;
-	//	spiParams.bitRate = 500000; /*!< SPI bit rate in Hz */ //max can be 2 MHz.
+	spiParams.bitRate = 100000; //default: 500000; /*!< SPI bit rate in Hz */ //max can be 2 MHz.
 	// spiParams.dataSize = ????; /*!< SPI data frame size in bits (default = 8) */
 	// NOTE:  .bitOrder = EUSCI_B_SPI_MSB_FIRST is defined in nestbox_init.
 
@@ -505,7 +506,7 @@ void spi1_arch_init(void)
   // set init struct, indices and status
 //  spi1.reg_addr = (void *)SPI1;
 //  spi1.init_struct = &spi1_dma;
-  spi1.trans_insert_idx = 0;
+   spi1.trans_insert_idx = 0;
   spi1.trans_extract_idx = 0;
   spi1.status = SPIIdle;
 
