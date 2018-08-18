@@ -256,13 +256,13 @@ void log_send_data_via_uart()
 
 }
 
-const uint8_t PIR_trigger_in[] = "PIR inside triggered\n";
-const uint8_t PIR_trigger_out[] = "PIR outside triggered\n";
-
-void log_send_PIR(unsigned int pin) {
-    uint8_t log_message[] = (pin != 0 && pin == nbox_pir_in1) ? PIR_trigger_in : PIR_trigger_out;
-    uart_serial_write(&debug_uart, log_message, sizeof(log_message));
-}
+//const uint8_t PIR_trigger_in[] = "PIR inside triggered\n";
+//const uint8_t PIR_trigger_out[] = "PIR outside triggered\n";
+//
+//void log_send_PIR(unsigned int pin) {
+//    uint8_t log_message[] = (pin != 0 && pin == nbox_pir_in1) ? PIR_trigger_in : PIR_trigger_out;
+//    uart_serial_write(&debug_uart, log_message, sizeof(log_message));
+//}
 
 uint8_t log_phase_two()
 {
@@ -334,6 +334,7 @@ Bool sd_spi_send_command(unsigned char cmd, uint32_t arg, uint8_t crc, uint8_t* 
     return transferOK;
 }
 
+#define CMD0    0x40
 #define CMD8    0x48
 #define CMD16   0x50
 #define CMD17   0x51
@@ -346,38 +347,26 @@ int sd_spi_init()
 {
     SPI_Transaction     spiTransaction;
     Bool                transferOK;
-    uint8_t     txBuf[14] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
-    uint8_t     rxBuf[14] = {0xff,};
+    uint8_t     txBuf[8]= {0xff,};
+    uint8_t     rxBuf[8] = {0xff,};
 
     unsigned int i = 0;
     // send command: "init and go to SPI mode":
     // Init and go to SPI mode: ]r:10 [0x40 0x00 0x00 0x00 0x00 0x95 r:8]
 
-    spiTransaction.count = 8;
+    spiTransaction.count = 1;
     spiTransaction.txBuf = txBuf;
     spiTransaction.rxBuf = rxBuf;
 
     spi_slave_unselect(nbox_spi_cs_n);
-    transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
-    if (!transferOK) {
-        return 0;/* Error in SPI transfer or transfer is already in progress */
-    }
-    memcpy(txBuf, (const unsigned char[]){0x40, 0x00, 0x00, 0x00, 0x00, 0x95, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, sizeof txBuf);
-
+    for(i=0; i<8; i++)
+        SPI_transfer(nestbox_spi_handle, &spiTransaction);
 
     for(i=0; i<10; i++)
     {
-        spiTransaction.count = 14;
-        spiTransaction.txBuf = txBuf;
-        spiTransaction.rxBuf = rxBuf;
+        sd_spi_send_command(CMD0, 0, 0x95, rxBuf, 4);
 
-        spi_slave_select(nbox_spi_cs_n);
-        transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
-        spi_slave_unselect(nbox_spi_cs_n);
-        if (!transferOK) {
-            return 0;/* Error in SPI transfer or transfer is already in progress */
-        }
-        if(rxBuf[7] == 1) // TODO: change to check all bytes!
+        if(rxBuf[1] == 1)
             break;
         Task_sleep(100);
     }
@@ -387,140 +376,90 @@ int sd_spi_init()
 
     // CMD8 to read version of SD card
     // according to https://openlabpro.com/guide/interfacing-microcontrollers-with-sd-card/
-    sd_spi_send_command(CMD8, 0x000001AA, 0x87, rxBuf, 4);
-
-//    memcpy(txBuf, (const unsigned char[]){CMD8, 0x00, 0x00, 0x01, 0xAA, 0x87, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, sizeof txBuf);
-//
-//
-//    for(i=0; i<10; i++)
-//    {
-//        spiTransaction.count = 14;
-//        spiTransaction.txBuf = txBuf;
-//        spiTransaction.rxBuf = rxBuf;
-//
-//        spi_slave_select(nbox_spi_cs_n);
-//        transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
-//        spi_slave_unselect(nbox_spi_cs_n);
-//        if (!transferOK) {
-//            return 0;/* Error in SPI transfer or transfer is already in progress */
-//        }
-//        Task_sleep(100);
-//    }
+    sd_spi_send_command(CMD8, 0x000001AA, 0x87, rxBuf, 8);
 
     for(i=0; i<10; i++)
     {
+        // send ACMD41 repeatedly until initialized
         sd_spi_send_command(CMD55, 0, 0x01, rxBuf, 4);
         sd_spi_send_command(ACMD41, 0x40000000, 0x01, rxBuf, 4);
         if(rxBuf[0] == 0 || rxBuf[1] == 0 || rxBuf[2] == 0 || rxBuf[3] == 0)
             break;
+        Task_sleep(20);
     }
 
     if(i == 10)
         return -2;
 
-//    // Initialize card: [0x41 0x00 0x00 0x00 0x00 0xFF r:8]
-//    memcpy(txBuf, (const unsigned char[]){0x41, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, sizeof txBuf);
-//    spiTransaction.count = 14;
-//    spiTransaction.txBuf = txBuf;
-//    spiTransaction.rxBuf = rxBuf;
-//    spi_slave_select(nbox_spi_cs_n);
-//    transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
-//    spi_slave_unselect(nbox_spi_cs_n);
-//
-//    if(rxBuf[6] == 0 || rxBuf[7] == 0 || rxBuf[8] == 0 || rxBuf[9] == 0 || rxBuf[10] == 0 || rxBuf[11] == 0 || rxBuf[12] == 0 || rxBuf[13] == 0)
-//    {
-//        //good response
-//        sd_spi_is_initialized = 1;
-//    }
-//    else
-//    {
-//        unsigned char response = 0xff;
-//        spiTransaction.count = 1;
-//        spiTransaction.txBuf = &(txBuf[8]);
-//        spiTransaction.rxBuf = &response;
-//
-//        for(i=0; i<100; i++)
-//        {
-//           spi_slave_select(nbox_spi_cs_n);
-//           transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
-//           spi_slave_unselect(nbox_spi_cs_n);
-//           if(response == 0x00)
-//           {
-//               sd_spi_is_initialized = 1;
-//               break;
-//           }
-//           Task_sleep(10);
-//        }
-//    }
-//    spi_slave_unselect(nbox_spi_cs_n);
-//
-//    if(i==100)
-//        return -2;
+    // Read OCR --> answer: first byte bit6 reads 1 --> high capacity SD card (SDHC)
+    //                                              --> block size is 512 by default!
+    sd_spi_send_command(CMD58, 0, 0xff, rxBuf, 8);
 
     //Set transfer size: [0x50 0x00 0x00 0x02 0x00 0xFF r:8]
-    sd_spi_send_command(CMD16, 0x00000200, 0xff, rxBuf, 6);
+    sd_spi_send_command(CMD16, 0x00000200, 0xff, rxBuf, 8);
+    Task_sleep(100);
 
-//    memcpy(txBuf, (const unsigned char[]){0x50, 0x00, 0x00, 0x02, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, sizeof txBuf);
-//    spiTransaction.count = 14;
-//    spiTransaction.txBuf = txBuf;
-//    spiTransaction.rxBuf = rxBuf;
-//
-//    spi_slave_select(nbox_spi_cs_n);
-//    transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
-//    spi_slave_unselect(nbox_spi_cs_n);
+    memcpy(txBuf, (const unsigned char[]){0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, 8);
 
-    int j=0;
-    for (j=0; j<100; j++) //read 100 sectors
+    Semaphore_pend((Semaphore_Handle)semSerial,BIOS_WAIT_FOREVER);
+
+    unsigned int j=0;
+    for (j=0; j<100; j++) //read 1 sectors
     {
+        for(i=0; i<10; i++)
+        {
+            //Read sector: [0x51 0x00 0x00 0x00 0x00 0xFF r:520]
+            sd_spi_send_command(CMD17, j+(16<<9), 0xff, rxBuf, 4); // --->> the first time it worked was at j=16 - text at j=33
+            // output:
+            // BSD  4.4 @      ⸮    ⸮      ⸮⸮ f                       ⸮ )⸮NO NAME    FAT32   ⸮1⸮⸮м |⸮⸮⸮⸮  ^⸮⸮⸮ ⸮⸮⸮⸮t⸮⸮⸮⸮0⸮⸮⸮
+            //Non-system disk
+            //Press any key to reboot
 
 
-        //Read sector: [0x51 0x00 0x00 0x00 0x00 0xFF r:520]
-        sd_spi_send_command(CMD17, j, 0xff, rxBuf, 1);
+            //wait for a 0x00 to arrive
 
-          memcpy(txBuf, (const unsigned char[]){0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, 8);
-    //    spiTransaction.count = 14;
-    //    spiTransaction.txBuf = txBuf;
-    //    spiTransaction.rxBuf = rxBuf;
-    //
-    //    spi_slave_select(nbox_spi_cs_n);
-    //    transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
-    //    //TODO: wait for 0x00 response!
+            if(rxBuf[0] == 0 ||rxBuf[1] == 0 || rxBuf[2] == 0 || rxBuf[3] == 0)
+                break;
+            Task_sleep(100);
 
-        spiTransaction.txBuf = txBuf;
-        spiTransaction.rxBuf = rxBuf;
-        spiTransaction.count = 1; //read 1 Byte at a time until 0 is detected
+        }
+//        spiTransaction.txBuf = txBuf;
+//        spiTransaction.rxBuf = rxBuf;
+//        spiTransaction.count = 1; //read 1 Byte at a time until 0 is detected
+//        transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
+//        //wait for a 0xFE to arrive
+//        for(i=0; i<10; i++)
+//        {
+//            transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
+//            if(rxBuf[0] == 0xFE)
+//                break;
+//        }
+        uint8_t outbuffer[20]; //
+
 
         spi_slave_select(nbox_spi_cs_n);
-
-        //wait for a 0x00 to arrive
-        for(i=0; i<10; i++)
-        {
-            transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
-            if(rxBuf[0] == 0)
-                break;
-        }
-
-        //wait for a 0xFE to arrive
-        for(i=0; i<10; i++)
-        {
-            transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
-            if(rxBuf[0] == 0xFE)
-                break;
-        }
-
-        for(i=0; i<64; i++)
+        for(i=0; i<66; i++)
         {
             spiTransaction.count = 8; //read 8 Byte at a time
             spiTransaction.txBuf = txBuf;
             spiTransaction.rxBuf = rxBuf;
-            spi_slave_select(nbox_spi_cs_n);
             transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
-            spi_slave_unselect(nbox_spi_cs_n);
 
-            uart_serial_write(&debug_uart, rxBuf, 8);
+            //uint8_t strlen = ui2a(*((uint32_t*)(&(rxBuf[0]))), 16, 1,PRINT_LEADING_ZEROS, outbuffer);
+            //outbuffer[strlen] = ' ';
+            //strlen += ui2a(*((uint32_t*)(&(rxBuf[4]))), 16, 1,PRINT_LEADING_ZEROS, &(outbuffer[strlen+1]))+1;
+            //outbuffer[strlen] = '\n';
+
+            uart_serial_write(&debug_uart, rxBuf,8);
         }
+        spi_slave_unselect(nbox_spi_cs_n);
+
+        uart_serial_write(&debug_uart, '\n', 1);
+
+
         Task_sleep(100);
     }
+    Semaphore_post((Semaphore_Handle)semSerial);
 
     if (!transferOK) {
         return 0;/* Error in SPI transfer or transfer is already in progress */

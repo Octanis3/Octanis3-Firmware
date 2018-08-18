@@ -63,6 +63,10 @@
 #include "spi.h"
 #include "../Board.h"
 
+
+#include <xdc/cfg/global.h> //needed for semaphore
+#include <ti/sysbios/knl/Semaphore.h>
+
 #ifndef NVIC_SPI_IRQ_PRIO
 #define NVIC_SPI_IRQ_PRIO 0
 #endif
@@ -139,12 +143,14 @@ static inline void SpiSlaveSelect(uint8_t slave)
 
 void spi_slave_select(uint8_t slave)
 {
+  Semaphore_pend((Semaphore_Handle)semSPI, 10000);
   SpiSlaveSelect(slave);
 }
 
 void spi_slave_unselect(uint8_t slave)
 {
   SpiSlaveUnselect(slave);
+  Semaphore_reset((Semaphore_Handle)semSPI, 1);
 }
 
 void spi_init_slaves(void)
