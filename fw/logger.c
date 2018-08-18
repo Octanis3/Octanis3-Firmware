@@ -404,7 +404,7 @@ int sd_spi_init()
     Semaphore_pend((Semaphore_Handle)semSerial,BIOS_WAIT_FOREVER);
 
     unsigned int j=0;
-    for (j=0; j<100; j++) //read 1 sectors
+    for (j=0; j<100; j++) //read 100 sectors
     {
         for(i=0; i<10; i++)
         {
@@ -418,43 +418,37 @@ int sd_spi_init()
 
             //wait for a 0x00 to arrive
 
-            if(rxBuf[0] == 0 ||rxBuf[1] == 0 || rxBuf[2] == 0 || rxBuf[3] == 0)
+            if(rxBuf[0] == 0 ||rxBuf[1] == 0 || rxBuf[2] == 0 || rxBuf[3] == 0) //the 0x00 response usually arrives on rxBuf[1] or rxBuf[2]
                 break;
             Task_sleep(100);
 
         }
-//        spiTransaction.txBuf = txBuf;
-//        spiTransaction.rxBuf = rxBuf;
-//        spiTransaction.count = 1; //read 1 Byte at a time until 0 is detected
-//        transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
-//        //wait for a 0xFE to arrive
-//        for(i=0; i<10; i++)
-//        {
-//            transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
-//            if(rxBuf[0] == 0xFE)
-//                break;
-//        }
-        uint8_t outbuffer[20]; //
-
-
+        spiTransaction.txBuf = txBuf;
+        spiTransaction.rxBuf = rxBuf;
+        spiTransaction.count = 1; //read 1 Byte at a time until 0 is detected
         spi_slave_select(nbox_spi_cs_n);
-        for(i=0; i<66; i++)
+        if(rxBuf[2] != 0xFE && rxBuf[3] != 0xFE)
+        {
+            for(i=0; i<10; i++)
+            {
+                transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
+                if(rxBuf[0] == 0xFE)
+                    break;
+            }
+        }
+
+        for(i=0; i<65; i++) // read 512 bytes plus 2bytes CRC plus 6 dummy bytes (0xff)
         {
             spiTransaction.count = 8; //read 8 Byte at a time
             spiTransaction.txBuf = txBuf;
             spiTransaction.rxBuf = rxBuf;
             transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
 
-            //uint8_t strlen = ui2a(*((uint32_t*)(&(rxBuf[0]))), 16, 1,PRINT_LEADING_ZEROS, outbuffer);
-            //outbuffer[strlen] = ' ';
-            //strlen += ui2a(*((uint32_t*)(&(rxBuf[4]))), 16, 1,PRINT_LEADING_ZEROS, &(outbuffer[strlen+1]))+1;
-            //outbuffer[strlen] = '\n';
-
             uart_serial_write(&debug_uart, rxBuf,8);
         }
         spi_slave_unselect(nbox_spi_cs_n);
 
-        uart_serial_write(&debug_uart, '\n', 1);
+        uart_serial_write(&debug_uart, "\n", 1); //newline after each sector
 
 
         Task_sleep(100);
