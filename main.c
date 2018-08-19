@@ -49,6 +49,9 @@
 //to set the CPU frequency.
 #include <ti/sysbios/knl/Clock.h>
 
+//TODO: tatic Tasks: The majority of the examples statically create their Tasks in their *.cfg files. This reduces
+ // the code footprint because code is not needed for functions such Task_create().
+
 #ifdef LIGHTBARRIER_VERSION
 // light barrier task
 #define LB_TASKSTACKSIZE   512
@@ -81,10 +84,7 @@ Char load_cell_task_Stack[LOAD_CELL_TASKSTACKSIZE];
 Task_Struct bat_task_Struct;
 Char bat_task_Stack[BATTERY_TASKSTACKSIZE];
 
-// PIR wakeup task
-#define PIR_WAKEUP_TASKSTACKSIZE   512
-Task_Struct PIR_wakeup_task_Struct;
-Char PIR_wakeup_task_Stack[PIR_WAKEUP_TASKSTACKSIZE];
+
 
 /*
  *  ======== main ========
@@ -164,12 +164,7 @@ int main(void)
 	log_taskParams.priority = 5; //most important task, but with low duty cycle
 	Task_construct(&bat_task_Struct, (Task_FuncPtr)battery_Task, &bat_taskParams, NULL);
 
-	/* Construct PIR_wakeup Task  thread */
-    Task_Params_init(&PIR_wakeup_taskParams);
-    PIR_wakeup_taskParams.stackSize = PIR_WAKEUP_TASKSTACKSIZE;
-    PIR_wakeup_taskParams.stack = &PIR_wakeup_task_Stack;
-    PIR_wakeup_taskParams.priority = 5; //
-    Task_construct(&PIR_wakeup_task_Struct, (Task_FuncPtr)PIR_wakeup_Task, &PIR_wakeup_taskParams, NULL);
+
 
     /* Turn on user LED  */
     GPIO_write(Board_led_green, Board_LED_ON);
