@@ -24,11 +24,11 @@
 
 #define LOG_BACKUP_PERIOD	2		// seconds between two time stamp back-ups
 
-#define LOG_NEXT_POS_VALID	0x11FFC // store the 16bit "password" (type unsigned int == uint16_t)
-#define LOG_NEXT_POS_OFS		0x11FFE // store the 16bit offset (type unsigned int == uint16_t)
-#define LOG_TIMESTAMP		0x11FF8 // store the 32bit timestamp (type unsigned int == uint16_t)
+#define LOG_NEXT_POS_VALID	0x12FFC // store the 16bit "password" (type unsigned int == uint16_t)
+#define LOG_NEXT_POS_OFS		0x12FFE // store the 16bit offset (type unsigned int == uint16_t)
+#define LOG_TIMESTAMP		0x12FF8 // store the 32bit timestamp (type unsigned int == uint16_t)
 							// ^--- RESERVED SPACE STARTS HERE!! CHANGE nestbox_memory_map.cmd FILE IF MODIFYING THIS VALUE!
-#define LOG_START_POS		0x00012000
+#define LOG_START_POS		0x00013000
 #define LOG_END_POS			0x00013FF0 // this is the last byte position to write to; conservative...
 /* Note: the allocated storage space is 8 kB large, which is enough for 819 entries */
 

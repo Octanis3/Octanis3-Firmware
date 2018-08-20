@@ -60,7 +60,7 @@ Char lb_task_Stack[LB_TASKSTACKSIZE];
 #endif
 
 // RFID reader task
-#define RFID_TASKSTACKSIZE   2048
+#define RFID_TASKSTACKSIZE   1024
 Task_Struct rfid_task_Struct;
 Char rfid_task_Stack[RFID_TASKSTACKSIZE];
 
@@ -75,12 +75,12 @@ Task_Struct log_task_Struct;
 Char log_task_Stack[LOG_TASKSTACKSIZE];
 
 // load cell task
-#define LOAD_CELL_TASKSTACKSIZE   1024
+#define LOAD_CELL_TASKSTACKSIZE   765
 Task_Struct load_cell_task_Struct;
 Char load_cell_task_Stack[LOAD_CELL_TASKSTACKSIZE];
 
 // battery task
-#define BATTERY_TASKSTACKSIZE   512
+#define BATTERY_TASKSTACKSIZE   300
 Task_Struct bat_task_Struct;
 Char bat_task_Stack[BATTERY_TASKSTACKSIZE];
 

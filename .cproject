@@ -127,8 +127,8 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
+						<entry excluding="fw/ff13b/documents|doc|fw/em4095_lib/EM4095.h|fw/em4095_lib/.DS_Store|fw/archive/ST95HF.c|fw/archive|fw/EM4095_library|fw/MLX90109_library/V4.c|src|archive|fw/archive/95HF_library" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="fw/EM4095_library/beyondWaste"/>
-						<entry excluding="fw/ff13b/source|fw/ff13b/documents|doc|fw/em4095_lib/EM4095.h|fw/em4095_lib/.DS_Store|fw/archive/ST95HF.c|fw/archive|fw/EM4095_library|fw/MLX90109_library/V4.c|src|archive|fw/archive/95HF_library" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
