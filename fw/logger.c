@@ -13,7 +13,7 @@
 #include "rfid_reader.h"
 
 #include "ADS1220/spi.h"
-
+#include "ff13b/source/ff.h"
 
 
 #include <xdc/cfg/global.h> //needed for semaphore
@@ -292,47 +292,47 @@ Void cron_quick_clock(UArg arg){
 extern SPI_Handle  nestbox_spi_handle;
 int sd_spi_is_initialized = 0;
 
-Bool sd_spi_send_command(unsigned char cmd, uint32_t arg, uint8_t crc, uint8_t* response, unsigned int readlen)
-{
-    SPI_Transaction     spiTransaction;
-    Bool                transferOK;
-
-    uint8_t txBuf[6];
-    uint8_t rxBuf[6];
-
-    txBuf[0] = cmd;
-    txBuf[1] = arg>>24;
-    txBuf[2] = arg>>16;
-    txBuf[3] = arg>>8;
-    txBuf[4] = arg;
-    txBuf[5] = crc;
-
-    // send command: "init and go to SPI mode":
-    // Init and go to SPI mode: ]r:10 [0x40 0x00 0x00 0x00 0x00 0x95 r:8]
-
-    spiTransaction.count = 6;
-    spiTransaction.txBuf = txBuf;
-    spiTransaction.rxBuf = rxBuf;
-
-    spi_slave_select(nbox_spi_cs_n);
-    transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
-
-    // receive response:
-    spiTransaction.count = 1;
-    txBuf[0] = 0xff;
-    spiTransaction.txBuf = txBuf;
-    spiTransaction.rxBuf = rxBuf;
-
-    unsigned int i=0;
-    for(i = 0; i<readlen; i++)
-    {
-        SPI_transfer(nestbox_spi_handle, &spiTransaction);
-        response[i] = rxBuf[0];
-    }
-    spi_slave_unselect(nbox_spi_cs_n);
-
-    return transferOK;
-}
+//Bool sd_spi_send_command(unsigned char cmd, uint32_t arg, uint8_t crc, uint8_t* response, unsigned int readlen)
+//{
+//    SPI_Transaction     spiTransaction;
+//    Bool                transferOK;
+//
+//    uint8_t txBuf[6];
+//    uint8_t rxBuf[6];
+//
+//    txBuf[0] = cmd;
+//    txBuf[1] = arg>>24;
+//    txBuf[2] = arg>>16;
+//    txBuf[3] = arg>>8;
+//    txBuf[4] = arg;
+//    txBuf[5] = crc;
+//
+//    // send command: "init and go to SPI mode":
+//    // Init and go to SPI mode: ]r:10 [0x40 0x00 0x00 0x00 0x00 0x95 r:8]
+//
+//    spiTransaction.count = 6;
+//    spiTransaction.txBuf = txBuf;
+//    spiTransaction.rxBuf = rxBuf;
+//
+//    spi_slave_select(nbox_spi_cs_n);
+//    transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
+//
+//    // receive response:
+//    spiTransaction.count = 1;
+//    txBuf[0] = 0xff;
+//    spiTransaction.txBuf = txBuf;
+//    spiTransaction.rxBuf = rxBuf;
+//
+//    unsigned int i=0;
+//    for(i = 0; i<readlen; i++)
+//    {
+//        SPI_transfer(nestbox_spi_handle, &spiTransaction);
+//        response[i] = rxBuf[0];
+//    }
+//    spi_slave_unselect(nbox_spi_cs_n);
+//
+//    return transferOK;
+//}
 
 #define CMD0    0x40
 #define CMD8    0x48
@@ -343,7 +343,7 @@ Bool sd_spi_send_command(unsigned char cmd, uint32_t arg, uint8_t crc, uint8_t* 
 #define ACMD41  0x69 // must be preceded by CMD55 !
 
 /* inspired by http://codeandlife.com/2012/04/25/simple-fat-and-sd-tutorial-part-3/ */
-int sd_spi_init()
+int sd_spi_init_logger()
 {
     SPI_Transaction     spiTransaction;
     Bool                transferOK;
@@ -468,7 +468,7 @@ void log_Task()
 
     Task_sleep(10000); //wait until UART is initialized
 
-	sd_spi_init();
+	//sd_spi_init_logger();
 
 	while(1)
 	{

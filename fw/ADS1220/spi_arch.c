@@ -483,39 +483,39 @@ void spi1_arch_close()
  *****************************************************************************/
 void spi1_arch_init(void)
 {
+    if (nestbox_spi_handle == NULL) {
+        // initialize
+        SPI_Params  spiParams;
+        SPI_Params_init(&spiParams);
+        spiParams.transferMode = SPI_MODE_BLOCKING;
+        spiParams.transferCallbackFxn = NULL;
+        spiParams.frameFormat = SPI_POL0_PHA0; //currently set for SD card mode 0
+        //default for ADS1220 --> SPI_POL0_PHA1; // ADS1220: Only SPI mode 1 (CPOL = 0, CPHA = 1) is supported.
+        spiParams.mode = SPI_MASTER;
+        spiParams.bitRate = 100000; //default: 500000; /*!< SPI bit rate in Hz */ //max can be 2 MHz.
+        // spiParams.dataSize = ????; /*!< SPI data frame size in bits (default = 8) */
+        // NOTE:  .bitOrder = EUSCI_B_SPI_MSB_FIRST is defined in nestbox_init.
 
-	// initialize
-	SPI_Params  spiParams;
-	SPI_Params_init(&spiParams);
-	spiParams.transferMode = SPI_MODE_BLOCKING;
-	spiParams.transferCallbackFxn = NULL;
-	spiParams.frameFormat = SPI_POL0_PHA0; //currently set for SD card mode 0
-	//default for ADS1220 --> SPI_POL0_PHA1; // ADS1220: Only SPI mode 1 (CPOL = 0, CPHA = 1) is supported.
-	spiParams.mode = SPI_MASTER;
-	spiParams.bitRate = 100000; //default: 500000; /*!< SPI bit rate in Hz */ //max can be 2 MHz.
-	// spiParams.dataSize = ????; /*!< SPI data frame size in bits (default = 8) */
-	// NOTE:  .bitOrder = EUSCI_B_SPI_MSB_FIRST is defined in nestbox_init.
 
+        nestbox_spi_handle = SPI_open(Board_SPI0, &spiParams);
+        if (nestbox_spi_handle == NULL) {
+           /* Error opening SPI */
 
-	nestbox_spi_handle = SPI_open(Board_SPI0, &spiParams);
-	if (nestbox_spi_handle == NULL) {
-	   /* Error opening SPI */
+            GPIO_toggle(Board_led_blue);
+            Task_sleep(100);
+            GPIO_toggle(Board_led_blue);
+            Task_sleep(100);
+            GPIO_toggle(Board_led_blue);
+            Task_sleep(100);
+        }
 
-		GPIO_toggle(Board_led_blue);
-		Task_sleep(100);
-		GPIO_toggle(Board_led_blue);
-		Task_sleep(100);
-		GPIO_toggle(Board_led_blue);
-		Task_sleep(100);
-	}
-
-  // set init struct, indices and status
-//  spi1.reg_addr = (void *)SPI1;
-//  spi1.init_struct = &spi1_dma;
-   spi1.trans_insert_idx = 0;
-  spi1.trans_extract_idx = 0;
-  spi1.status = SPIIdle;
-
+      // set init struct, indices and status
+    //  spi1.reg_addr = (void *)SPI1;
+    //  spi1.init_struct = &spi1_dma;
+       spi1.trans_insert_idx = 0;
+      spi1.trans_extract_idx = 0;
+      spi1.status = SPIIdle;
+    }
 
 //  // Configure GPIOs: SCK, MISO and MOSI
 //#ifdef STM32F1

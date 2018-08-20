@@ -9,6 +9,9 @@
 extern "C" {
 #endif
 
+#define _USE_WRITE  1   /* 1: Enable disk_write() function */
+#define _USE_IOCTL  0   /* 1: Enable disk_ioctl() fucntion */
+
 #include "integer.h"
 
 
@@ -29,12 +32,15 @@ typedef enum {
 /* Prototypes for disk control functions */
 
 
-DSTATUS disk_initialize (BYTE pdrv);
-DSTATUS disk_status (BYTE pdrv);
-DRESULT disk_read (BYTE pdrv, BYTE* buff, DWORD sector, UINT count);
-DRESULT disk_write (BYTE pdrv, const BYTE* buff, DWORD sector, UINT count);
-DRESULT disk_ioctl (BYTE pdrv, BYTE cmd, void* buff);
-
+DSTATUS fat_disk_initialize (BYTE pdrv);
+DSTATUS fat_disk_status (BYTE pdrv);
+DRESULT fat_disk_read (BYTE pdrv, BYTE* buff, DWORD sector, UINT count);
+#if _USE_WRITE
+DRESULT fat_disk_write (BYTE pdrv, const BYTE* buff, DWORD sector, UINT count);
+#endif
+#if _USE_IOCTL
+DRESULT fat_disk_ioctl (BYTE pdrv, BYTE cmd, void* buff);
+#endif
 
 /* Disk Status Bits (DSTATUS) */
 
@@ -43,7 +49,7 @@ DRESULT disk_ioctl (BYTE pdrv, BYTE cmd, void* buff);
 #define STA_PROTECT		0x04	/* Write protected */
 
 
-/* Command code for disk_ioctrl fucntion */
+/* Command code for fat_disk_ioctrl fucntion */
 
 /* Generic command (Used by FatFs) */
 #define CTRL_SYNC			0	/* Complete pending write process (needed at FF_FS_READONLY == 0) */
@@ -72,6 +78,14 @@ DRESULT disk_ioctl (BYTE pdrv, BYTE cmd, void* buff);
 #define ATA_GET_REV			20	/* Get F/W revision */
 #define ATA_GET_MODEL		21	/* Get model name */
 #define ATA_GET_SN			22	/* Get serial number */
+
+/* MMC card type flags (MMC_GET_TYPE) */
+#define CT_MMC      0x01        /* MMC ver 3 */
+#define CT_SD1      0x02        /* SD ver 1 */
+#define CT_SD2      0x04        /* SD ver 2 */
+#define CT_SDC      (CT_SD1|CT_SD2) /* SD */
+#define CT_BLOCK    0x08        /* Block addressing */
+
 
 #ifdef __cplusplus
 }
