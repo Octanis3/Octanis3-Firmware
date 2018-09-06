@@ -12,9 +12,15 @@
 #include <xdc/cfg/global.h> //needed for semaphore
 #include <ti/sysbios/knl/Semaphore.h>
 #include <xdc/runtime/Timestamp.h>
+#include <ti/sysbios/hal/Seconds.h>
 
+#include "diskio.h"
 
-#include "sd_spi.h"
+/* Definitions of physical drive number for each drive */
+#define DEV_MMC     0   /* Example: Map MMC/SD card to physical drive 1 */
+#define DEV_USB     2   /* Example: Map USB MSD to physical drive 2 */
+#define DEV_RAM     1   /* Example: Map Ramdisk to physical drive 0 */
+
 
 extern SPI_Handle  nestbox_spi_handle;
 
@@ -70,9 +76,7 @@ BYTE xchg_spi (
     spiTransaction.count = 1;
     spiTransaction.txBuf = &dat;
     spiTransaction.rxBuf = &rxBuf;
-    spi_slave_select(nbox_spi_cs_n);
     SPI_transfer(nestbox_spi_handle, &spiTransaction);
-    spi_slave_unselect(nbox_spi_cs_n);
 
     return rxBuf;       /* Return received byte */
 }
@@ -91,13 +95,11 @@ void rcvr_spi_multi (
     spiTransaction.count = 2;
     spiTransaction.txBuf = txBuf;
 
-    spi_slave_select(nbox_spi_cs_n);
     do {                    /* Receive the data block into buffer */
         spiTransaction.rxBuf = buff;
         SPI_transfer(nestbox_spi_handle, &spiTransaction);
         buff += 2;
     } while (btr -= 2);
-    spi_slave_unselect(nbox_spi_cs_n);
 }
 
 
@@ -222,7 +224,7 @@ int xmit_datablock (    /* 1:OK, 0:Failed */
     BYTE token          /* Token */
 )
 {
-    BYTE resp;
+    BYTE resp,resp1,resp2,resp3;
 
 
     if (!wait_ready(500)) return 0;     /* Wait for card ready */
@@ -233,7 +235,17 @@ int xmit_datablock (    /* 1:OK, 0:Failed */
         xchg_spi(0xFF); xchg_spi(0xFF); /* Dummy CRC */
 
         resp = xchg_spi(0xFF);              /* Receive data resp */
-        if ((resp & 0x1F) != 0x05) return 0;    /* Function fails if the data packet was not accepted */
+//        resp1 = xchg_spi(0xFF);              /* Receive data resp */
+//        resp2 = xchg_spi(0xFF);              /* Receive data resp */
+//        resp3 = xchg_spi(0xFF);              /* Receive data resp */
+
+        // TODO: receives wrong response here!! (0xff)
+        if(     ((resp & 0x1F)!= 0x05) //&&
+//                ((resp1 & 0x1F)!= 0x05) &&
+//                ((resp2 & 0x1F)!= 0x05) &&
+//                ((resp3 & 0x1F)!= 0x05)
+          )
+        /*if ((resp & 0x1F) != 0x05)*/ return 0;    /* Function fails if the data packet was not accepted */
     }
     return 1;
 }
@@ -319,12 +331,13 @@ DSTATUS fat_disk_initialize (
 
     ty = 0;
     if (send_cmd(CMD0, 0) == 1) {           /* Put the card SPI/Idle state */
-        uint32_t timeout = Timestamp_get32()+1000;    /* Initialization timeout = 1 sec */
+        uint32_t timeout = Seconds_get()+30;    /* Initialization timeout = 1 sec */
         if (send_cmd(CMD8, 0x1AA) == 1) {   /* SDv2? */
             for (n = 0; n < 4; n++) ocr[n] = xchg_spi(0xFF);    /* Get 32 bit return value of R7 resp */
             if (ocr[2] == 0x01 && ocr[3] == 0xAA) {             /* Is the card supports vcc of 2.7-3.6V? */
-                while ((timeout>Timestamp_get32()) && send_cmd(ACMD41, 1UL << 30)) ; /* Wait for end of initialization with ACMD41(HCS) */
-                if ((timeout>Timestamp_get32()) && send_cmd(CMD58, 0) == 0) {        /* Check CCS bit in the OCR */
+                while ((timeout>Seconds_get()) && send_cmd(ACMD41, 1UL << 30)) ; /* Wait for end of initialization with ACMD41(HCS) */
+                uint32_t time2 = Seconds_get();
+                if ((timeout>time2) && send_cmd(CMD58, 0) == 0) {        /* Check CCS bit in the OCR */
                     for (n = 0; n < 4; n++) ocr[n] = xchg_spi(0xFF);
                     ty = (ocr[0] & 0x40) ? CT_SD2 | CT_BLOCK : CT_SD2;  /* Card id SDv2 */
                 }
@@ -335,8 +348,8 @@ DSTATUS fat_disk_initialize (
             } else {
                 ty = CT_MMC; cmd = CMD1;    /* MMCv3 (CMD1(0)) */
             }
-            while ((timeout>Timestamp_get32()) && send_cmd(cmd, 0)) ;        /* Wait for end of initialization */
-            if ((timeout<Timestamp_get32()) || send_cmd(CMD16, 512) != 0)   /* Set block length: 512 */
+            while ((timeout>Seconds_get()) && send_cmd(cmd, 0)) ;        /* Wait for end of initialization */
+            if ((timeout<Seconds_get()) || send_cmd(CMD16, 512) != 0)   /* Set block length: 512 */
                 ty = 0;
         }
     }
@@ -570,5 +583,32 @@ void fat_disk_timerproc (void)
 //    }
     Stat = s;
 }
+
+/*---------------------------------------------------------*/
+/* User provided RTC function for FatFs module             */
+/*---------------------------------------------------------*/
+/* This is a real time clock service to be called back     */
+/* from FatFs module.                                      */
+
+#if !FF_FS_NORTC && !FF_FS_READONLY
+DWORD fat_get_fattime (void)
+{
+    return 0;
+    //TODO:
+//    RTCTIME rtc;
+//
+//    /* Get local time */
+//    if (!rtc_gettime(&rtc)) return 0;
+//
+//    /* Pack date and time into a DWORD variable */
+//    return    ((DWORD)(rtc.year - 1980) << 25)
+//            | ((DWORD)rtc.month << 21)
+//            | ((DWORD)rtc.mday << 16)
+//            | ((DWORD)rtc.hour << 11)
+//            | ((DWORD)rtc.min << 5)
+//            | ((DWORD)rtc.sec >> 1);
+}
+#endif
+
 
 

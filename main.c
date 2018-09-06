@@ -70,7 +70,7 @@ Task_Struct button_task_Struct;
 Char button_task_Stack[BUTTON_TASKSTACKSIZE];
 
 // log task
-#define LOG_TASKSTACKSIZE   512
+#define LOG_TASKSTACKSIZE   4000
 Task_Struct log_task_Struct;
 Char log_task_Stack[LOG_TASKSTACKSIZE];
 

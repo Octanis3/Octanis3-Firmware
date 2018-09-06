@@ -19,8 +19,9 @@
 /----------------------------------------------------------------------------*/
 
 
-#include "ff.h"			/* Declarations of FatFs API */
+#include "./ff.h"			/* Declarations of FatFs API */
 #include "diskio.h"		/* Declarations of device I/O functions */
+#include "ffconf.h"     /* FatFs configuration options */
 
 
 /*--------------------------------------------------------------------------
@@ -234,12 +235,12 @@
 
 /* Timestamp */
 #if FF_FS_NORTC == 1
-#if FF_NORTC_YEAR < 1980 || FF_NORTC_YEAR > 2107 || FF_NORTC_MON < 1 || FF_NORTC_MON > 12 || FF_NORTC_MDAY < 1 || FF_NORTC_MDAY > 31
-#error Invalid FF_FS_NORTC settings
-#endif
-#define GET_FATTIME()	((DWORD)(FF_NORTC_YEAR - 1980) << 25 | (DWORD)FF_NORTC_MON << 21 | (DWORD)FF_NORTC_MDAY << 16)
+    #if FF_NORTC_YEAR < 1980 || FF_NORTC_YEAR > 2107 || FF_NORTC_MON < 1 || FF_NORTC_MON > 12 || FF_NORTC_MDAY < 1 || FF_NORTC_MDAY > 31
+        #error Invalid FF_FS_NORTC settings
+    #endif
+    #define GET_FATTIME()	((DWORD)(FF_NORTC_YEAR - 1980) << 25 | (DWORD)FF_NORTC_MON << 21 | (DWORD)FF_NORTC_MDAY << 16)
 #else
-#define GET_FATTIME()	get_fattime()
+    #define GET_FATTIME()	fat_get_fattime()
 #endif
 
 
@@ -1037,6 +1038,7 @@ static FRESULT sync_window (	/* Returns FR_OK or FR_DISK_ERR */
 
 
 	if (fs->wflag) {	/* Is the disk access window dirty */
+	    // TODO: below command does not work on 1GB SD card!
 		if (fat_disk_write(fs->pdrv, fs->win, fs->winsect, 1) == RES_OK) {	/* Write back the window */
 			fs->wflag = 0;	/* Clear window dirty flag */
 			if (fs->winsect - fs->fatbase < fs->fsize) {	/* Is it in the 1st FAT? */
