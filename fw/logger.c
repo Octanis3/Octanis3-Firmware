@@ -475,7 +475,7 @@ int sd_spi_init_logger()
 void log_Task()
 {
 	Task_sleep(5000); //wait until UART is initialized
-	//uart_start_debug_prints(); // disable all UART comm except when SD card is on
+	uart_start_debug_prints(); // disable all UART comm except when SD card is on
 
     Task_sleep(10000); //wait until UART is initialized
 

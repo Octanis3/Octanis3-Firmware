@@ -489,10 +489,11 @@ void spi1_arch_init(void)
         SPI_Params_init(&spiParams);
         spiParams.transferMode = SPI_MODE_BLOCKING;
         spiParams.transferCallbackFxn = NULL;
-        spiParams.frameFormat = SPI_POL0_PHA0; //currently set for SD card mode 0
-        //default for ADS1220 --> SPI_POL0_PHA1; // ADS1220: Only SPI mode 1 (CPOL = 0, CPHA = 1) is supported.
+        spiParams.frameFormat = SPI_POL0_PHA1;
+        //default for ADS1220: SPI_POL0_PHA1; // ADS1220: Only SPI mode 1 (CPOL = 0, CPHA = 1) is supported.
+        //        for SD card: SPI_POL0_PHA0
         spiParams.mode = SPI_MASTER;
-        spiParams.bitRate = 100000; //default: 500000; /*!< SPI bit rate in Hz */ //max can be 2 MHz.
+        spiParams.bitRate = 500000; //SD-card: 100000, default: 500000; /*!< SPI bit rate in Hz */ //max can be 2 MHz.
         // spiParams.dataSize = ????; /*!< SPI data frame size in bits (default = 8) */
         // NOTE:  .bitOrder = EUSCI_B_SPI_MSB_FIRST is defined in nestbox_init.
 
