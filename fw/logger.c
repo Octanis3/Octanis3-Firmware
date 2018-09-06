@@ -197,6 +197,10 @@ void log_send_data_via_uart()
 
 
 	************************ end example *************************/
+    GPIO_write(nbox_spi_cs_n, 0); //turn on SD card
+    Task_sleep(500);
+
+
 	uart_stop_debug_prints();
 	uart_debug_open();
 
@@ -249,8 +253,15 @@ void log_send_data_via_uart()
 
 	}
 
+
 	uart_serial_write(&debug_uart, end_string, sizeof(end_string));
-	uart_start_debug_prints();
+	uart_debug_close();
+
+    Task_sleep(1000); //wait for data to be written
+
+    GPIO_write(nbox_spi_cs_n, 1); //turn off SD card
+
+//	uart_start_debug_prints();
 
 	//TODO: optional, reset the *LOG_NEXT_POS_OFS to zero.
 
@@ -464,40 +475,40 @@ int sd_spi_init_logger()
 void log_Task()
 {
 	Task_sleep(5000); //wait until UART is initialized
-	uart_start_debug_prints();
+	//uart_start_debug_prints(); // disable all UART comm except when SD card is on
 
     Task_sleep(10000); //wait until UART is initialized
 
 	//sd_spi_init_logger();
     //fat_disk_initialize (0);
 
-    FATFS FatFs;        /* FatFs work area needed for each volume */
-    FIL Fil;            /* File object needed for each open file */
-    UINT bw;
-    FRESULT res;
-
-    f_mount(&FatFs, "", 0);     /* Give a work area to the default drive */
+//    FATFS FatFs;        /* FatFs work area needed for each volume */
+//    FIL Fil;            /* File object needed for each open file */
+//    UINT bw;
+//    FRESULT res;
+//
+//    f_mount(&FatFs, "", 0);     /* Give a work area to the default drive */
     // CAREFUL: filename length limitation!!
-    if (f_open(&Fil, "mun.txt", FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {    /* Create a file */
-       uart_serial_print_event('F', &bw, 1);
-
-       res =  f_write(&Fil, "It works!\r\n", 11, &bw);    /* Write data to the file */
-       if(res == FR_OK)
-       {
-           GPIO_write(Board_led_green,0);
-
-       }
-        res = f_close(&Fil);                              /* Close the file */
-
-        if (bw == 11) {     /* Lights green LED if data written well */
-            GPIO_write(Board_led_green,1);
-        }
-        if(res == FR_OK)
-        {
-            GPIO_write(Board_led_green,0);
-
-        }
-    }
+//    if (f_open(&Fil, "mun.txt", FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {    /* Create a file */
+//       uart_serial_print_event('F', &bw, 1);
+//
+//       res =  f_write(&Fil, "It works!\r\n", 11, &bw);    /* Write data to the file */
+//       if(res == FR_OK)
+//       {
+//           GPIO_write(Board_led_green,0);
+//
+//       }
+//        res = f_close(&Fil);                              /* Close the file */
+//
+//        if (bw == 11) {     /* Lights green LED if data written well */
+//            GPIO_write(Board_led_green,1);
+//        }
+//        if(res == FR_OK)
+//        {
+//            GPIO_write(Board_led_green,0);
+//
+//        }
+//    }
 
 
 	while(1)

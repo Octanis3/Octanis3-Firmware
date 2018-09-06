@@ -65,7 +65,7 @@ Task_Struct rfid_task_Struct;
 Char rfid_task_Stack[RFID_TASKSTACKSIZE];
 
 // user button task
-#define BUTTON_TASKSTACKSIZE   256
+#define BUTTON_TASKSTACKSIZE   512
 Task_Struct button_task_Struct;
 Char button_task_Stack[BUTTON_TASKSTACKSIZE];
 

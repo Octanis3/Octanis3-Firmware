@@ -5,6 +5,8 @@
  *      Author: raffael
  */
 
+#include <msp430.h>
+
 #include "../Board.h"
 #include "uart_helper.h"
 #include <xdc/runtime/Timestamp.h>
@@ -14,14 +16,18 @@
 #include <ti/sysbios/knl/Semaphore.h>
 
 UART_Handle debug_uart;
+static int uart_initialized = 0;
+
 
 int uart_debug_open(){
 	static UART_Params uartParams;
 
-	static int uart_initialized = 0;
-
 	if(uart_initialized == 0)
 	{
+	    //reset TX gpio register settings:
+	    P2OUT |= BIT5;
+	    P2SEL1 |= BIT5;
+
 		/* Create a UART with data processing off. */
 		UART_Params_init(&uartParams);
 		uartParams.writeDataMode = UART_DATA_BINARY;
@@ -50,6 +56,18 @@ int uart_debug_open(){
 
 	return 1;
 }
+
+void uart_debug_close(){
+
+    UART_close(debug_uart);
+
+    //force write TX gpio to zero:
+    P2OUT &= ~BIT5;
+    P2SEL1 &= ~BIT5;
+
+    uart_initialized = 0;
+}
+
 
 int debug_prints_allowed = 0;
 void uart_start_debug_prints()
