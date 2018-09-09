@@ -52,7 +52,7 @@
 #define WEIGHT_TOLERANCE 	1.0f		// maximum deviation from average value within one measurement series
 #define WEIGHT_MAX_CHANGE	0.015f	// maximum change within one "event"
 
-#define RAW_THRESHOLD       180000
+#define RAW_THRESHOLD       1000
 // TODO: above values should be in %FS
 
 Semaphore_Handle semLoadCellDRDY;
@@ -161,6 +161,7 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 
 	if(tol < WEIGHT_TOLERANCE)
 	{
+	    //TODO: correct logging
 		print_load_cell_value(average * WEIGHT_SLOPE + WEIGHT_Y0, 'S');
 		GPIO_write(Board_led_blue,1);
         Task_sleep(2000);
@@ -170,6 +171,8 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 
 	else
 	{
+        //TODO: correct logging
+
 		print_load_cell_value(average * WEIGHT_SLOPE + WEIGHT_Y0, 'A');
 		return UNSTABLE;
 	}
@@ -297,8 +300,8 @@ void load_cell_Task()
 
 			//print the inexact weight value: (TODO:remove)
 //			print_load_cell_value(value*1000, 'W');
-            print_load_cell_value((float)(ads.data), 'D');
-
+            //print_load_cell_value((float)(ads.data), 'D');
+            log_write_new_entry('D', ((ads.data)>>8) & 0x0000ffff);
 
             if((ads.data)>RAW_THRESHOLD)
 //			if((ads.data)>raw_threshold)
@@ -443,7 +446,9 @@ void load_cell_Task()
 
                 }
 
-				log_write_new_entry(Seconds_get(), owl_ID,log_char, weight, tol, temp);
+				//TODO: correct logging
+
+				//log_write_new_entry(Seconds_get(), owl_ID,log_char, weight, tol, temp);
 
 				// stop the weight measurement
 #ifdef USE_ADS

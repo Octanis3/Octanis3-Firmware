@@ -9,6 +9,7 @@
 #include "../Board.h"
 #include <msp430.h>
 #include "load_cell.h"
+#include "logger.h"
 
 
 volatile uint16_t ADC_val = 0;
@@ -87,7 +88,9 @@ void display_result()
 	float vbat = ADC_val;
 	vbat = vbat * 0.1047; // (1000/2^12*2.5*(82+47)/47/16) --> mV;
 
-	print_load_cell_value(vbat, 'P');
+	log_write_new_entry('P', (uint16_t)vbat);
+
+//	print_load_cell_value(vbat, 'P');
 }
 
 void goto_deepsleep()

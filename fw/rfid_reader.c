@@ -62,12 +62,13 @@ void rfid_Task()
 
 		if(lf_tagdata.valid)
 		{
-			Semaphore_pend((Semaphore_Handle)semSerial,BIOS_WAIT_FOREVER);
-			uint8_t outbuffer[20]; // (64bits/4bits per character) = 16; conservative buffer size value!
-			uint8_t strlen = ui2a((lf_tagdata.tagId)>>32, 16, 1,HIDE_LEADING_ZEROS, outbuffer); //the first 32 bits
-			strlen = strlen + ui2a((uint32_t)(0xffffffff & (lf_tagdata.tagId)), 16, 1,PRINT_LEADING_ZEROS, &(outbuffer[strlen])); //the second 32 bits
-			uart_serial_print_event('R', outbuffer, strlen);
-			Semaphore_post((Semaphore_Handle)semSerial);
+		    log_write_new_rfid_entry(lf_tagdata.tagId);
+//			Semaphore_pend((Semaphore_Handle)semSerial,BIOS_WAIT_FOREVER);
+//			uint8_t outbuffer[20]; // (64bits/4bits per character) = 16; conservative buffer size value!
+//			uint8_t strlen = ui2a((lf_tagdata.tagId)>>32, 16, 1,HIDE_LEADING_ZEROS, outbuffer); //the first 32 bits
+//			strlen = strlen + ui2a((uint32_t)(0xffffffff & (lf_tagdata.tagId)), 16, 1,PRINT_LEADING_ZEROS, &(outbuffer[strlen])); //the second 32 bits
+//			uart_serial_print_event('R', outbuffer, strlen);
+//			Semaphore_post((Semaphore_Handle)semSerial);
 		}
 
 		if(log_phase_two())

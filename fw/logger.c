@@ -8,6 +8,7 @@
 #include "logger.h"
 #include "uart_helper.h"
 #include "../Board.h"
+#include <xdc/runtime/Timestamp.h>
 #include <ti/sysbios/hal/Seconds.h>
 #include <msp430.h>
 #include "rfid_reader.h"
@@ -32,37 +33,38 @@
 #define LOG_END_POS			0x00013FF0 // this is the last byte position to write to; conservative...
 /* Note: the allocated storage space is 8 kB large, which is enough for 819 entries */
 
+// general log offsets:
+#define LOG_TIME_32b_OFS				0x0 // 32 bit epoch timestamp
+#define LOG_CHAR_8b_OFS		        0x4 // 1 byte "R", "X" for long values, "D", "T", "P" for short values
+                                                                           //"I", "O" or "U" in/out/unknown
 
-#define LOG_UID_64b_OFS				0x0 // 64 bit UID
-#define LOG_UID_32b_MSB_OFS			0x0 // 64 bit UID
-#define LOG_UID_32b_LSB_OFS			0x1 // 64 bit UID
+// offsets for short log entries:
+#define LOG_ENTRY_SHORT_8b_LEN      0x8
+#define LOG_ENTRY_SHORT_16b_LEN     0x4 // length of the second part of the logging (storing the weight measurement)
 
-#define LOG_TIME_32b_OFS				0x2 // 32 bit epoch timestamp
-#define LOG_DIR_8b_OFS				0xC // 1 byte "I", "O" or "U" in/out/unknown
-#define LOG_CRC_8b_OFS				0xD // 1 byte CRC (for int16 alignment)
+#define LOG_VALUE_SHORT_16b_OFS     0x3 // for short entries: value
+#define LOG_CRC_8b_OFS              0x5 // 1 byte for rounded milliseconds or CRC
 
-// offsets of the second block for weight measurement records:
-#define LOG_WEIGHT_16b_OFS			0x0 // weight measurement number goes here
-#define LOG_STDDEV_16b_OFS			0x1 // tolerance of the weight measurement here
-#define LOG_TEMP_16b_OFS				0x2 // temperature at time of the measurement goes here
-#define LOG CRC2_16b_OFS				0x3 // CRC of the weight measurement data goes here
+// offsets for long log entries:
+#define LOG_ENTRY_LONG_8b_LEN       0xC // length of a long log entry (storing the exact weight or UID)
+#define LOG_ENTRY_LONG_16b_LEN      0x6
 
-#define LOG_ENTRY_8b_LEN				0xE
-#define LOG_ENTRY_WEIGHT_8b_LEN		0x8 // length of the second part of the logging (storing the weight measurement)
-
-#define LOG_ENTRY_16b_LEN			0x7
-#define LOG_ENTRY_WEIGHT_16b_LEN		0x4 // length of the second part of the logging (storing the weight measurement)
+#define LOG_UID_32b_MSB_OFS         0x1 // 64 bit UID
+#define LOG_UID_32b_LSB_OFS         0x2 // 64 bit UID
+#define LOG_VALUE_LONG_32b_OFS      0x2 // for long weight entries: value (32bit)
+#define LOG_STDDEV_16b_OFS          0x3 // tolerance of the weight measurement here
+#define LOG_MSEC_8b_OFS             0x5 // 1 byte for rounded milliseconds or CRC
 
 
-#define T_PHASE_2			518400 //after 6 days, all events get logged
+//#define T_PHASE_2			518400 //after 6 days, all events get logged
 
-#define OUTPUT_BUF_LEN		LOG_ENTRY_8b_LEN+2+2 // adding two ',' and two digits for decimal time stamp rep. +5 for weight
+#define OUTPUT_BUF_LEN		LOG_ENTRY_LONG_8b_LEN*2+4 // adding 4 ',' and twice the digits for decimal values
 
-unsigned int* FRAM_offset_ptr;
-unsigned int* FRAM_read_ptr;
+uint16_t* FRAM_offset_ptr;
+uint16_t* FRAM_read_ptr;
 
 unsigned int log_initialized = 0;
-const unsigned int phase_two = 0;
+//const unsigned int phase_two = 0;
 
 void log_startup()
 {
@@ -99,64 +101,111 @@ void log_startup()
 	log_initialized = 1;
 }
 
-int log_write_new_entry(uint32_t timestamp, uint64_t uid, uint8_t inout, uint16_t weight, uint16_t stdev, uint16_t temp)
+int log_write_new_entry(uint8_t logchar, uint16_t value)
 {
 	FRAM_offset_ptr = (unsigned int*)LOG_NEXT_POS_OFS; // pointer should be already initialized at startup, but just to be sure...
 	unsigned int* FRAM_write_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); // = base address plus *FRAM_offset_ptr
 
 
-	// Make sure we are not going to exceeding the reserved memory region. If we do we
+	// Make sure we are not going to exceed the reserved memory region. If we do we
 	// will not write to the memory
-	if (FRAM_write_ptr > (unsigned int*)LOG_END_POS-LOG_ENTRY_8b_LEN)
+	if (FRAM_write_ptr > (unsigned int*)LOG_END_POS-LOG_ENTRY_LONG_8b_LEN)
 	{
 		return 0; //no available space --> 0 bytes written!
 	}
 	// else, continue...
 
-	*((uint32_t*)FRAM_write_ptr+LOG_UID_32b_MSB_OFS) = uid>>32;
-	*((uint32_t*)FRAM_write_ptr+LOG_UID_32b_LSB_OFS) = 0xffffffff & uid;
+	*((uint32_t*)FRAM_write_ptr+LOG_TIME_32b_OFS) = Seconds_get();
 
-	*((uint32_t*)FRAM_write_ptr+LOG_TIME_32b_OFS) = timestamp;
+	*((unsigned char*)FRAM_write_ptr+LOG_CHAR_8b_OFS) = logchar;
 
-	unsigned char inout_c = 'U';
-	if(inout == 1)
-		inout_c = 'I';
-	else if(inout == 0)
-		inout_c = 'O';
-	else if(inout == 'W')
-		inout_c = 'W';
-	else if(inout == 'X')
-		inout_c = 'X';
+	//TODO: calculate some sort of CRC. For now, just repeat the Logchar value
+    *((unsigned char*)FRAM_write_ptr+LOG_CRC_8b_OFS) = logchar;
 
-	*((unsigned char*)FRAM_write_ptr+LOG_DIR_8b_OFS) = inout_c;
-	//TODO: calculate some sort of CRC.
+    *((uint16_t*)FRAM_write_ptr+LOG_VALUE_SHORT_16b_OFS) = value;
 
-	*FRAM_offset_ptr += LOG_ENTRY_8b_LEN;                 // Increment write index //TODO: why not the 16bit value??
 
-	if(inout_c == 'W' || inout_c == 'X')
-	{
-		FRAM_write_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); // = base address plus *FRAM_offset_ptr
-		//TODO: on the next block, write down the weight value.
-		*((uint16_t*)FRAM_write_ptr+LOG_WEIGHT_16b_OFS) = weight;
-		*((uint16_t*)FRAM_write_ptr+LOG_STDDEV_16b_OFS) = stdev;
-		*((uint16_t*)FRAM_write_ptr+LOG_TEMP_16b_OFS) = temp;
+	*FRAM_offset_ptr += LOG_ENTRY_SHORT_8b_LEN;                 // Increment write index //TODO: ORIGINALLY WE USED THE 8BIT value??
 
-		*FRAM_offset_ptr += LOG_ENTRY_WEIGHT_8b_LEN;                 // Increment write index
-
-		return LOG_ENTRY_8b_LEN + LOG_ENTRY_WEIGHT_8b_LEN;
-	}
-
-	return LOG_ENTRY_8b_LEN;
+	return LOG_ENTRY_SHORT_8b_LEN;
 }
 
-void log_send_lb_state()
+int log_write_new_rfid_entry(uint64_t uid)
 {
-	if(GPIO_read(nbox_lightbarrier_int)==1)
-		uart_serial_putc(&debug_uart, '1');
-	else
-		uart_serial_putc(&debug_uart, '0');
+    uint32_t t = Timestamp_get32();
+    uint32_t msecs = (t & 0x7fff) * 1000 /32768;
 
+    uint16_t msec = msecs;
+    uint32_t timestamp = Seconds_get();
+
+    FRAM_offset_ptr = (unsigned int*)LOG_NEXT_POS_OFS; // pointer should be already initialized at startup, but just to be sure...
+    unsigned int* FRAM_write_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); // = base address plus *FRAM_offset_ptr
+
+
+    // Make sure we are not going to exceeding the reserved memory region. If we do we
+    // will not write to the memory
+    if (FRAM_write_ptr > (unsigned int*)LOG_END_POS-LOG_ENTRY_LONG_8b_LEN)
+    {
+        return 0; //no available space --> 0 bytes written!
+    }
+    // else, continue...
+    *((uint32_t*)FRAM_write_ptr+LOG_TIME_32b_OFS) = timestamp;
+
+    *((uint32_t*)FRAM_write_ptr+LOG_UID_32b_MSB_OFS) = uid>>32;
+    *((uint32_t*)FRAM_write_ptr+LOG_UID_32b_LSB_OFS) = 0xffffffff & uid;
+
+    // overwrite unused bits from 64bit UID field with log-char 'R'
+    *((unsigned char*)FRAM_write_ptr+LOG_CHAR_8b_OFS) = 'R';
+
+    *((unsigned char*)FRAM_write_ptr+LOG_MSEC_8b_OFS) = 0xff & (msec >> 2); // MILLISECONDS ARE GETTING SHIFTED TO ONLY DISPLAY BITS 10 - 2
+
+    *FRAM_offset_ptr += LOG_ENTRY_LONG_8b_LEN;                 // Increment write index //TODO: WHY 8BIT value??
+
+    return LOG_ENTRY_LONG_8b_LEN;
 }
+
+int log_write_new_weight_entry( uint8_t logchar, uint32_t weight, uint16_t stdev)
+{
+    uint32_t t = Timestamp_get32();
+    uint32_t msecs = (t & 0x7fff) * 1000 /32768;
+
+    uint16_t msec = msecs;
+    uint32_t timestamp = Seconds_get();
+    FRAM_offset_ptr = (unsigned int*)LOG_NEXT_POS_OFS; // pointer should be already initialized at startup, but just to be sure...
+    unsigned int* FRAM_write_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); // = base address plus *FRAM_offset_ptr
+
+
+    // Make sure we are not going to exceeding the reserved memory region. If we do we
+    // will not write to the memory
+    if (FRAM_write_ptr > (unsigned int*)LOG_END_POS-LOG_ENTRY_LONG_8b_LEN)
+    {
+        return 0; //no available space --> 0 bytes written!
+    }
+    // else, continue...
+
+    *((uint32_t*)FRAM_write_ptr+LOG_TIME_32b_OFS) = timestamp;
+
+    *((unsigned char*)FRAM_write_ptr+LOG_CHAR_8b_OFS) = logchar;
+    *((unsigned char*)FRAM_write_ptr+LOG_MSEC_8b_OFS) = 0xff & (msec >> 2); // MILLISECONDS ARE GETTING SHIFTED TO ONLY DISPLAY BITS 10 - 2
+
+    *((uint32_t*)FRAM_write_ptr+LOG_VALUE_LONG_32b_OFS) = weight;
+    *((uint16_t*)FRAM_write_ptr+LOG_STDDEV_16b_OFS) = stdev;
+
+    *FRAM_offset_ptr += LOG_ENTRY_LONG_8b_LEN;                 // Increment write index //TODO: WHY 8BIT value??
+
+    return LOG_ENTRY_LONG_8b_LEN;
+}
+
+
+
+//void log_send_lb_state()
+//{
+//	if(GPIO_read(nbox_lightbarrier_int)==1)
+//		uart_serial_putc(&debug_uart, '1');
+//	else
+//		uart_serial_putc(&debug_uart, '0');
+//
+//}
 
 const uint8_t start_string[] = "#=========== start FRAM logs =========\n";
 const uint8_t title_row[] = "time [s],RFID UID,event type, weight [g], tolerance [mg], temperature [1/10 K]\n";
@@ -213,46 +262,52 @@ void log_send_data_via_uart()
 	uint8_t outbuffer[OUTPUT_BUF_LEN];
 	while(FRAM_read_ptr < FRAM_read_end_ptr)
 	{
-		//send out time stamp:
-		int strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_TIME_32b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
-		uart_serial_write(&debug_uart, outbuffer, strlen);
-		uart_serial_putc(&debug_uart, ',');
+		//send out log character and time stamp:
+        outbuffer[0] = *((uint8_t*)FRAM_read_ptr+LOG_CHAR_8b_OFS);
+        outbuffer[1] = ',';
+		int strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_TIME_32b_OFS), 10, 1, HIDE_LEADING_ZEROS, &(outbuffer[2]));
+        outbuffer[strlen+2] = ',';
+		uart_serial_write(&debug_uart, outbuffer, strlen+3);
 
-		//send out UID and I/O:
-		strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_MSB_OFS), 16, 1,HIDE_LEADING_ZEROS, outbuffer); //the first 32 bits
-		uart_serial_write(&debug_uart, outbuffer, strlen);
-		strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_LSB_OFS), 16, 1,PRINT_LEADING_ZEROS, outbuffer); //the second 32 bits
-		outbuffer[strlen] = ',';
-		outbuffer[strlen+1] = *((uint8_t*)FRAM_read_ptr+LOG_DIR_8b_OFS);
-		// TODO: treat weight and light barrier event differently
-		uart_serial_write(&debug_uart, outbuffer, strlen+2);
-
-		//increment pointer to next memory location
-		FRAM_read_ptr += LOG_ENTRY_16b_LEN;
-
-		if(outbuffer[strlen+1] == 'W' || outbuffer[strlen+1] == 'X') //this is a weight measurement record --> continue reading
+		if(outbuffer[0] == 'X' || outbuffer[0] == 'R')
 		{
-			uart_serial_putc(&debug_uart, ',');
-			//print weight
-			strlen = ui2a(*((uint16_t*)FRAM_read_ptr+LOG_WEIGHT_16b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
-			outbuffer[strlen] = ',';
-			uart_serial_write(&debug_uart, outbuffer, strlen+1);
-			//print stdev
-			strlen = ui2a(*((uint16_t*)FRAM_read_ptr+LOG_STDDEV_16b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
-			outbuffer[strlen] = ',';
-			uart_serial_write(&debug_uart, outbuffer, strlen+1);
-			//print temperature
-			strlen = ui2a(*((uint16_t*)FRAM_read_ptr+LOG_TEMP_16b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
-			uart_serial_write(&debug_uart, outbuffer, strlen);
+		    //send out milliseconds:
+		    strlen = ui2a((*((uint8_t*)FRAM_read_ptr+LOG_MSEC_8b_OFS)<<2), 10, 1,HIDE_LEADING_ZEROS, outbuffer);
+            uart_serial_write(&debug_uart, outbuffer, strlen);
+            if(outbuffer[0] == 'R')
+            {
+                //send out UID and I/O:
+                strlen = ui2a((*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_MSB_OFS)) & 0x0000ffff, 16, 1,HIDE_LEADING_ZEROS, outbuffer); //the first 32 (actually 8) bits
+                uart_serial_write(&debug_uart, outbuffer, strlen);
+                strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_LSB_OFS), 16, 1,PRINT_LEADING_ZEROS, outbuffer); //the second 32 bits
+                outbuffer[strlen] = '\n';
+                uart_serial_write(&debug_uart, outbuffer, strlen+1);
+            }
+            else
+            {
+                strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_VALUE_LONG_32b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
+                outbuffer[strlen] = ',';
+                uart_serial_write(&debug_uart, outbuffer, strlen+1);
+                strlen = ui2a(*((uint16_t*)FRAM_read_ptr+LOG_STDDEV_16b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
+                outbuffer[strlen] = '\n';
+                uart_serial_write(&debug_uart, outbuffer, strlen+1);
+            }
 
-			//increment pointer to next memory location
-			FRAM_read_ptr += LOG_ENTRY_WEIGHT_16b_LEN;
+            //increment pointer to next memory location
+            FRAM_read_ptr += LOG_ENTRY_LONG_16b_LEN; // TODO_ why not 8bit value???
+            continue;
 		}
 
-		uart_serial_putc(&debug_uart, '\n');
+
+		//print short value:
+		strlen = ui2a(*((uint16_t*)FRAM_read_ptr+LOG_VALUE_SHORT_16b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
+        outbuffer[strlen] = '\n';
+        uart_serial_write(&debug_uart, outbuffer, strlen+1);
+
+        //increment pointer to next memory location
+        FRAM_read_ptr += LOG_ENTRY_SHORT_16b_LEN;
 
 	}
-
 
 	uart_serial_write(&debug_uart, end_string, sizeof(end_string));
 	uart_debug_close();
