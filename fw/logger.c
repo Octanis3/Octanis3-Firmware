@@ -151,8 +151,8 @@ int log_write_new_rfid_entry(uint64_t uid)
     // else, continue...
     *((uint32_t*)FRAM_write_ptr+LOG_TIME_32b_OFS) = timestamp;
 
-    *((uint32_t*)FRAM_write_ptr+LOG_UID_32b_MSB_OFS) = uid>>32;
     *((uint32_t*)FRAM_write_ptr+LOG_UID_32b_LSB_OFS) = 0xffffffff & uid;
+    *((uint32_t*)FRAM_write_ptr+LOG_UID_32b_MSB_OFS) = (uid>>16); //only shift it by 2 bytes, because the 32bit value gets written LSByte first and would get overwritten by logchar!
 
     // overwrite unused bits from 64bit UID field with log-char 'R'
     *((unsigned char*)FRAM_write_ptr+LOG_CHAR_8b_OFS) = 'R';
@@ -269,15 +269,18 @@ void log_send_data_via_uart()
         outbuffer[strlen+2] = ',';
 		uart_serial_write(&debug_uart, outbuffer, strlen+3);
 
-		if(outbuffer[0] == 'X' || outbuffer[0] == 'R')
+        unsigned char logchar = outbuffer[0];
+
+		if(logchar == 'X' || logchar == 'R')
 		{
 		    //send out milliseconds:
 		    strlen = ui2a((*((uint8_t*)FRAM_read_ptr+LOG_MSEC_8b_OFS)<<2), 10, 1,HIDE_LEADING_ZEROS, outbuffer);
-            uart_serial_write(&debug_uart, outbuffer, strlen);
-            if(outbuffer[0] == 'R')
+		    outbuffer[strlen] = ',';
+		    uart_serial_write(&debug_uart, outbuffer, strlen+1);
+            if(logchar == 'R')
             {
                 //send out UID and I/O:
-                strlen = ui2a((*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_MSB_OFS)) & 0x000000ff, 16, 1,HIDE_LEADING_ZEROS, outbuffer); //the first 32 (actually 8) bits
+                strlen = ui2a(((*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_MSB_OFS))>>16) & 0x000000ff, 16, 1,HIDE_LEADING_ZEROS, outbuffer); //the first 32 (actually 8) bits
                 uart_serial_write(&debug_uart, outbuffer, strlen);
                 strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_LSB_OFS), 16, 1,PRINT_LEADING_ZEROS, outbuffer); //the second 32 bits
                 outbuffer[strlen] = '\n';
