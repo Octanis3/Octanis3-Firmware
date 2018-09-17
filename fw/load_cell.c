@@ -240,7 +240,7 @@ void load_cell_Task()
 	GPIO_enableInt(nbox_loadcell_data_ready);
 
 	// turn on analog supply:
-	//GPIO_write(nbox_loadcell_ldo_enable, 1);
+	GPIO_write(nbox_loadcell_ldo_enable, 1);
 //	GPIO_write(nbox_loadcell_exc_a_p, 0); //pmos, turn on
 //	GPIO_write(nbox_loadcell_exc_b_n, 1); //nmos, turn on
 	//TODO: check if delay is needed!
