@@ -29,7 +29,7 @@
 #include <xdc/runtime/Error.h>
 #include <xdc/runtime/System.h>
 
-#define WEIGHT_THRESHOLD 100 // grams
+#define WEIGHT_THRESHOLD 20000 // raw ADC units
 #ifdef USE_HX
 	#define SAMPLE_RATE		HX_SAMPLE_RATE //Hz
 #endif
@@ -48,17 +48,16 @@
 #define T_RFID_RETRY		1000 	//ms
 #define T_LOADCELL_POLL	1000 	//ms
 
-#define SAMPLE_TOLERANCE 	2.0f		// maximum variation of the sampled values within N_AVERAGES samples
-#define WEIGHT_TOLERANCE 	1.0f		// maximum deviation from average value within one measurement series
-#define WEIGHT_MAX_CHANGE	0.015f	// maximum change within one "event"
+#define SAMPLE_TOLERANCE 	2000		// maximum variation of the sampled values within N_AVERAGES samples
+#define WEIGHT_TOLERANCE 	1000 	// maximum deviation from average value within one measurement series
+#define WEIGHT_MAX_CHANGE	500	// maximum change within one "event"
 
-#define RAW_THRESHOLD       1000
+//#define RAW_THRESHOLD       1000
 // TODO: above values should be in %FS
 
 Semaphore_Handle semLoadCellDRDY;
 
-float WEIGHT_SLOPE = 1.0;
-float WEIGHT_Y0 = 0;
+int32_t averaged_weight_threshold = 5000; // TODO!!!
 
 typedef enum weightResultStatus_
 {
@@ -87,14 +86,14 @@ void print_load_cell_value(float value, char log_symbol)
 
 weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 {
-	static float meas_buf[EVENT_BUF_SIZE] = {0.0,};
+	static int32_t meas_buf[EVENT_BUF_SIZE] = {0.0,};
 	static int first_valid = 0;
 //	static int first_invalid = 0;
 
 	int i = 0;
 	int tmp = first_valid;
 	int values_recorded = 0;
-	float deviation = 0;
+	int32_t deviation = 0;
 
 	// fill circular buffer with new measurements
 	while(values_recorded < EVENT_BUF_SIZE)
@@ -103,11 +102,11 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 		meas_buf[tmp] = hx711_get_units(N_AVERAGES, &deviation);
 #endif
 #ifdef USE_ADS
-		meas_buf[tmp] = ads1220_get_units(N_AVERAGES, &deviation, ads);
+		meas_buf[tmp] = ads1220_read_average(N_AVERAGES, &deviation, ads);
 #endif
-		print_load_cell_value(meas_buf[tmp] * WEIGHT_SLOPE + WEIGHT_Y0, 'X');
+		log_write_new_weight_entry('X', meas_buf[tmp], 0x0000ffff & deviation);
 
-		if(meas_buf[tmp]<(float)WEIGHT_THRESHOLD)
+		if(meas_buf[tmp] < averaged_weight_threshold)
 		{
 			first_valid = 0;
 //			first_invalid = 0;
@@ -161,8 +160,8 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 
 	if(tol < WEIGHT_TOLERANCE)
 	{
-	    //TODO: correct logging
-		print_load_cell_value(average * WEIGHT_SLOPE + WEIGHT_Y0, 'S');
+        log_write_new_weight_entry('S', average, tol);
+
 		GPIO_write(Board_led_blue,1);
         Task_sleep(2000);
         GPIO_write(Board_led_blue,0);
@@ -171,9 +170,7 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 
 	else
 	{
-        //TODO: correct logging
-
-		print_load_cell_value(average * WEIGHT_SLOPE + WEIGHT_Y0, 'A');
+        log_write_new_weight_entry('A', average, tol);
 		return UNSTABLE;
 	}
 }
@@ -182,7 +179,7 @@ void ads1220_set_loadcell_config(struct Ads1220 *ads){
 	ads->config.mux = ADS1220_MUX_AIN1_AIN2;
 	ads->config.gain = ADS1220_GAIN_128;
 	ads->config.pga_bypass = 0;
-	ads->config.rate = ADS1220_RATE_20_HZ;
+	ads->config.rate = ADS1220_RATE_1000_HZ;
 	// todo: change operating mode to duty-cycle mode
 	ads->config.conv = ADS1220_SINGLE_SHOT;
 	ads->config.temp_sensor = ADS1220_TEMPERATURE_DISABLED;
@@ -252,20 +249,27 @@ void load_cell_Task()
 
 	ads1220_init(&ads, &ads_spi, nbox_loadcell_spi_cs_n);
 	ads1220_set_loadcell_config(&ads);
-	//ads.config.rate = ADS1220_RATE_20_HZ; //for tare, set to slow=exact mode
+	ads.config.rate = ADS1220_RATE_20_HZ; //for tare, set to same as used during polling --> 1ksps!
+    ads.config.conv = ADS1220_SINGLE_SHOT;
 
+	// IMPORTANT TO NOTE: 20 Hz and 1000 Hz in single shot mode do not result in the same value!
+    // --> due to power down, the analog input voltages do not settle quick enough, therefore tare is done in single-shot mode!
 	Task_sleep(10);
 	ads1220_event(&ads);
 
 	ads1220_configure(&ads); // this one sends the reset and config
 
+    ads1220_change_mode(&ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT, ADS1220_TEMPERATURE_DISABLED);
 
+    Task_sleep(100);
 
 	ads1220_tare(20, &ads);
-	ads1220_set_raw_threshold(&raw_threshold, (float)WEIGHT_THRESHOLD);
-
+	ads1220_set_raw_threshold(&raw_threshold, WEIGHT_THRESHOLD);
 
 	ads1220_change_mode(&ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT, ADS1220_TEMPERATURE_DISABLED);
+	// !! "every write access to any configuration register also starts a new conversion" !!
+
+	Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, 100); // timeout 100 ms in case DRDY pin is not connected
 
 #endif
 
@@ -276,13 +280,16 @@ void load_cell_Task()
 		{
 #ifdef USE_ADS
 		/************ADS1220 POLLING*************/
+//
+
+        Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
 		ads1220_start_conversion(&ads);
-		Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
 		Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, 100); // timeout 100 ms in case DRDY pin is not connected
 
 		ads1220_periodic(&ads);
 		ads1220_event(&ads);
 		ads1220_powerdown(&ads);
+
 		// TODO: remove conversion
 		// value = ads1220_convert_units(&ads);
 		/**********END ADS1220 TEST***********/
@@ -301,32 +308,29 @@ void load_cell_Task()
 			//print the inexact weight value: (TODO:remove)
 //			print_load_cell_value(value*1000, 'W');
             //print_load_cell_value((float)(ads.data), 'D');
-            log_write_new_entry('D', ((ads.data)>>8) & 0x0000ffff);
-            static int test = 1;
-            test = !test;
 
-            if(test)
+
 //            if((ads.data)>RAW_THRESHOLD)
-//			if((ads.data)>raw_threshold)
-
+			if((ads.data)>raw_threshold)
             {
+	            log_write_new_entry('D', ((ads.data)>>8) & 0x0000ffff);
+
 				if(event_ongoing==0)
 				{
-					if(!log_phase_two())
-					{
-						rfid_start_detection();
-						Semaphore_pend((Semaphore_Handle)semLoadCell,RFID_TIMEOUT);
-						rfid_stop_detection();
-					}
+                    rfid_start_detection();
+                    Semaphore_pend((Semaphore_Handle)semLoadCell,RFID_TIMEOUT);
+                    rfid_stop_detection();
+
 					rfid_type = rfid_get_id(&owl_ID);
 
-					if(rfid_type>0 || log_phase_two())
+//					if(rfid_type>0)
+					if(1)
 					{
 						// now start the weight measurement
 
-					    //indicate calibration mode if calib UID detected:
-					    if(rfid_type > 1)
-					        GPIO_write(Board_led_blue,1);
+//					    //indicate calibration mode if calib UID detected:
+//					    if(rfid_type > 1)
+//					        GPIO_write(Board_led_blue,1);
 
 #ifdef USE_ADS
 						// change to slow = exact mode
@@ -380,79 +384,10 @@ void load_cell_Task()
 
 			ads1220_change_mode(&ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION, ADS1220_TEMPERATURE_DISABLED);
 
-			if((res == STABLE && (!log_phase_two())) || res == OWL_LEFT)
+			if(res == STABLE || res == OWL_LEFT)
 			{
-				//log event!! + mark series completed, but keep event ongoing (in order to not count it twice)!
+				//stable event!! + mark series completed, but keep event ongoing (in order to not count it twice)!
 				series_completed = 1;
-				uint16_t weight = (uint16_t)(ads.stable_weight * WEIGHT_SLOPE + WEIGHT_Y0);
-				uint16_t tol = (uint16_t)(ads.tolerance * WEIGHT_SLOPE*1000);
-
-
-				char log_char = 'X';
-				if(res == STABLE)
-					log_char = 'W';
-
-				if(rfid_type > 1)
-                {
-				    owl_ID = 0xCA71B;
-				    GPIO_write(Board_led_blue,0);
-				    switch(rfid_type)
-				    {
-				        case 162:
-				            calib163 = ads.stable_weight;
-				            break;
-				        case 379:
-				            calib379 = ads.stable_weight;
-				            break;
-				        case 595:
-				            calib595 = ads.stable_weight;
-				            break;
-				        default:
-				            break;
-				     }
-
-				    if(calib163>0 && calib595>0 && calib379>0)
-				    {
-				        //calibration done
-				        float slope=(595-163)/(calib595-calib163);
-				        float b = 163 - slope*calib163;
-
-				        // check if 3rd point lays on the line
-				        float midpoint = slope*calib379 + b;
-				        if((midpoint - 379)>2 || (379 - midpoint)>2)
-				        {
-				            //bad calibration:
-				            int i=0;
-				            for(i=0;i<10;i++)
-				            {
-                                GPIO_write(Board_led_red,1);
-                                Task_sleep(200);
-                                GPIO_write(Board_led_red,0);
-                                Task_sleep(200);
-                            }
-				        }
-				        else
-				        {
-				            //good calibration:
-				            int i=0;
-                            for(i=0;i<5;i++)
-                            {
-                                Task_sleep(200);
-                                GPIO_write(Board_led_blue,1);
-                                Task_sleep(200);
-                                GPIO_write(Board_led_blue,0);
-                            }
-
-                            WEIGHT_SLOPE = slope;
-                            WEIGHT_Y0 = b;
-				        }
-				    }
-
-                }
-
-				//TODO: correct logging
-
-				//log_write_new_entry(Seconds_get(), owl_ID,log_char, weight, tol, temp);
 
 				// stop the weight measurement
 #ifdef USE_ADS
@@ -485,6 +420,8 @@ void load_cell_Task()
 void load_cell_deep_sleep()
 {
 	spi1_arch_close();
+    //todo: redefine load SPI pins to be GPIOs with 0 as output.
+
 }
 
 void load_cell_isr()

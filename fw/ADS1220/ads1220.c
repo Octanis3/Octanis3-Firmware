@@ -131,7 +131,7 @@ void ads1220_change_mode(struct Ads1220 *ads, enum Ads1220SampleRate rate, enum 
 
 	spi_submit(ads->spi_p, &(ads->spi_trans));
 	//start readout:
-	ads1220_start_conversion(ads);
+//	ads1220_start_conversion(ads);
 }
 
 // Configuration function called before normal use
@@ -190,7 +190,7 @@ void ads1220_event(struct Ads1220 *ads)
     if (ads->spi_trans.status == SPITransFailed) {
       ads->spi_trans.status = SPITransDone;
     } else if (ads->spi_trans.status == SPITransSuccess) {
-		// Successfull reading of 24bits adc
+		// Successful reading of 24bits adc
 		ads->data = (int32_t)(((uint32_t)(ads->rx_buf[0]) << 16) | ((uint32_t)(ads->rx_buf[1]) << 8) | (ads->rx_buf[2]));
    		if(ads->rx_buf[0] & 0x80) //negative number!
     		{
@@ -233,15 +233,14 @@ int32_t ads1220_read_average(uint8_t times, int32_t* max_deviation, struct Ads12
 {
     int32_t max = 0;
 
-	if(ads->config.conv == ADS1220_CONTINIOUS_CONVERSION)
+	if(ads->config.conv != ADS1220_CONTINIOUS_CONVERSION)
 	{
 		ads1220_change_mode(ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION, ADS1220_TEMPERATURE_DISABLED);
-		// this function includes the START/SYNC command, so data will be ready continuously.
 	}
-    GPIO_enableInt(nbox_loadcell_data_ready);
-
-	Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
-	Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, 100); // timeout 100 ms in case DRDY pin is not connected
+//
+//	Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
+//	Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, 100); // timeout 100 ms in case DRDY pin is not connected
+    Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, 100); // timeout 100 ms in case DRDY pin is not connected
 
 	Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
     ads1220_start_conversion(ads);
@@ -261,7 +260,6 @@ int32_t ads1220_read_average(uint8_t times, int32_t* max_deviation, struct Ads12
 	for (i = 1; i < times; i++)
 	{
         Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
-	    ads1220_start_conversion(ads);
 	    Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, 100); // timeout 100 ms in case DRDY pin is not connected
 
 	    ads1220_periodic(ads);
@@ -274,42 +272,54 @@ int32_t ads1220_read_average(uint8_t times, int32_t* max_deviation, struct Ads12
 		if(value<min)
 			min = value;
 	}
-    GPIO_disableInt(nbox_loadcell_data_ready);
 
 	*max_deviation = (max-min);
 	return sum/times;
 }
 
-float ads1220_get_units(uint8_t times, float* max_deviation, struct Ads1220 *ads)
-{
-	int32_t max_dev_int = 0;
-	int32_t value = ads1220_read_average(times, &max_dev_int, ads) - ADS_OFFSET;
+//float ads1220_get_units(uint8_t times, float* max_deviation, struct Ads1220 *ads)
+//{
+//	int32_t max_dev_int = 0;
+//	int32_t value = ads1220_read_average(times, &max_dev_int, ads) - ADS_OFFSET;
+//
+//	*max_deviation = (float)max_dev_int/ADS_SCALE;
+//
+//	return (float)value/ADS_SCALE;
+//}
 
-	*max_deviation = (float)max_dev_int/ADS_SCALE;
-
-	return (float)value/ADS_SCALE;
-}
-
-float ads1220_convert_units(struct Ads1220 *ads)
-{
-	return (float)(ads->data - ADS_OFFSET)/ADS_SCALE;
-}
+//float ads1220_convert_units(struct Ads1220 *ads)
+//{
+//	return (float)(ads->data - ADS_OFFSET)/ADS_SCALE;
+//}
 
 int ads1220_tare(uint8_t times, struct Ads1220 *ads)
 {
-	int32_t tare_deviation;
-	ADS_OFFSET = ads1220_read_average(times, &tare_deviation, ads);
-	if(tare_deviation<ADS_TARE_TOLERANCE)
-	{
-		return 1;
+	int i;
+	int32_t sum = 0;
 
-	}
-	else
-		return 0;}
 
-void ads1220_set_raw_threshold(int32_t* raw_threshold, float weight_threshold)
+	for (i = 0; i < times; i++)
+    {
+        Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
+        ads1220_start_conversion(ads);
+        Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, 100); // timeout 100 ms in case DRDY pin is not connected
+
+        ads1220_periodic(ads);
+        ads1220_event(ads);
+//        ads1220_powerdown(ads);
+
+        sum += ads->data;
+    }
+
+	ADS_OFFSET = sum/times;
+   return 0;
+}
+
+void ads1220_set_raw_threshold(int32_t* raw_threshold, int32_t weight_threshold)
 {
-	*raw_threshold = ADS_SCALE * weight_threshold + ADS_OFFSET;
+//	*raw_threshold = ADS_SCALE * weight_threshold + ADS_OFFSET;
+    *raw_threshold = ADS_OFFSET + weight_threshold;
+
 }
 
 
