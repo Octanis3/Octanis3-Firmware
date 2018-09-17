@@ -186,7 +186,7 @@ int log_write_new_weight_entry( uint8_t logchar, uint32_t weight, uint16_t stdev
     *((uint32_t*)FRAM_write_ptr+LOG_TIME_32b_OFS) = timestamp;
 
     *((unsigned char*)FRAM_write_ptr+LOG_CHAR_8b_OFS) = logchar;
-    *((unsigned char*)FRAM_write_ptr+LOG_MSEC_8b_OFS) = 0xff & (msec >> 2); // MILLISECONDS ARE GETTING SHIFTED TO ONLY DISPLAY BITS 10 - 2
+    //*((unsigned char*)FRAM_write_ptr+LOG_MSEC_8b_OFS) = 0xff & (msec >> 2); // MILLISECONDS ARE GETTING SHIFTED TO ONLY DISPLAY BITS 10 - 2
 
     *((uint32_t*)FRAM_write_ptr+LOG_VALUE_LONG_32b_OFS) = weight;
     *((uint16_t*)FRAM_write_ptr+LOG_STDDEV_16b_OFS) = stdev;
@@ -277,7 +277,7 @@ void log_send_data_via_uart()
             if(outbuffer[0] == 'R')
             {
                 //send out UID and I/O:
-                strlen = ui2a((*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_MSB_OFS)) & 0x0000ffff, 16, 1,HIDE_LEADING_ZEROS, outbuffer); //the first 32 (actually 8) bits
+                strlen = ui2a((*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_MSB_OFS)) & 0x000000ff, 16, 1,HIDE_LEADING_ZEROS, outbuffer); //the first 32 (actually 8) bits
                 uart_serial_write(&debug_uart, outbuffer, strlen);
                 strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_LSB_OFS), 16, 1,PRINT_LEADING_ZEROS, outbuffer); //the second 32 bits
                 outbuffer[strlen] = '\n';

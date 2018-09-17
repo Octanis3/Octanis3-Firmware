@@ -302,10 +302,14 @@ void load_cell_Task()
 //			print_load_cell_value(value*1000, 'W');
             //print_load_cell_value((float)(ads.data), 'D');
             log_write_new_entry('D', ((ads.data)>>8) & 0x0000ffff);
+            static int test = 1;
+            test = !test;
 
-            if((ads.data)>RAW_THRESHOLD)
+            if(test)
+//            if((ads.data)>RAW_THRESHOLD)
 //			if((ads.data)>raw_threshold)
-			{
+
+            {
 				if(event_ongoing==0)
 				{
 					if(!log_phase_two())
