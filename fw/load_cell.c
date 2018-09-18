@@ -354,6 +354,8 @@ void load_cell_Task()
             GPIO_enableInt(nbox_loadcell_data_ready);
 
 			Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
+	        ads1220_start_conversion(&ads);
+
 			Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, 100); // timeout 100 ms in case DRDY pin is not connected
 
 			ads1220_read(&ads);
