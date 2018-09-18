@@ -37,7 +37,8 @@ void PIR_wakeup_Task()
 		Semaphore_pend((Semaphore_Handle)semPIRwakeup, BIOS_WAIT_FOREVER);
 
 		//Send out data on serial port
-		print_load_cell_value(int_pin, 'I');
+		log_write_new_entry('I', int_pin);
+
 
 //		Task_sleep(10); //avoid too many subsequent memory readouts
         Semaphore_reset((Semaphore_Handle)semPIRwakeup,0);

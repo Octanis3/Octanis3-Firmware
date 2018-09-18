@@ -111,7 +111,7 @@ void ads1220_send_config(struct Ads1220 *ads)
   spi_submit(ads->spi_p, &(ads->spi_trans));
   //start continuous readout mode:
   //TI recommends always sending a START/SYNC command immediately after the CM (continuous mode) bit is set to 1.
-	 ads1220_start_conversion(ads);
+  ads1220_start_conversion(ads);
 }
 
 // Configuration function called to start fast conversion; single-shot mode
@@ -306,7 +306,9 @@ int ads1220_tare(uint8_t times, struct Ads1220 *ads)
 
         ads1220_periodic(ads);
         ads1220_event(ads);
-//        ads1220_powerdown(ads);
+        ads1220_powerdown(ads);
+
+        Task_sleep(20);
 
         sum += ads->data;
     }
@@ -315,10 +317,10 @@ int ads1220_tare(uint8_t times, struct Ads1220 *ads)
    return 0;
 }
 
-void ads1220_set_raw_threshold(int32_t* raw_threshold, int32_t weight_threshold)
+void ads1220_set_raw_threshold(int32_t* threshold, int32_t threshold_delta)
 {
 //	*raw_threshold = ADS_SCALE * weight_threshold + ADS_OFFSET;
-    *raw_threshold = ADS_OFFSET + weight_threshold;
+    *threshold = ADS_OFFSET + threshold_delta;
 
 }
 

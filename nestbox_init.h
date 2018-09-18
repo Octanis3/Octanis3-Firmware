@@ -52,6 +52,9 @@ extern "C" {
 //#define VERBOSE 		1
 // #define LAUNCHPAD_PINDEF 1
 
+#define LOG_VERBOSE 1
+
+
 //#define MLX_READER		1
 #ifndef MLX_READER
 	#define EM_READER		1

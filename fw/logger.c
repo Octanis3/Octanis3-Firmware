@@ -16,7 +16,6 @@
 #include "ADS1220/spi.h"
 #include "ff13b/source/ff.h"
 
-
 #include <xdc/cfg/global.h> //needed for semaphore
 #include <ti/sysbios/knl/Semaphore.h>
 
@@ -101,11 +100,32 @@ void log_startup()
 	log_initialized = 1;
 }
 
+void quick_print(long value, char log_symbol)
+{
+    char sign = ' ';
+    if(value<0)
+    {
+        sign = '-';
+        value = -value;
+    }
+    uint8_t strlen;
+    uint8_t weight_buf[20];
+    strlen = ui2a(value, 10, 1, HIDE_LEADING_ZEROS, &weight_buf[1]);
+    weight_buf[0] = sign;
+
+    Semaphore_pend((Semaphore_Handle)semSerial,BIOS_WAIT_FOREVER);
+    uart_serial_print_event(log_symbol, weight_buf, strlen+1);
+    Semaphore_post((Semaphore_Handle)semSerial);
+}
+
 int log_write_new_entry(uint8_t logchar, uint16_t value)
 {
 	FRAM_offset_ptr = (unsigned int*)LOG_NEXT_POS_OFS; // pointer should be already initialized at startup, but just to be sure...
 	unsigned int* FRAM_write_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); // = base address plus *FRAM_offset_ptr
 
+#if(LOG_VERBOSE)
+    quick_print(value, logchar);
+#endif
 
 	// Make sure we are not going to exceed the reserved memory region. If we do we
 	// will not write to the memory
@@ -125,6 +145,7 @@ int log_write_new_entry(uint8_t logchar, uint16_t value)
     *((uint16_t*)FRAM_write_ptr+LOG_VALUE_SHORT_16b_OFS) = value;
 
 
+
 	*FRAM_offset_ptr += LOG_ENTRY_SHORT_8b_LEN;                 // Increment write index //TODO: ORIGINALLY WE USED THE 8BIT value??
 
 	return LOG_ENTRY_SHORT_8b_LEN;
@@ -137,6 +158,10 @@ int log_write_new_rfid_entry(uint64_t uid)
 
     uint16_t msec = msecs;
     uint32_t timestamp = Seconds_get();
+
+#if(LOG_VERBOSE)
+    quick_print(uid, 'R');
+#endif
 
     FRAM_offset_ptr = (unsigned int*)LOG_NEXT_POS_OFS; // pointer should be already initialized at startup, but just to be sure...
     unsigned int* FRAM_write_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); // = base address plus *FRAM_offset_ptr
@@ -174,6 +199,9 @@ int log_write_new_weight_entry( uint8_t logchar, uint32_t weight, uint16_t stdev
     FRAM_offset_ptr = (unsigned int*)LOG_NEXT_POS_OFS; // pointer should be already initialized at startup, but just to be sure...
     unsigned int* FRAM_write_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); // = base address plus *FRAM_offset_ptr
 
+#if(LOG_VERBOSE)
+    quick_print(weight, logchar);
+#endif
 
     // Make sure we are not going to exceeding the reserved memory region. If we do we
     // will not write to the memory
@@ -195,17 +223,6 @@ int log_write_new_weight_entry( uint8_t logchar, uint32_t weight, uint16_t stdev
 
     return LOG_ENTRY_LONG_8b_LEN;
 }
-
-
-
-//void log_send_lb_state()
-//{
-//	if(GPIO_read(nbox_lightbarrier_int)==1)
-//		uart_serial_putc(&debug_uart, '1');
-//	else
-//		uart_serial_putc(&debug_uart, '0');
-//
-//}
 
 const uint8_t start_string[] = "#=========== start FRAM logs =========\n";
 const uint8_t title_row[] = "time [s],RFID UID,event type, weight [g], tolerance [mg], temperature [1/10 K]\n";

@@ -59,6 +59,8 @@ int uart_debug_open(){
 
 void uart_debug_close(){
 
+#if(!LOG_VERBOSE)
+
     UART_close(debug_uart);
 
     //force write TX gpio to zero:
@@ -66,6 +68,7 @@ void uart_debug_close(){
     P2SEL1 &= ~BIT5;
 
     uart_initialized = 0;
+#endif
 }
 
 
@@ -117,6 +120,7 @@ void uart_serial_print_event(char type, const uint8_t* data, unsigned int n)
 		UART_write(debug_uart, sec_buf, strlen+3);
 		UART_write(debug_uart, data, n);
 		UART_write(debug_uart, &newline, 1);
+
 	}
 }
 

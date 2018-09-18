@@ -66,23 +66,6 @@ typedef enum weightResultStatus_
 	STABLE
 } weightResultStatus;
 
-void print_load_cell_value(float value, char log_symbol)
-{
-	char sign = PLUS_SIGN;
-	if(value<0)
-	{
-		sign = MINUS_SIGN;
-		value = -value;
-	}
-	uint8_t strlen;
-	uint8_t weight_buf[20];
-	strlen = ui2a((unsigned long)(value), 10, 1, HIDE_LEADING_ZEROS, &weight_buf[1]);
-	weight_buf[0] = sign;
-
-	Semaphore_pend((Semaphore_Handle)semSerial,BIOS_WAIT_FOREVER);
-	uart_serial_print_event(log_symbol, weight_buf, strlen+1);
-	Semaphore_post((Semaphore_Handle)semSerial);
-}
 
 weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 {
@@ -179,9 +162,9 @@ void ads1220_set_loadcell_config(struct Ads1220 *ads){
 	ads->config.mux = ADS1220_MUX_AIN1_AIN2;
 	ads->config.gain = ADS1220_GAIN_128;
 	ads->config.pga_bypass = 0;
-	ads->config.rate = ADS1220_RATE_1000_HZ;
+	ads->config.rate = ADS1220_RATE_20_HZ;
 	// todo: change operating mode to duty-cycle mode
-	ads->config.conv = ADS1220_SINGLE_SHOT;
+	ads->config.conv = ADS1220_CONTINIOUS_CONVERSION;
 	ads->config.temp_sensor = ADS1220_TEMPERATURE_DISABLED;
 	ads->config.vref = ADS1220_VREF_EXTERNAL_AIN; // this will be toggled with AC excitation
 	ads->config.idac = ADS1220_IDAC_OFF;
@@ -206,10 +189,6 @@ void load_cell_Task()
 
 	uint64_t owl_ID = 0;
 	int rfid_type = 0;
-	float calib163 = 0;
-	float calib379 = 0;
-	float calib595 = 0;
-
 
 
 #ifdef USE_HX
@@ -249,8 +228,8 @@ void load_cell_Task()
 
 	ads1220_init(&ads, &ads_spi, nbox_loadcell_spi_cs_n);
 	ads1220_set_loadcell_config(&ads);
-	ads.config.rate = ADS1220_RATE_20_HZ; //for tare, set to same as used during polling --> 1ksps!
-    ads.config.conv = ADS1220_SINGLE_SHOT;
+	ads.config.rate = ADS1220_RATE_20_HZ; //first tare is done with correct averaging method.
+    ads.config.conv = ADS1220_CONTINIOUS_CONVERSION;
 
 	// IMPORTANT TO NOTE: 20 Hz and 1000 Hz in single shot mode do not result in the same value!
     // --> due to power down, the analog input voltages do not settle quick enough, therefore tare is done in single-shot mode!
@@ -258,6 +237,12 @@ void load_cell_Task()
 	ads1220_event(&ads);
 
 	ads1220_configure(&ads); // this one sends the reset and config
+
+    Task_sleep(100);
+
+	int32_t max_deviation = 0;
+	averaged_weight_threshold = ads1220_read_average(20, &max_deviation, &ads) + WEIGHT_THRESHOLD;
+
 
     ads1220_change_mode(&ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT, ADS1220_TEMPERATURE_DISABLED);
 
@@ -270,6 +255,9 @@ void load_cell_Task()
 	// !! "every write access to any configuration register also starts a new conversion" !!
 
 	Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, 100); // timeout 100 ms in case DRDY pin is not connected
+
+    Task_sleep(100);
+
 
 #endif
 
@@ -305,15 +293,11 @@ void load_cell_Task()
 			// hx711_power_down();
 #endif
 
-			//print the inexact weight value: (TODO:remove)
-//			print_load_cell_value(value*1000, 'W');
-            //print_load_cell_value((float)(ads.data), 'D');
-
+            log_write_new_entry('D', ((ads.data)>>8) & 0x0000ffff);
 
 //            if((ads.data)>RAW_THRESHOLD)
 			if((ads.data)>raw_threshold)
             {
-	            log_write_new_entry('D', ((ads.data)>>8) & 0x0000ffff);
 
 				if(event_ongoing==0)
 				{
@@ -378,8 +362,8 @@ void load_cell_Task()
 			ads1220_convert_temperature(&ads);
 
 			uint16_t temp = (uint16_t)((ads.temperature+273.15) * 10); //deci kelvins
+            log_write_new_entry('T', temp);
 
-			print_load_cell_value(ads.temperature*100, 'T');
             GPIO_disableInt(nbox_loadcell_data_ready);
 
 			ads1220_change_mode(&ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION, ADS1220_TEMPERATURE_DISABLED);

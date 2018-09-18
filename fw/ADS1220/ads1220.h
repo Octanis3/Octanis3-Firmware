@@ -204,7 +204,7 @@ extern void ads1220_convert_temperature(struct Ads1220 *ads);
 //float ads1220_convert_units(struct Ads1220 *ads);
 extern int ads1220_tare(uint8_t times, struct Ads1220 *ads);
 extern int32_t ads1220_read_average(uint8_t times, int32_t* max_deviation, struct Ads1220 *ads);
-extern void ads1220_set_raw_threshold(int32_t* raw_threshold, int32_t weight_threshold);
+extern void ads1220_set_raw_threshold(int32_t* threshold, int32_t threshold_delta);
 extern void ads1220_change_mode(struct Ads1220 *ads, enum Ads1220SampleRate rate, enum Ads1220ConvMode mode, enum Ads1220TempSensorMode temp);
 
 /// convenience function: read or start configuration if not already initialized
