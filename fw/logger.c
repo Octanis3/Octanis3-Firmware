@@ -266,9 +266,12 @@ void log_send_data_via_uart()
     GPIO_write(nbox_spi_cs_n, 0); //turn on SD card
     Task_sleep(500);
 
+#if LOG_VERBOSE
+    uart_stop_debug_prints();
+#else
+    uart_debug_open();
+#endif
 
-	uart_stop_debug_prints();
-	uart_debug_open();
 
 	uart_serial_write(&debug_uart, start_string, sizeof(start_string));
 	uart_serial_write(&debug_uart, title_row, sizeof(title_row));
@@ -288,7 +291,7 @@ void log_send_data_via_uart()
 
         unsigned char logchar = outbuffer[0];
 
-		if(logchar == 'X' || logchar == 'R')
+		if(logchar == 'X' || logchar == 'S' || logchar == 'A' || logchar == 'R')
 		{
 		    //send out milliseconds:
 		    strlen = ui2a((*((uint8_t*)FRAM_read_ptr+LOG_MSEC_8b_OFS)<<2), 10, 1,HIDE_LEADING_ZEROS, outbuffer);
@@ -330,13 +333,17 @@ void log_send_data_via_uart()
 	}
 
 	uart_serial_write(&debug_uart, end_string, sizeof(end_string));
-	uart_debug_close();
 
     Task_sleep(1000); //wait for data to be written
 
+#if LOG_VERBOSE
+    uart_start_debug_prints();
+#else
+    uart_debug_close();
+#endif
+
     GPIO_write(nbox_spi_cs_n, 1); //turn off SD card
 
-//	uart_start_debug_prints();
 
 	//TODO: optional, reset the *LOG_NEXT_POS_OFS to zero.
 

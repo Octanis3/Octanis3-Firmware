@@ -295,10 +295,8 @@ void load_cell_Task()
 
             log_write_new_entry('D', ((ads.data)>>8) & 0x0000ffff);
 
-//            if((ads.data)>RAW_THRESHOLD)
 			if((ads.data)>raw_threshold)
             {
-
 				if(event_ongoing==0)
 				{
                     rfid_start_detection();
@@ -307,8 +305,7 @@ void load_cell_Task()
 
 					rfid_type = rfid_get_id(&owl_ID);
 
-//					if(rfid_type>0)
-					if(1)
+					if(rfid_type>0)
 					{
 						// now start the weight measurement
 
