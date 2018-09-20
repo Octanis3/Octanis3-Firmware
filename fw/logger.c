@@ -30,6 +30,12 @@
 							// ^--- RESERVED SPACE STARTS HERE!! CHANGE nestbox_memory_map.cmd FILE IF MODIFYING THIS VALUE!
 #define LOG_START_POS		0x00013000
 #define LOG_END_POS			0x00013FF0 // this is the last byte position to write to; conservative...
+#define LOG_END_OFS         (LOG_END_POS - LOG_START_POS)
+
+#define LOG_MIDDLE_POS       ((LOG_END_POS + LOG_START_POS)/2)
+#define LOG_MIDDLE_OFS       (LOG_END_POS - LOG_START_POS)/2
+
+
 /* Note: the allocated storage space is 8 kB large, which is enough for 819 entries */
 
 // general log offsets:
@@ -59,8 +65,13 @@
 
 #define OUTPUT_BUF_LEN		LOG_ENTRY_LONG_8b_LEN*2+4 // adding 4 ',' and twice the digits for decimal values
 
+// variable used to write next log entry
 uint16_t* FRAM_offset_ptr;
+
+// variables used to read out the log buffer:
 uint16_t* FRAM_read_ptr;
+uint16_t FRAM_read_end_ptr_value;
+
 
 unsigned int log_initialized = 0;
 //const unsigned int phase_two = 0;
@@ -91,13 +102,28 @@ void log_startup()
 	// compensate for LFX deviation:
     RTCCTL01 = RTCHOLD;
 
-	//compensate for 11.1ppm = 5*2.17 --> 5 = 0b101
+	//TODO: make correct compensation
+    // Here we compensate for 11.1ppm = 5*2.17 --> 5 = 0b101
 	RTCCTL23 = RTCCAL2 + RTCCAL0;
 	RTCCTL23 &= ~RTCCALS;
 
     RTCCTL01 &= ~(RTCHOLD);                 // Start RTC
 
 	log_initialized = 1;
+}
+
+void log_check_pointer_position()
+{
+    // Make sure we are not going to exceed the reserved memory region. If we do we
+    // will not write reset the pointer to the beginning of the memory.
+    if (*FRAM_offset_ptr > LOG_END_OFS-LOG_ENTRY_LONG_8b_LEN)
+    {
+        FRAM_read_end_ptr_value =  *FRAM_offset_ptr;
+        // new initialization
+        *FRAM_offset_ptr = 0x0000;
+    }
+    // else, continue...
+
 }
 
 void quick_print(long value, char log_symbol)
@@ -120,20 +146,12 @@ void quick_print(long value, char log_symbol)
 
 int log_write_new_entry(uint8_t logchar, uint16_t value)
 {
-	FRAM_offset_ptr = (unsigned int*)LOG_NEXT_POS_OFS; // pointer should be already initialized at startup, but just to be sure...
+    log_check_pointer_position();
 	unsigned int* FRAM_write_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); // = base address plus *FRAM_offset_ptr
 
 #if(LOG_VERBOSE)
     quick_print(value, logchar);
 #endif
-
-	// Make sure we are not going to exceed the reserved memory region. If we do we
-	// will not write to the memory
-	if (FRAM_write_ptr > (unsigned int*)LOG_END_POS-LOG_ENTRY_LONG_8b_LEN)
-	{
-		return 0; //no available space --> 0 bytes written!
-	}
-	// else, continue...
 
 	*((uint32_t*)FRAM_write_ptr+LOG_TIME_32b_OFS) = Seconds_get();
 
@@ -159,21 +177,13 @@ int log_write_new_rfid_entry(uint64_t uid)
     uint16_t msec = msecs;
     uint32_t timestamp = Seconds_get();
 
+    log_check_pointer_position();
+    unsigned int* FRAM_write_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); // = base address plus *FRAM_offset_ptr
+
 #if(LOG_VERBOSE)
     quick_print(uid, 'R');
 #endif
 
-    FRAM_offset_ptr = (unsigned int*)LOG_NEXT_POS_OFS; // pointer should be already initialized at startup, but just to be sure...
-    unsigned int* FRAM_write_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); // = base address plus *FRAM_offset_ptr
-
-
-    // Make sure we are not going to exceeding the reserved memory region. If we do we
-    // will not write to the memory
-    if (FRAM_write_ptr > (unsigned int*)LOG_END_POS-LOG_ENTRY_LONG_8b_LEN)
-    {
-        return 0; //no available space --> 0 bytes written!
-    }
-    // else, continue...
     *((uint32_t*)FRAM_write_ptr+LOG_TIME_32b_OFS) = timestamp;
 
     *((uint32_t*)FRAM_write_ptr+LOG_UID_32b_LSB_OFS) = 0xffffffff & uid;
@@ -194,22 +204,14 @@ int log_write_new_weight_entry( uint8_t logchar, uint32_t weight, uint16_t stdev
     uint32_t t = Timestamp_get32();
     uint32_t msecs = (t & 0x7fff) * 1000 /32768;
 
-    uint16_t msec = msecs;
     uint32_t timestamp = Seconds_get();
-    FRAM_offset_ptr = (unsigned int*)LOG_NEXT_POS_OFS; // pointer should be already initialized at startup, but just to be sure...
+
+    log_check_pointer_position();
     unsigned int* FRAM_write_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); // = base address plus *FRAM_offset_ptr
 
 #if(LOG_VERBOSE)
     quick_print(weight, logchar);
 #endif
-
-    // Make sure we are not going to exceeding the reserved memory region. If we do we
-    // will not write to the memory
-    if (FRAM_write_ptr > (unsigned int*)LOG_END_POS-LOG_ENTRY_LONG_8b_LEN)
-    {
-        return 0; //no available space --> 0 bytes written!
-    }
-    // else, continue...
 
     *((uint32_t*)FRAM_write_ptr+LOG_TIME_32b_OFS) = timestamp;
 
@@ -227,10 +229,8 @@ int log_write_new_weight_entry( uint8_t logchar, uint32_t weight, uint16_t stdev
 const uint8_t start_string[] = "#=========== start FRAM logs =========\n";
 const uint8_t title_row[] = "time [s],RFID UID,event type, weight [g], tolerance [mg], temperature [1/10 K]\n";
 const uint8_t end_string[] = "#========== end FRAM logs ===========\n";
-const uint8_t phase_two_string[] = "#========== STARTING PHASE TWO =========\n";
 
-
-void log_send_data_via_uart()
+void log_send_data_via_uart(uint16_t* FRAM_read_end_ptr)
 {
 
 	/********* possible example code for fast DMA transfer **********
@@ -274,10 +274,7 @@ void log_send_data_via_uart()
 
 
 	uart_serial_write(&debug_uart, start_string, sizeof(start_string));
-	uart_serial_write(&debug_uart, title_row, sizeof(title_row));
-
-	unsigned int* FRAM_read_end_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); //points to the end of the valid stored data
-	FRAM_read_ptr = (unsigned int*)LOG_START_POS; // points to start of logged data.
+//	uart_serial_write(&debug_uart, title_row, sizeof(title_row));
 
 	uint8_t outbuffer[OUTPUT_BUF_LEN];
 	while(FRAM_read_ptr < FRAM_read_end_ptr)
@@ -436,132 +433,140 @@ int sd_spi_is_initialized = 0;
 #define ACMD41  0x69 // must be preceded by CMD55 !
 
 /* inspired by http://codeandlife.com/2012/04/25/simple-fat-and-sd-tutorial-part-3/ */
-int sd_spi_init_logger()
-{
-    SPI_Transaction     spiTransaction;
-    Bool                transferOK;
-    uint8_t     txBuf[8]= {0xff,};
-    uint8_t     rxBuf[8] = {0xff,};
-
-    unsigned int i = 0;
-    // send command: "init and go to SPI mode":
-    // Init and go to SPI mode: ]r:10 [0x40 0x00 0x00 0x00 0x00 0x95 r:8]
-
-    spiTransaction.count = 1;
-    spiTransaction.txBuf = txBuf;
-    spiTransaction.rxBuf = rxBuf;
-
-    spi_slave_unselect(nbox_spi_cs_n);
-    for(i=0; i<8; i++)
-        SPI_transfer(nestbox_spi_handle, &spiTransaction);
-
-    for(i=0; i<10; i++)
-    {
-        sd_spi_send_command(CMD0, 0, 0x95, rxBuf, 4);
-
-        if(rxBuf[1] == 1)
-            break;
-        Task_sleep(100);
-    }
-
-    if(i==10)
-        return -1;
-
-    // CMD8 to read version of SD card
-    // according to https://openlabpro.com/guide/interfacing-microcontrollers-with-sd-card/
-    sd_spi_send_command(CMD8, 0x000001AA, 0x87, rxBuf, 8);
-
-    for(i=0; i<10; i++)
-    {
-        // send ACMD41 repeatedly until initialized
-        sd_spi_send_command(CMD55, 0, 0x01, rxBuf, 4);
-        sd_spi_send_command(ACMD41, 0x40000000, 0x01, rxBuf, 4);
-        if(rxBuf[0] == 0 || rxBuf[1] == 0 || rxBuf[2] == 0 || rxBuf[3] == 0)
-            break;
-        Task_sleep(20);
-    }
-
-    if(i == 10)
-        return -2;
-
-    // Read OCR --> answer: first byte bit6 reads 1 --> high capacity SD card (SDHC)
-    //                                              --> block size is 512 by default!
-    sd_spi_send_command(CMD58, 0, 0xff, rxBuf, 8);
-
-    //Set transfer size: [0x50 0x00 0x00 0x02 0x00 0xFF r:8]
-    sd_spi_send_command(CMD16, 0x00000200, 0xff, rxBuf, 8);
-    Task_sleep(100);
-
-    memcpy(txBuf, (const unsigned char[]){0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, 8);
-
-    Semaphore_pend((Semaphore_Handle)semSerial,BIOS_WAIT_FOREVER);
-
-    unsigned int j=0;
-    for (j=0; j<100; j++) //read 100 sectors
-    {
-        for(i=0; i<10; i++)
-        {
-            //Read sector: [0x51 0x00 0x00 0x00 0x00 0xFF r:520]
-            sd_spi_send_command(CMD17, j+(16<<9), 0xff, rxBuf, 4); // --->> the first time it worked was at j=16 - text at j=33
-            // output:
-            // BSD  4.4 @      ⸮    ⸮      ⸮⸮ f                       ⸮ )⸮NO NAME    FAT32   ⸮1⸮⸮м |⸮⸮⸮⸮  ^⸮⸮⸮ ⸮⸮⸮⸮t⸮⸮⸮⸮0⸮⸮⸮
-            //Non-system disk
-            //Press any key to reboot
-
-
-            //wait for a 0x00 to arrive
-
-            if(rxBuf[0] == 0 ||rxBuf[1] == 0 || rxBuf[2] == 0 || rxBuf[3] == 0) //the 0x00 response usually arrives on rxBuf[1] or rxBuf[2]
-                break;
-            Task_sleep(100);
-
-        }
-        spiTransaction.txBuf = txBuf;
-        spiTransaction.rxBuf = rxBuf;
-        spiTransaction.count = 1; //read 1 Byte at a time until 0 is detected
-        spi_slave_select(nbox_spi_cs_n);
-        if(rxBuf[2] != 0xFE && rxBuf[3] != 0xFE)
-        {
-            for(i=0; i<10; i++)
-            {
-                transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
-                if(rxBuf[0] == 0xFE)
-                    break;
-            }
-        }
-
-        for(i=0; i<65; i++) // read 512 bytes plus 2bytes CRC plus 6 dummy bytes (0xff)
-        {
-            spiTransaction.count = 8; //read 8 Byte at a time
-            spiTransaction.txBuf = txBuf;
-            spiTransaction.rxBuf = rxBuf;
-            transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
-
-            uart_serial_write(&debug_uart, rxBuf,8);
-        }
-        spi_slave_unselect(nbox_spi_cs_n);
-
-        uart_serial_write(&debug_uart, "\n", 1); //newline after each sector
-
-
-        Task_sleep(100);
-    }
-    Semaphore_post((Semaphore_Handle)semSerial);
-
-    if (!transferOK) {
-        return 0;/* Error in SPI transfer or transfer is already in progress */
-    }
-    return 1;
-}
+//int sd_spi_init_logger()
+//{
+//    SPI_Transaction     spiTransaction;
+//    Bool                transferOK;
+//    uint8_t     txBuf[8]= {0xff,};
+//    uint8_t     rxBuf[8] = {0xff,};
+//
+//    unsigned int i = 0;
+//    // send command: "init and go to SPI mode":
+//    // Init and go to SPI mode: ]r:10 [0x40 0x00 0x00 0x00 0x00 0x95 r:8]
+//
+//    spiTransaction.count = 1;
+//    spiTransaction.txBuf = txBuf;
+//    spiTransaction.rxBuf = rxBuf;
+//
+//    spi_slave_unselect(nbox_spi_cs_n);
+//    for(i=0; i<8; i++)
+//        SPI_transfer(nestbox_spi_handle, &spiTransaction);
+//
+//    for(i=0; i<10; i++)
+//    {
+//        sd_spi_send_command(CMD0, 0, 0x95, rxBuf, 4);
+//
+//        if(rxBuf[1] == 1)
+//            break;
+//        Task_sleep(100);
+//    }
+//
+//    if(i==10)
+//        return -1;
+//
+//    // CMD8 to read version of SD card
+//    // according to https://openlabpro.com/guide/interfacing-microcontrollers-with-sd-card/
+//    sd_spi_send_command(CMD8, 0x000001AA, 0x87, rxBuf, 8);
+//
+//    for(i=0; i<10; i++)
+//    {
+//        // send ACMD41 repeatedly until initialized
+//        sd_spi_send_command(CMD55, 0, 0x01, rxBuf, 4);
+//        sd_spi_send_command(ACMD41, 0x40000000, 0x01, rxBuf, 4);
+//        if(rxBuf[0] == 0 || rxBuf[1] == 0 || rxBuf[2] == 0 || rxBuf[3] == 0)
+//            break;
+//        Task_sleep(20);
+//    }
+//
+//    if(i == 10)
+//        return -2;
+//
+//    // Read OCR --> answer: first byte bit6 reads 1 --> high capacity SD card (SDHC)
+//    //                                              --> block size is 512 by default!
+//    sd_spi_send_command(CMD58, 0, 0xff, rxBuf, 8);
+//
+//    //Set transfer size: [0x50 0x00 0x00 0x02 0x00 0xFF r:8]
+//    sd_spi_send_command(CMD16, 0x00000200, 0xff, rxBuf, 8);
+//    Task_sleep(100);
+//
+//    memcpy(txBuf, (const unsigned char[]){0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, 8);
+//
+//    Semaphore_pend((Semaphore_Handle)semSerial,BIOS_WAIT_FOREVER);
+//
+//    unsigned int j=0;
+//    for (j=0; j<100; j++) //read 100 sectors
+//    {
+//        for(i=0; i<10; i++)
+//        {
+//            //Read sector: [0x51 0x00 0x00 0x00 0x00 0xFF r:520]
+//            sd_spi_send_command(CMD17, j+(16<<9), 0xff, rxBuf, 4); // --->> the first time it worked was at j=16 - text at j=33
+//            // output:
+//            // BSD  4.4 @      ⸮    ⸮      ⸮⸮ f                       ⸮ )⸮NO NAME    FAT32   ⸮1⸮⸮м |⸮⸮⸮⸮  ^⸮⸮⸮ ⸮⸮⸮⸮t⸮⸮⸮⸮0⸮⸮⸮
+//            //Non-system disk
+//            //Press any key to reboot
+//
+//
+//            //wait for a 0x00 to arrive
+//
+//            if(rxBuf[0] == 0 ||rxBuf[1] == 0 || rxBuf[2] == 0 || rxBuf[3] == 0) //the 0x00 response usually arrives on rxBuf[1] or rxBuf[2]
+//                break;
+//            Task_sleep(100);
+//
+//        }
+//        spiTransaction.txBuf = txBuf;
+//        spiTransaction.rxBuf = rxBuf;
+//        spiTransaction.count = 1; //read 1 Byte at a time until 0 is detected
+//        spi_slave_select(nbox_spi_cs_n);
+//        if(rxBuf[2] != 0xFE && rxBuf[3] != 0xFE)
+//        {
+//            for(i=0; i<10; i++)
+//            {
+//                transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
+//                if(rxBuf[0] == 0xFE)
+//                    break;
+//            }
+//        }
+//
+//        for(i=0; i<65; i++) // read 512 bytes plus 2bytes CRC plus 6 dummy bytes (0xff)
+//        {
+//            spiTransaction.count = 8; //read 8 Byte at a time
+//            spiTransaction.txBuf = txBuf;
+//            spiTransaction.rxBuf = rxBuf;
+//            transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
+//
+//            uart_serial_write(&debug_uart, rxBuf,8);
+//        }
+//        spi_slave_unselect(nbox_spi_cs_n);
+//
+//        uart_serial_write(&debug_uart, "\n", 1); //newline after each sector
+//
+//
+//        Task_sleep(100);
+//    }
+//    Semaphore_post((Semaphore_Handle)semSerial);
+//
+//    if (!transferOK) {
+//        return 0;/* Error in SPI transfer or transfer is already in progress */
+//    }
+//    return 1;
+//}
 
 void log_Task()
 {
 	Task_sleep(5000); //wait until UART is initialized
+
+#if(LOG_VERBOSE)
 	uart_start_debug_prints(); // disable all UART comm except when SD card is on
+#endif
 
     Task_sleep(10000); //wait until UART is initialized
 
-	//sd_spi_init_logger();
+    enum log_partitions {FIRST = 1, SECOND = 2};
+    enum log_partitions current_log_partition = FIRST;
+    FRAM_read_ptr = (unsigned int*)LOG_START_POS; // points to start of logged data.
+
+
+    //sd_spi_init_logger();
     //fat_disk_initialize (0);
 
 //    FATFS FatFs;        /* FatFs work area needed for each volume */
@@ -595,11 +600,23 @@ void log_Task()
 
 	while(1)
 	{
-		// print status of light barrier
-//		uint8_t stat = '0' + 2*GPIO_read(nbox_lightbarrier_int) + GPIO_read(nbox_lightbarrier_ext);
-//		uart_serial_print_event('S', &stat, 1);
-//		Semaphore_post((Semaphore_Handle)semSerial);
-		Task_sleep(1000);
+
+	    if(current_log_partition == FIRST && *FRAM_offset_ptr > LOG_MIDDLE_OFS)
+	    {
+	        //Flush out the first half of the internal log via UART
+	        log_send_data_via_uart((uint16_t*)LOG_MIDDLE_POS);
+	        current_log_partition = SECOND;
+	    }
+
+	    if(current_log_partition == SECOND && *FRAM_offset_ptr < LOG_MIDDLE_OFS)
+        {
+            //Flush out the first half of the internal log via UART
+            log_send_data_via_uart((uint16_t*)(FRAM_read_end_ptr_value+LOG_START_POS));
+            current_log_partition = FIRST;
+            FRAM_read_ptr = (uint16_t*)LOG_START_POS; // points back to start of logged data.
+        }
+
+	    Task_sleep(1000);
 
 //		if(phase_two == 2)
 //		{

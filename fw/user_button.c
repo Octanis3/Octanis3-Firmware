@@ -26,7 +26,8 @@ void user_button_Task()
 		Semaphore_pend((Semaphore_Handle)semButton, BIOS_WAIT_FOREVER);
 
 //		log_send_lb_state();
-		log_send_data_via_uart();
+//		log_send_data_via_uart();
+		log_startup();
 
 //		rfid_start_detection();
 
