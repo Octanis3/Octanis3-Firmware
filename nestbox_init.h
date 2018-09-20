@@ -52,7 +52,7 @@ extern "C" {
 //#define VERBOSE 		1
 // #define LAUNCHPAD_PINDEF 1
 
-#define LOG_VERBOSE 0 // define as 0 or 1!
+#define LOG_VERBOSE 1 // define as 0 or 1!
 
 
 //#define MLX_READER		1
@@ -103,7 +103,8 @@ typedef enum nbox_GPIOName {
 #endif
 	nbox_loadcell_ldo_enable,
 	nbox_5v_enable,
-/*	nbox_5v_pwm_enable, /* Burst Mode Select. PWM must be driven HIGH during start-up.
+//	nbox_5v_pwm_enable,
+	                    /* Burst Mode Select. PWM must be driven HIGH during start-up.
 						* When VOUT is in regulation, the PWM pin may be driven LOW
 						* to command Burst Mode operation. Applying a voltage below
 						* 400mV enables Burst Mode operation, providing a significant

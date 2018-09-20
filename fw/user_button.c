@@ -25,15 +25,16 @@ void user_button_Task()
 	{
 		Semaphore_pend((Semaphore_Handle)semButton, BIOS_WAIT_FOREVER);
 
-//		log_send_lb_state();
-//		log_send_data_via_uart();
-		log_startup();
+		/* Turn on data LED  */
+		GPIO_write(Board_led_blue, Board_LED_ON);
 
-//		rfid_start_detection();
+		log_restart();
 
 		Task_sleep(1000); //avoid too many subsequent memory readouts
-		GPIO_enableInt(Board_button);
+        GPIO_write(Board_led_blue, Board_LED_OFF);
 
+		GPIO_clearInt(Board_button);
+		GPIO_enableInt(Board_button);
 	}
 }
 

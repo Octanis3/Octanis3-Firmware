@@ -164,11 +164,6 @@ int main(void)
 	log_taskParams.priority = 5; //most important task, but with low duty cycle
 	Task_construct(&bat_task_Struct, (Task_FuncPtr)battery_Task, &bat_taskParams, NULL);
 
-
-
-    /* Turn on user LED  */
-    GPIO_write(Board_led_green, Board_LED_ON);
-
     /* Start BIOS */
     BIOS_start();
 

@@ -29,7 +29,7 @@
 #define LOG_TIMESTAMP		0x12FF8 // store the 32bit timestamp (type unsigned int == uint16_t)
 							// ^--- RESERVED SPACE STARTS HERE!! CHANGE nestbox_memory_map.cmd FILE IF MODIFYING THIS VALUE!
 #define LOG_START_POS		0x00013000
-#define LOG_END_POS			0x000130F0 // this is the last byte position to write to; conservative...
+#define LOG_END_POS			0x00013FF0 // this is the last byte position to write to; conservative...
 #define LOG_END_OFS         (LOG_END_POS - LOG_START_POS)
 
 #define LOG_MIDDLE_POS       ((LOG_END_POS + LOG_START_POS)/2)
@@ -72,6 +72,10 @@ uint16_t* FRAM_offset_ptr;
 uint16_t* FRAM_read_ptr;
 uint16_t FRAM_read_end_ptr_value;
 
+// in which half of the storage region will the next flush out happen?
+enum log_partitions {FIRST = 1, SECOND = 2};
+enum log_partitions current_log_partition = FIRST;
+
 
 unsigned int log_initialized = 0;
 //const unsigned int phase_two = 0;
@@ -110,6 +114,26 @@ void log_startup()
     RTCCTL01 &= ~(RTCHOLD);                 // Start RTC
 
 	log_initialized = 1;
+}
+
+void log_restart()
+{
+    //reset time stamp:
+    Seconds_set(0);
+
+    // then flush out all the data recorded so far:
+    log_send_data_via_uart((uint16_t*)(*FRAM_offset_ptr+LOG_START_POS));
+    current_log_partition = FIRST;
+    FRAM_read_ptr = (uint16_t*)LOG_START_POS; // points back to start of logged data.
+
+    // new FRAM initialization
+    *FRAM_offset_ptr = 0x0000;
+
+    // store correct password
+    unsigned int* FRAM_pw = (unsigned int*)LOG_NEXT_POS_VALID;
+    (*FRAM_pw) = LOG_POS_VALID_PW;
+
+    (*(uint32_t*)LOG_TIMESTAMP) = Seconds_get();
 }
 
 void log_check_pointer_position()
@@ -532,17 +556,18 @@ int sd_spi_is_initialized = 0;
 
 void log_Task()
 {
-	Task_sleep(5000); //wait until UART is initialized
+    log_startup();
+
+    //TODO: check first if there is some logged stuff on the FRAM to avoid data loss after a crash.
+    FRAM_read_ptr = (unsigned int*)LOG_START_POS; // points to start of logged data.
+
+	Task_sleep(500); //wait until other functions are initialized
 
 #if(LOG_VERBOSE)
+    uart_debug_open();
 	uart_start_debug_prints(); // disable all UART comm except when SD card is on
 #endif
 
-    Task_sleep(10000); //wait until UART is initialized
-
-    enum log_partitions {FIRST = 1, SECOND = 2};
-    enum log_partitions current_log_partition = FIRST;
-    FRAM_read_ptr = (unsigned int*)LOG_START_POS; // points to start of logged data.
 
 
     //sd_spi_init_logger();
@@ -595,7 +620,7 @@ void log_Task()
             FRAM_read_ptr = (uint16_t*)LOG_START_POS; // points back to start of logged data.
         }
 
-	    Task_sleep(1000);
+	    Task_sleep(10000);
 
 //		if(phase_two == 2)
 //		{

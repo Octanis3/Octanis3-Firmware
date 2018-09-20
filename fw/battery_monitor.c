@@ -98,7 +98,8 @@ void goto_deepsleep()
 	//TODO
 //	timer0_A_stop(); //stop timer to make it possible to turn off SMCLK.
 
-	//todo: write stored data to flash before power down
+	//write stored data to flash before power down
+    log_restart();
 
 	//todo: power off all modules
 	GPIO_write(nbox_vbat_test_enable, 0);
@@ -126,9 +127,8 @@ void goto_deepsleep()
 	Clock_tickStop();
 	//Clock_stop();
 
-	//disable all serial ports (makes it worse!):
-//	load_cell_deep_sleep();
-//	UART_close(Board_UART_debug);
+	//TODO: disable all serial SPI/UART ports (redefine pins as outputs to zero):
+
 	//__bic_SR_register(GIE);
 	__bis_SR_register(LPM4_bits);        // Enter LPM0 with interrupts
 }

@@ -248,11 +248,11 @@ bool spi_submit(struct spi_periph *p, struct spi_transaction *t)
 //  return FALSE;
 //}
 
-static inline uint8_t get_transaction_signature(struct spi_transaction *t)
-{
-  return ((t->dss << 6) | (t->cdiv << 3) | (t->bitorder << 2) |
-          (t->cpha << 1) | (t->cpol));
-}
+//static inline uint8_t get_transaction_signature(struct spi_transaction *t)
+//{
+//  return ((t->dss << 6) | (t->cdiv << 3) | (t->bitorder << 2) |
+//          (t->cpha << 1) | (t->cpol));
+//}
 
 
 ///******************************************************************************

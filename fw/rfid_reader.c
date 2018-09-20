@@ -9,7 +9,6 @@
 #include "rfid_reader.h"
 #include "MLX90109_library/mlx90109.h"
 #include "MLX90109_library/mlx90109_params.h"
-#include "uart_helper.h"
 #include "logger.h"
 #include <msp430.h>
 
@@ -29,9 +28,6 @@ static tagdata lf_tagdata;
 
 void rfid_Task()
 {
-	uart_debug_open();
-	log_startup();
-
 	/* Initialize LF reader */
 	mlx90109_params_t mlx_params = MLX90109_PARAMS;
 	mlx90109_init(&mlx_dev, &mlx_params);
@@ -46,8 +42,7 @@ void rfid_Task()
 			if(fdx_format(&mlx_dev, &lf_tagdata) == MLX90109_OK)
 			{
 				lf_tagdata.valid = 1;
-				if(!log_phase_two())
-					rfid_stop_detection();
+				rfid_stop_detection();
 			}
 		}
 		else
@@ -55,8 +50,7 @@ void rfid_Task()
 			if(em4100_format(&mlx_dev, &lf_tagdata) == MLX90109_OK)
 			{
 				lf_tagdata.valid = 1;
-				if(!log_phase_two())
-					rfid_stop_detection();
+				rfid_stop_detection();
 			}
 		}
 
@@ -70,14 +64,6 @@ void rfid_Task()
 //			uart_serial_print_event('R', outbuffer, strlen);
 //			Semaphore_post((Semaphore_Handle)semSerial);
 		}
-
-		if(log_phase_two())
-		{
-			Task_sleep(100);
-			rfid_start_detection();
-			Semaphore_reset((Semaphore_Handle)semReader,0);
-		}
-
     }
 }
 

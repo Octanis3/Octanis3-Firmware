@@ -11,7 +11,6 @@
 #include <msp430.h>
 #include "user_button.h"
 #include "logger.h"
-#include "uart_helper.h"
 #include "rfid_reader.h"
 
 #include <time.h>
@@ -127,7 +126,7 @@ void lightBarrier_Task()
     		{
     			Semaphore_pend((Semaphore_Handle)semSerial,BIOS_WAIT_FOREVER);
     			uint8_t c = lb_status.direction+'0';
-    			uart_serial_print_event('L', &c, 1);
+//    			uart_serial_print_event('L', &c, 1);
     			Semaphore_post((Semaphore_Handle)semSerial);
 
     			// second event was detected
@@ -178,7 +177,7 @@ void lightBarrier_Task()
     		{
     			Semaphore_pend((Semaphore_Handle)semSerial,BIOS_WAIT_FOREVER);
     			uint8_t c = (lb_status.outer_trig) + (lb_status.inner_trig*2) + 64; //will print A for outer and B for inner trigger'd
-    			uart_serial_print_event('U', &c, 1);
+//    			uart_serial_print_event('U', &c, 1);
     			Semaphore_post((Semaphore_Handle)semSerial);
 
     			// no second event detected!
