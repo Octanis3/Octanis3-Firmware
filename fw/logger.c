@@ -29,7 +29,7 @@
 #define LOG_TIMESTAMP		0x12FF8 // store the 32bit timestamp (type unsigned int == uint16_t)
 							// ^--- RESERVED SPACE STARTS HERE!! CHANGE nestbox_memory_map.cmd FILE IF MODIFYING THIS VALUE!
 #define LOG_START_POS		0x00013000
-#define LOG_END_POS			0x00013FF0 // this is the last byte position to write to; conservative...
+#define LOG_END_POS			0x000130F0 // this is the last byte position to write to; conservative...
 #define LOG_END_OFS         (LOG_END_POS - LOG_START_POS)
 
 #define LOG_MIDDLE_POS       ((LOG_END_POS + LOG_START_POS)/2)
@@ -192,7 +192,7 @@ int log_write_new_rfid_entry(uint64_t uid)
     // overwrite unused bits from 64bit UID field with log-char 'R'
     *((unsigned char*)FRAM_write_ptr+LOG_CHAR_8b_OFS) = 'R';
 
-    *((unsigned char*)FRAM_write_ptr+LOG_MSEC_8b_OFS) = 0xff & (msec >> 2); // MILLISECONDS ARE GETTING SHIFTED TO ONLY DISPLAY BITS 10 - 2
+//    *((unsigned char*)FRAM_write_ptr+LOG_MSEC_8b_OFS) = 0xff & (msec >> 2); // MILLISECONDS ARE GETTING SHIFTED TO ONLY DISPLAY BITS 10 - 2
 
     *FRAM_offset_ptr += LOG_ENTRY_LONG_8b_LEN;                 // Increment write index //TODO: WHY 8BIT value??
 
@@ -205,6 +205,7 @@ int log_write_new_weight_entry( uint8_t logchar, uint32_t weight, uint16_t stdev
     uint32_t msecs = (t & 0x7fff) * 1000 /32768;
 
     uint32_t timestamp = Seconds_get();
+    uint16_t msec = msecs;
 
     log_check_pointer_position();
     unsigned int* FRAM_write_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); // = base address plus *FRAM_offset_ptr
@@ -216,7 +217,7 @@ int log_write_new_weight_entry( uint8_t logchar, uint32_t weight, uint16_t stdev
     *((uint32_t*)FRAM_write_ptr+LOG_TIME_32b_OFS) = timestamp;
 
     *((unsigned char*)FRAM_write_ptr+LOG_CHAR_8b_OFS) = logchar;
-    //*((unsigned char*)FRAM_write_ptr+LOG_MSEC_8b_OFS) = 0xff & (msec >> 2); // MILLISECONDS ARE GETTING SHIFTED TO ONLY DISPLAY BITS 10 - 2
+//    *((unsigned char*)FRAM_write_ptr+LOG_MSEC_8b_OFS) = 0xff & (msec >> 2); // MILLISECONDS ARE GETTING SHIFTED TO ONLY DISPLAY BITS 10 - 2
 
     *((uint32_t*)FRAM_write_ptr+LOG_VALUE_LONG_32b_OFS) = weight;
     *((uint16_t*)FRAM_write_ptr+LOG_STDDEV_16b_OFS) = stdev;
@@ -268,13 +269,11 @@ void log_send_data_via_uart(uint16_t* FRAM_read_end_ptr)
 
 #if LOG_VERBOSE
     uart_stop_debug_prints();
+    uart_serial_write(&debug_uart, start_string, sizeof(start_string));
+    //  uart_serial_write(&debug_uart, title_row, sizeof(title_row));
 #else
     uart_debug_open();
 #endif
-
-
-	uart_serial_write(&debug_uart, start_string, sizeof(start_string));
-//	uart_serial_write(&debug_uart, title_row, sizeof(title_row));
 
 	uint8_t outbuffer[OUTPUT_BUF_LEN];
 	while(FRAM_read_ptr < FRAM_read_end_ptr)
@@ -291,9 +290,9 @@ void log_send_data_via_uart(uint16_t* FRAM_read_end_ptr)
 		if(logchar == 'X' || logchar == 'S' || logchar == 'A' || logchar == 'R')
 		{
 		    //send out milliseconds:
-		    strlen = ui2a((*((uint8_t*)FRAM_read_ptr+LOG_MSEC_8b_OFS)<<2), 10, 1,HIDE_LEADING_ZEROS, outbuffer);
-		    outbuffer[strlen] = ',';
-		    uart_serial_write(&debug_uart, outbuffer, strlen+1);
+//		    strlen = ui2a((*((uint8_t*)FRAM_read_ptr+LOG_MSEC_8b_OFS)<<2), 10, 1,HIDE_LEADING_ZEROS, outbuffer);
+//		    outbuffer[strlen] = ',';
+//		    uart_serial_write(&debug_uart, outbuffer, strlen+1);
             if(logchar == 'R')
             {
                 //send out UID and I/O:
@@ -329,30 +328,19 @@ void log_send_data_via_uart(uint16_t* FRAM_read_end_ptr)
 
 	}
 
-	uart_serial_write(&debug_uart, end_string, sizeof(end_string));
 
     Task_sleep(1000); //wait for data to be written
 
 #if LOG_VERBOSE
+    uart_serial_write(&debug_uart, end_string, sizeof(end_string));
+    Task_sleep(100);
     uart_start_debug_prints();
 #else
     uart_debug_close();
 #endif
 
     GPIO_write(nbox_spi_cs_n, 1); //turn off SD card
-
-
-	//TODO: optional, reset the *LOG_NEXT_POS_OFS to zero.
-
 }
-
-//const uint8_t PIR_trigger_in[] = "PIR inside triggered\n";
-//const uint8_t PIR_trigger_out[] = "PIR outside triggered\n";
-//
-//void log_send_PIR(unsigned int pin) {
-//    uint8_t log_message[] = (pin != 0 && pin == nbox_pir_in1) ? PIR_trigger_in : PIR_trigger_out;
-//    uart_serial_write(&debug_uart, log_message, sizeof(log_message));
-//}
 
 uint8_t log_phase_two()
 {
@@ -367,15 +355,6 @@ Void cron_quick_clock(UArg arg){
 	// back up time stamp
 	if(log_initialized)
 		(*(uint32_t*)LOG_TIMESTAMP) = Seconds_get();
-
-//	if(Seconds_get() > T_PHASE_2)
-//	{
-//		if(phase_two == 0)
-//		{
-//			phase_two = 2;
-//			rfid_start_detection();
-//		}
-//	}
 }
 
 
@@ -423,15 +402,15 @@ int sd_spi_is_initialized = 0;
 //
 //    return transferOK;
 //}
-
-#define CMD0    0x40
-#define CMD8    0x48
-#define CMD16   0x50
-#define CMD17   0x51
-#define CMD55   0x77
-#define CMD58   0x7A
-#define ACMD41  0x69 // must be preceded by CMD55 !
-
+//
+//#define CMD0    0x40
+//#define CMD8    0x48
+//#define CMD16   0x50
+//#define CMD17   0x51
+//#define CMD55   0x77
+//#define CMD58   0x7A
+//#define ACMD41  0x69 // must be preceded by CMD55 !
+//
 /* inspired by http://codeandlife.com/2012/04/25/simple-fat-and-sd-tutorial-part-3/ */
 //int sd_spi_init_logger()
 //{

@@ -45,9 +45,11 @@ int uart_debug_open(){
 		if (debug_uart == NULL)
 			return 0;
 
+#if(LOG_VERBOSE)
 
 		const char test_string[] = "nestbox UART initialized\n";
 		uart_serial_write(&debug_uart, (uint8_t*)test_string, sizeof(test_string));
+#endif
 
 		Semaphore_post((Semaphore_Handle)semSerial);
 

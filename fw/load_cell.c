@@ -305,7 +305,8 @@ void load_cell_Task()
 
 					rfid_type = rfid_get_id(&owl_ID);
 
-					if(rfid_type>0)
+//					if(rfid_type>0)
+					    if(1)
 					{
 						// now start the weight measurement
 
