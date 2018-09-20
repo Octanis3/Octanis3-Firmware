@@ -68,7 +68,7 @@ typedef enum weightResultStatus_
 
 weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 {
-	static int32_t meas_buf[EVENT_BUF_SIZE] = {0.0,};
+	static int32_t meas_buf[EVENT_BUF_SIZE] = {0,};
 	static int first_valid = 0;
 //	static int first_invalid = 0;
 
@@ -90,9 +90,18 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 
 		if(meas_buf[tmp] < averaged_weight_threshold)
 		{
-			first_valid = 0;
-//			first_invalid = 0;
-			return OWL_LEFT;
+		    static unsigned int threshold_cnt = 0; //
+		    threshold_cnt = threshold_cnt+1;
+
+		    if(threshold_cnt>3)
+		    {
+                first_valid = 0;
+                threshold_cnt = 0;
+    //			first_invalid = 0;
+                return OWL_LEFT;
+		    }
+		    else
+		        continue;
 		}
 		if(deviation > SAMPLE_TOLERANCE)
 			continue;
@@ -212,8 +221,6 @@ void load_cell_Task()
 	semParams.mode = Semaphore_Mode_BINARY;
 	semLoadCellDRDY = Semaphore_create(0, &semParams, &eb);
 
-	GPIO_enableInt(nbox_loadcell_data_ready);
-
 	// turn on analog supply:
 	GPIO_write(nbox_loadcell_ldo_enable, 1);
 //	GPIO_write(nbox_loadcell_exc_a_p, 0); //pmos, turn on
@@ -244,8 +251,7 @@ void load_cell_Task()
 
 
     ads1220_change_mode(&ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT, ADS1220_TEMPERATURE_DISABLED);
-
-    Task_sleep(100);
+    GPIO_enableInt(nbox_loadcell_data_ready);
 
 	ads1220_tare(20, &ads);
 	ads1220_set_raw_threshold(&raw_threshold, WEIGHT_THRESHOLD);
@@ -362,7 +368,6 @@ void load_cell_Task()
             log_write_new_entry('T', temp);
 
             GPIO_disableInt(nbox_loadcell_data_ready);
-
 			ads1220_change_mode(&ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION, ADS1220_TEMPERATURE_DISABLED);
 
 			if(res == STABLE || res == OWL_LEFT)
