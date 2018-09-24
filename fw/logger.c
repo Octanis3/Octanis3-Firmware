@@ -19,6 +19,8 @@
 #include <xdc/cfg/global.h> //needed for semaphore
 #include <ti/sysbios/knl/Semaphore.h>
 
+#define MAX_SD_RETRY        3 // number of times we try to initialize the SD card.
+
 #define LOG_POS_VALID_PW		0x1234 	// write this value to the LOG_NEXT_POS_VALID space in memory
 									// at the first time we make a log entry to this FRAM
 
@@ -288,16 +290,61 @@ void log_send_data_via_uart(uint16_t* FRAM_read_end_ptr)
 
 
 	************************ end example *************************/
-    GPIO_write(nbox_spi_cs_n, 0); //turn on SD card
-    Task_sleep(500);
+    char sd_rx;
+    unsigned int sd_retry = 0;
 
-#if LOG_VERBOSE
-    uart_stop_debug_prints();
-    uart_serial_write(&debug_uart, start_string, sizeof(start_string));
-    //  uart_serial_write(&debug_uart, title_row, sizeof(title_row));
-#else
-    uart_debug_open();
-#endif
+    for(sd_retry = 0; sd_retry <= MAX_SD_RETRY; sd_retry++){
+        GPIO_write(nbox_spi_cs_n, 0); //turn on SD card
+
+    #if LOG_VERBOSE
+        uart_stop_debug_prints();
+        uart_serial_write(&debug_uart, start_string, sizeof(start_string));
+        //  uart_serial_write(&debug_uart, title_row, sizeof(title_row));
+    #else
+        uart_debug_open();
+    #endif
+
+        unsigned int sd_delay = 0;
+        for(sd_delay = 0; sd_delay < 10; sd_delay++)
+        {
+            sd_rx=uart_serial_getc(&debug_uart);
+            if(sd_rx == '1')
+                break;
+            Task_sleep(100);
+        }
+        for(sd_delay = 0; sd_delay < 20; sd_delay++)
+        {
+            sd_rx=uart_serial_getc(&debug_uart);
+            if(sd_rx == '2')
+                break;
+            Task_sleep(100);
+        }
+        for(sd_delay = 0; sd_delay < 20; sd_delay++)
+        {
+            sd_rx=uart_serial_getc(&debug_uart);
+            if(sd_rx == '<')
+                break;
+            Task_sleep(100);
+        }
+
+        if(sd_rx == '<' || sd_retry == MAX_SD_RETRY)
+            break;
+        else
+        {
+        #if LOG_VERBOSE
+            uart_serial_write(&debug_uart, end_string, sizeof(end_string));
+            Task_sleep(100);
+            uart_start_debug_prints();
+        #else
+            uart_debug_close();
+        #endif
+
+            GPIO_write(nbox_spi_cs_n, 1); //turn off SD card
+
+            Task_sleep(5000);
+        }
+    }
+
 
 	uint8_t outbuffer[OUTPUT_BUF_LEN];
 	while(FRAM_read_ptr < FRAM_read_end_ptr)

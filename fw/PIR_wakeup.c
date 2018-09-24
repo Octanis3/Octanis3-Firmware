@@ -24,6 +24,8 @@
 #include <xdc/cfg/global.h> //needed for semaphore
 #include <ti/sysbios/knl/Semaphore.h>
 
+#if USE_PIR
+
 unsigned int int_pin = 0;
 
 void PIR_wakeup_Task()
@@ -59,3 +61,5 @@ void PIR_wakeup_isr(unsigned int index)
 	//check interrupt source
 	Semaphore_post((Semaphore_Handle)semPIRwakeup);
 }
+
+#endif

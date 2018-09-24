@@ -54,13 +54,13 @@ extern "C" {
 
 #define LOG_VERBOSE 0 // define as 0 or 1!
 
-
 //#define MLX_READER		1
 #ifndef MLX_READER
 	#define EM_READER		1
 #endif
 
-#define LF_RFID //TODO: remove all references to this
+#define USE_PIR     0 // define as 0 or 1!
+
 
 /* LEDs on nestbox_board are active high. */
 #define nbox_LED_OFF (0)
@@ -77,8 +77,10 @@ typedef enum nbox_GPIOName {
 	nbox_lightbarrier_ext,
 	nbox_lightbarrier_int,
 	nbox_loadcell_data_ready,
+#if USE_PIR
 	nbox_pir_in1,
 	nbox_pir_in2,
+#endif
 #ifdef EM_READER
 	nbox_lf_data,
 	nbox_lf_clk,

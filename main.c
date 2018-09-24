@@ -84,7 +84,12 @@ Char load_cell_task_Stack[LOAD_CELL_TASKSTACKSIZE];
 Task_Struct bat_task_Struct;
 Char bat_task_Stack[BATTERY_TASKSTACKSIZE];
 
-
+#if USE_PIR
+// PIR task
+#define PIR_TASKSTACKSIZE   256
+Task_Struct pir_task_Struct;
+Char pir_task_Stack[PIR_TASKSTACKSIZE];
+#endif
 
 /*
  *  ======== main ========
@@ -99,7 +104,9 @@ int main(void)
     Task_Params log_taskParams;
     Task_Params load_cell_taskParams;
     Task_Params bat_taskParams;
-    Task_Params PIR_wakeup_taskParams;
+#if USE_PIR
+    Task_Params pir_taskParams;
+#endif
 
     // disable interrupts if an interrupt could lead to
 	// another call to Clock_tickReconfig or if interrupt
@@ -159,11 +166,19 @@ int main(void)
 
 	/* Construct battery monitoring Task  thread */
 	Task_Params_init(&bat_taskParams);
-	log_taskParams.stackSize = BATTERY_TASKSTACKSIZE;
-	log_taskParams.stack = &bat_task_Stack;
-	log_taskParams.priority = 5; //most important task, but with low duty cycle
+	bat_taskParams.stackSize = BATTERY_TASKSTACKSIZE;
+	bat_taskParams.stack = &bat_task_Stack;
+	bat_taskParams.priority = 5; //most important task, but with low duty cycle
 	Task_construct(&bat_task_Struct, (Task_FuncPtr)battery_Task, &bat_taskParams, NULL);
 
+#if USE_PIR
+	/* Construct battery monitoring Task  thread */
+    Task_Params_init(&pir_taskParams);
+    pir_taskParams.stackSize = PIR_TASKSTACKSIZE;
+    pir_taskParams.stack = &pir_task_Stack;
+    pir_taskParams.priority = 5; //most important task, but with low duty cycle
+    Task_construct(&pir_task_Struct, (Task_FuncPtr)PIR_wakeup_Task, &pir_taskParams, NULL);
+#endif
     /* Start BIOS */
     BIOS_start();
 
