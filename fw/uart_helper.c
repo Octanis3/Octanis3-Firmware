@@ -16,13 +16,16 @@
 #include <ti/sysbios/knl/Semaphore.h>
 
 UART_Handle debug_uart;
-static int uart_initialized = 0;
+UART_Handle wifi_uart;
+
+static int debug_uart_initialized = 0;
+static int wifi_uart_initialized = 0;
 
 
 int uart_debug_open(){
 	static UART_Params uartParams;
 
-	if(uart_initialized == 0)
+	if(debug_uart_initialized == 0)
 	{
 	    //reset TX gpio register settings:
 	    P2OUT |= BIT5;
@@ -53,7 +56,7 @@ int uart_debug_open(){
 
 		Semaphore_post((Semaphore_Handle)semSerial);
 
-		uart_initialized = 1;
+		debug_uart_initialized = 1;
 	}
 
 	return 1;
@@ -69,8 +72,58 @@ void uart_debug_close(){
     P2OUT &= ~BIT5;
     P2SEL1 &= ~BIT5;
 
-    uart_initialized = 0;
+    debug_uart_initialized = 0;
 #endif
+}
+
+
+int uart_wifi_open(){
+    static UART_Params uartParams;
+
+    if(wifi_uart_initialized == 0)
+    {
+//        //reset TX gpio register settings:
+//        P2OUT |= BIT5;
+//        P2SEL1 |= BIT5;
+
+        /* Create a UART with data processing off. */
+        UART_Params_init(&uartParams);
+        uartParams.writeDataMode = UART_DATA_BINARY;
+        uartParams.readDataMode = UART_DATA_BINARY;
+        uartParams.readReturnMode = UART_RETURN_FULL;
+        uartParams.readEcho = UART_ECHO_OFF;
+        uartParams.baudRate = 9600;
+        //uartParams.readMode = UART_MODE_BLOCKING;
+        //uartParams.readTimeout = 10;
+        //uartParams.dataLength = UART_LEN_8;
+
+        //Correct port for the mainboard
+        wifi_uart = UART_open(Board_UART_wifi, &uartParams);
+
+        if (wifi_uart == NULL)
+            return 0;
+
+#if(WIFI_UART_VERBOSE)
+
+        const char test_string[] = "nestbox wifi UART initialized\n";
+        uart_serial_write(&wifi_uart, (uint8_t*)test_string, sizeof(test_string));
+#endif
+
+        wifi_uart_initialized = 1;
+    }
+
+    return 1;
+}
+
+void uart_wifi_close(){
+
+    UART_close(wifi_uart);
+
+    //force write TX gpio to zero:
+//    P2OUT &= ~BIT5;
+//    P2SEL1 &= ~BIT5;
+
+    wifi_uart_initialized = 0;
 }
 
 
@@ -128,6 +181,7 @@ void uart_serial_print_event(char type, const uint8_t* data, unsigned int n)
 
 size_t uart_serial_write(UART_Handle *dev, const uint8_t *data, unsigned int n)
 {
+    //TODO: change to *dev
 	return UART_write(debug_uart, data, n);
 }
 

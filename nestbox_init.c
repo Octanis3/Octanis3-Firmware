@@ -355,8 +355,6 @@ const UARTEUSCIA_BaudrateConfig uartEUSCIABaudrates[] = {
 };
 
 const UARTEUSCIA_HWAttrs uartEUSCIAHWAttrs[nbox_UARTCOUNT] = {
-
-#ifdef LAUNCHPAD_PINDEF
     {
         .baseAddr = EUSCI_A0_BASE,
         .clockSource = EUSCI_A_UART_CLOCKSOURCE_SMCLK,
@@ -364,7 +362,6 @@ const UARTEUSCIA_HWAttrs uartEUSCIAHWAttrs[nbox_UARTCOUNT] = {
         .numBaudrateEntries = sizeof(uartEUSCIABaudrates)/sizeof(UARTEUSCIA_BaudrateConfig),
         .baudrateLUT = uartEUSCIABaudrates
     },
-#else
 	{
 		.baseAddr = EUSCI_A1_BASE,
 		.clockSource = EUSCI_A_UART_CLOCKSOURCE_SMCLK,
@@ -372,7 +369,6 @@ const UARTEUSCIA_HWAttrs uartEUSCIAHWAttrs[nbox_UARTCOUNT] = {
 		.numBaudrateEntries = sizeof(uartEUSCIABaudrates)/sizeof(UARTEUSCIA_BaudrateConfig),
 		.baudrateLUT = uartEUSCIABaudrates
 	},
-#endif
 };
 
 const UART_Config UART_config[] = {
@@ -381,11 +377,11 @@ const UART_Config UART_config[] = {
         .object = &uartEUSCIAObjects[0],
         .hwAttrs = &uartEUSCIAHWAttrs[0]
     },
-//	{
-//		.fxnTablePtr = &UARTEUSCIA_fxnTable,
-//		.object = &uartEUSCIAObjects[1],
-//		.hwAttrs = &uartEUSCIAHWAttrs[1]
-//	},
+	{
+		.fxnTablePtr = &UARTEUSCIA_fxnTable,
+		.object = &uartEUSCIAObjects[1],
+		.hwAttrs = &uartEUSCIAHWAttrs[1]
+	},
     {NULL, NULL, NULL}
 };
 

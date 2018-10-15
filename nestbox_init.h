@@ -52,7 +52,7 @@ extern "C" {
 //#define VERBOSE 		1
 // #define LAUNCHPAD_PINDEF 1
 
-#define LOG_VERBOSE 0 // define as 0 or 1!
+#define LOG_VERBOSE 1 // define as 0 or 1!
 
 //#define MLX_READER		1
 #ifndef MLX_READER
@@ -133,7 +133,7 @@ typedef enum nbox_SPIName {
  *  @brief  Enum of UART names on the nbox dev board
  */
 typedef enum nbox_UARTName {
-//    nbox_UARTA0 = 0,
+    nbox_UARTA0 = 0,
 	nbox_UARTA1,
 
     nbox_UARTCOUNT

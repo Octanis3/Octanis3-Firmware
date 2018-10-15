@@ -19,9 +19,13 @@
 #define UART_BUFFER_SIZE 50
 
 extern UART_Handle debug_uart;
+extern UART_Handle wifi_uart;
 
 int uart_debug_open();
 void uart_debug_close();
+
+int wifi_debug_open();
+void wifi_debug_close();
 
 size_t uart_serial_write(UART_Handle *dev, const uint8_t *data, unsigned int n);
 
