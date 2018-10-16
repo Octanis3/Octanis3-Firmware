@@ -106,7 +106,7 @@ int uart_wifi_open(){
 #if(WIFI_UART_VERBOSE)
 
         const char test_string[] = "nestbox wifi UART initialized\n";
-        uart_serial_write(&wifi_uart, (uint8_t*)test_string, sizeof(test_string));
+//        uart_serial_write(&wifi_uart, (uint8_t*)test_string, sizeof(test_string));
 #endif
 
         wifi_uart_initialized = 1;
@@ -182,7 +182,7 @@ void uart_serial_print_event(char type, const uint8_t* data, unsigned int n)
 size_t uart_serial_write(UART_Handle *dev, const uint8_t *data, unsigned int n)
 {
     //TODO: change to *dev
-	return UART_write(debug_uart, data, n);
+	return UART_write(*dev, data, n);
 }
 
 size_t uart_serial_read(UART_Handle *dev, uint8_t *data, unsigned int n)

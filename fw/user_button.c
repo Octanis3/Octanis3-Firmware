@@ -25,38 +25,40 @@
 void user_button_Task()
 {
 	GPIO_enableInt(Board_button);
+	Task_sleep(30000);
 
 	// MIN test program
         // A MIN context (we only have one because we're going to use a single port).
         // MIN 2.0 supports multiple contexts, each on a separate port, but in this example
         // we will use just SerialUSB.
+	uart_wifi_open();
 	struct min_context min_ctx;
 //        // Initialize the single context. Since we are going to ignore the port value we could
 //        // use any value. But in a bigger program we would probably use it as an index.
-//	min_init_context(&min_ctx, 0);
-//
-//	uint8_t rx_bytes[32];
-//	unsigned short n_rx=0;
+	min_init_context(&min_ctx, 0);
+
+	uint8_t rx_bytes[32];
+	unsigned short n_rx=0;
 
 	while(1)
 	{
-//	    n_rx = uart_serial_read(&wifi_uart, rx_bytes, 8);
+	    n_rx = uart_serial_read(&wifi_uart, rx_bytes, 8);
+
+	    if(n_rx)
+	    {
+	        min_poll(&min_ctx, rx_bytes, n_rx);
+	    }
+
+	    uint32_t now = Seconds_get();
+	    min_queue_frame(&min_ctx, 0x33U, (uint8_t *)&now, 4U);
+
+//		Semaphore_pend((Semaphore_Handle)semButton, BIOS_WAIT_FOREVER);
 //
-//	    if(n_rx)
-//	    {
-//	        min_poll(&min_ctx, rx_bytes, n_rx);
-//	    }
+//		/* Turn on data LED  */
+//		GPIO_write(Board_led_blue, Board_LED_ON);
 //
-//	    uint32_t now = Seconds_get();
-//	    min_queue_frame(&min_ctx, 0x33U, (uint8_t *)&now, 4U);
-
-		Semaphore_pend((Semaphore_Handle)semButton, BIOS_WAIT_FOREVER);
-
-		/* Turn on data LED  */
-		GPIO_write(Board_led_blue, Board_LED_ON);
-
-
-		log_restart();
+//
+//		log_restart();
 
 		Task_sleep(1000); //avoid too many subsequent memory readouts
         GPIO_write(Board_led_blue, Board_LED_OFF);
