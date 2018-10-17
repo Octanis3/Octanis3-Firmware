@@ -258,112 +258,113 @@ const uint8_t end_string[] = "#========== end FRAM logs ===========\n";
 void log_send_data_via_uart(uint16_t* FRAM_read_end_ptr)
 {
 
-	/********* possible example code for fast DMA transfer **********
-	// Set up DMA0, Repeated single transfer, length = index, UART trigger, transmit bytes
-	DMA_initParam dma_param = {0};
-	dma_param.channelSelect = DMA_CHANNEL_0;
-	dma_param.transferModeSelect = DMA_TRANSFER_REPEATED_SINGLE;
-	dma_param.transferSize = *FRAM_write_index;
-	dma_param.triggerSourceSelect = DMA_TRIGGERSOURCE_15;
-	dma_param.transferUnitSelect = DMA_SIZE_SRCBYTE_DSTBYTE;
-	dma_param.triggerTypeSelect = DMA_TRIGGER_RISINGEDGE;
-	DMA_init(&dma_param);
-
-	// Transfer from ADC_results in FRAM, increment
-	DMA_setSrcAddress(DMA_CHANNEL_0, (unsigned long)FRAM_ADC_RESULTS + 2,
-					  DMA_DIRECTION_INCREMENT);
-
-	// Transfer to TX buffer for UART (UCA0), unchanged
-	DMA_setDstAddress(DMA_CHANNEL_0, (unsigned long)&UCA0TXBUF,
-					  DMA_DIRECTION_UNCHANGED);
-	DMA_enableTransfers(DMA_CHANNEL_0);
-	DMA_enableInterrupt(DMA_CHANNEL_0);
-
-	// Go to sleep until transfer finishes
-	__bis_SR_register(LPM0_bits + GIE);
-	__no_operation();
-
-	EUSCI_A_UART_disable(__MSP430_BASEADDRESS_EUSCI_A0__);                      // Stop UART (UCA0)
-	DMA_disableTransfers(DMA_CHANNEL_0);                                        // disable DMA
-
-
-	************************ end example *************************/
-    GPIO_write(nbox_spi_cs_n, 0); //turn on SD card
-    Task_sleep(500);
-
-#if LOG_VERBOSE
-    uart_stop_debug_prints();
-    uart_serial_write(&debug_uart, start_string, sizeof(start_string));
-    //  uart_serial_write(&debug_uart, title_row, sizeof(title_row));
-#else
-    uart_debug_open();
-#endif
-
-	uint8_t outbuffer[OUTPUT_BUF_LEN];
-	while(FRAM_read_ptr < FRAM_read_end_ptr)
-	{
-		//send out log character and time stamp:
-        outbuffer[0] = *((uint8_t*)FRAM_read_ptr+LOG_CHAR_8b_OFS);
-        outbuffer[1] = ',';
-		int strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_TIME_32b_OFS), 10, 1, HIDE_LEADING_ZEROS, &(outbuffer[2]));
-        outbuffer[strlen+2] = ',';
-		uart_serial_write(&debug_uart, outbuffer, strlen+3);
-
-        unsigned char logchar = outbuffer[0];
-
-		if(logchar == 'X' || logchar == 'S' || logchar == 'A' || logchar == 'R')
-		{
-		    //send out milliseconds:
-//		    strlen = ui2a((*((uint8_t*)FRAM_read_ptr+LOG_MSEC_8b_OFS)<<2), 10, 1,HIDE_LEADING_ZEROS, outbuffer);
-//		    outbuffer[strlen] = ',';
-//		    uart_serial_write(&debug_uart, outbuffer, strlen+1);
-            if(logchar == 'R')
-            {
-                //send out UID and I/O:
-                strlen = ui2a(((*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_MSB_OFS))>>16) & 0x000000ff, 16, 1,HIDE_LEADING_ZEROS, outbuffer); //the first 32 (actually 8) bits
-                uart_serial_write(&debug_uart, outbuffer, strlen);
-                strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_LSB_OFS), 16, 1,PRINT_LEADING_ZEROS, outbuffer); //the second 32 bits
-                outbuffer[strlen] = '\n';
-                uart_serial_write(&debug_uart, outbuffer, strlen+1);
-            }
-            else
-            {
-                strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_VALUE_LONG_32b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
-                outbuffer[strlen] = ',';
-                uart_serial_write(&debug_uart, outbuffer, strlen+1);
-                strlen = ui2a(*((uint16_t*)FRAM_read_ptr+LOG_STDDEV_16b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
-                outbuffer[strlen] = '\n';
-                uart_serial_write(&debug_uart, outbuffer, strlen+1);
-            }
-
-            //increment pointer to next memory location
-            FRAM_read_ptr += LOG_ENTRY_LONG_16b_LEN; // TODO_ why not 8bit value???
-            continue;
-		}
-
-
-		//print short value:
-		strlen = ui2a(*((uint16_t*)FRAM_read_ptr+LOG_VALUE_SHORT_16b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
-        outbuffer[strlen] = '\n';
-        uart_serial_write(&debug_uart, outbuffer, strlen+1);
-
-        //increment pointer to next memory location
-        FRAM_read_ptr += LOG_ENTRY_SHORT_16b_LEN;
-
-	}
-
-
-    Task_sleep(1000); //wait for data to be written
-
-#if LOG_VERBOSE
-    uart_serial_write(&debug_uart, end_string, sizeof(end_string));
-    Task_sleep(100);
-    uart_start_debug_prints();
-#else
-    uart_debug_close();
-#endif
-
-    GPIO_write(nbox_spi_cs_n, 1); //turn off SD card
+//
+//	/********* possible example code for fast DMA transfer **********
+//	// Set up DMA0, Repeated single transfer, length = index, UART trigger, transmit bytes
+//	DMA_initParam dma_param = {0};
+//	dma_param.channelSelect = DMA_CHANNEL_0;
+//	dma_param.transferModeSelect = DMA_TRANSFER_REPEATED_SINGLE;
+//	dma_param.transferSize = *FRAM_write_index;
+//	dma_param.triggerSourceSelect = DMA_TRIGGERSOURCE_15;
+//	dma_param.transferUnitSelect = DMA_SIZE_SRCBYTE_DSTBYTE;
+//	dma_param.triggerTypeSelect = DMA_TRIGGER_RISINGEDGE;
+//	DMA_init(&dma_param);
+//
+//	// Transfer from ADC_results in FRAM, increment
+//	DMA_setSrcAddress(DMA_CHANNEL_0, (unsigned long)FRAM_ADC_RESULTS + 2,
+//					  DMA_DIRECTION_INCREMENT);
+//
+//	// Transfer to TX buffer for UART (UCA0), unchanged
+//	DMA_setDstAddress(DMA_CHANNEL_0, (unsigned long)&UCA0TXBUF,
+//					  DMA_DIRECTION_UNCHANGED);
+//	DMA_enableTransfers(DMA_CHANNEL_0);
+//	DMA_enableInterrupt(DMA_CHANNEL_0);
+//
+//	// Go to sleep until transfer finishes
+//	__bis_SR_register(LPM0_bits + GIE);
+//	__no_operation();
+//
+//	EUSCI_A_UART_disable(__MSP430_BASEADDRESS_EUSCI_A0__);                      // Stop UART (UCA0)
+//	DMA_disableTransfers(DMA_CHANNEL_0);                                        // disable DMA
+//
+//
+//	************************ end example *************************/
+//    GPIO_write(nbox_spi_cs_n, 0); //turn on SD card
+//    Task_sleep(500);
+//
+//#if LOG_VERBOSE
+//    uart_stop_debug_prints();
+//    uart_serial_write(&debug_uart, start_string, sizeof(start_string));
+//    //  uart_serial_write(&debug_uart, title_row, sizeof(title_row));
+//#else
+//    uart_debug_open();
+//#endif
+//
+//	uint8_t outbuffer[OUTPUT_BUF_LEN];
+//	while(FRAM_read_ptr < FRAM_read_end_ptr)
+//	{
+//		//send out log character and time stamp:
+//        outbuffer[0] = *((uint8_t*)FRAM_read_ptr+LOG_CHAR_8b_OFS);
+//        outbuffer[1] = ',';
+//		int strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_TIME_32b_OFS), 10, 1, HIDE_LEADING_ZEROS, &(outbuffer[2]));
+//        outbuffer[strlen+2] = ',';
+//		uart_serial_write(&debug_uart, outbuffer, strlen+3);
+//
+//        unsigned char logchar = outbuffer[0];
+//
+//		if(logchar == 'X' || logchar == 'S' || logchar == 'A' || logchar == 'R')
+//		{
+//		    //send out milliseconds:
+////		    strlen = ui2a((*((uint8_t*)FRAM_read_ptr+LOG_MSEC_8b_OFS)<<2), 10, 1,HIDE_LEADING_ZEROS, outbuffer);
+////		    outbuffer[strlen] = ',';
+////		    uart_serial_write(&debug_uart, outbuffer, strlen+1);
+//            if(logchar == 'R')
+//            {
+//                //send out UID and I/O:
+//                strlen = ui2a(((*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_MSB_OFS))>>16) & 0x000000ff, 16, 1,HIDE_LEADING_ZEROS, outbuffer); //the first 32 (actually 8) bits
+//                uart_serial_write(&debug_uart, outbuffer, strlen);
+//                strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_LSB_OFS), 16, 1,PRINT_LEADING_ZEROS, outbuffer); //the second 32 bits
+//                outbuffer[strlen] = '\n';
+//                uart_serial_write(&debug_uart, outbuffer, strlen+1);
+//            }
+//            else
+//            {
+//                strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_VALUE_LONG_32b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
+//                outbuffer[strlen] = ',';
+//                uart_serial_write(&debug_uart, outbuffer, strlen+1);
+//                strlen = ui2a(*((uint16_t*)FRAM_read_ptr+LOG_STDDEV_16b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
+//                outbuffer[strlen] = '\n';
+//                uart_serial_write(&debug_uart, outbuffer, strlen+1);
+//            }
+//
+//            //increment pointer to next memory location
+//            FRAM_read_ptr += LOG_ENTRY_LONG_16b_LEN; // TODO_ why not 8bit value???
+//            continue;
+//		}
+//
+//
+//		//print short value:
+//		strlen = ui2a(*((uint16_t*)FRAM_read_ptr+LOG_VALUE_SHORT_16b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
+//        outbuffer[strlen] = '\n';
+//        uart_serial_write(&debug_uart, outbuffer, strlen+1);
+//
+//        //increment pointer to next memory location
+//        FRAM_read_ptr += LOG_ENTRY_SHORT_16b_LEN;
+//
+//	}
+//
+//
+//    Task_sleep(1000); //wait for data to be written
+//
+//#if LOG_VERBOSE
+//    uart_serial_write(&debug_uart, end_string, sizeof(end_string));
+//    Task_sleep(100);
+//    uart_start_debug_prints();
+//#else
+//    uart_debug_close();
+//#endif
+//
+//    GPIO_write(nbox_spi_cs_n, 1); //turn off SD card
 }
 
 uint8_t log_phase_two()

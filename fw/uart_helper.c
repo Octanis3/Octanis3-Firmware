@@ -100,26 +100,26 @@ void uart_serial_print_event(char type, const uint8_t* data, unsigned int n)
 
 		uint8_t strlen;
 		uint8_t sec_buf[7];
-		strlen = ui2a(rtc_sec, 10, 1, HIDE_LEADING_ZEROS, sec_buf);
-		sec_buf[strlen]=',';
-		UART_write(debug_uart, sec_buf, strlen+1);
-
-		strlen = ui2a(seconds, 10, 1, HIDE_LEADING_ZEROS, sec_buf);
-		if(strlen>6)
-				strlen = 6;
-		sec_buf[strlen]='.';
-		UART_write(debug_uart, sec_buf, strlen+1);
-		strlen = ui2a(msecs, 10, 1, HIDE_LEADING_ZEROS, sec_buf);
-		if(strlen<3)
-			UART_write(debug_uart, &zero, 1);
-		if(strlen<2)
-			UART_write(debug_uart, &zero, 1);
-		if(strlen>4)
-			strlen = 4;
-		sec_buf[strlen]=',';
-		sec_buf[strlen+1]=type;
-		sec_buf[strlen+2]=',';
-		UART_write(debug_uart, sec_buf, strlen+3);
+//		strlen = ui2a(rtc_sec, 10, 1, HIDE_LEADING_ZEROS, sec_buf);
+//		sec_buf[strlen]=',';
+//		UART_write(debug_uart, sec_buf, strlen+1);
+//
+//		strlen = ui2a(seconds, 10, 1, HIDE_LEADING_ZEROS, sec_buf);
+//		if(strlen>6)
+//				strlen = 6;
+//		sec_buf[strlen]='.';
+//		UART_write(debug_uart, sec_buf, strlen+1);
+//		strlen = ui2a(msecs, 10, 1, HIDE_LEADING_ZEROS, sec_buf);
+//		if(strlen<3)
+//			UART_write(debug_uart, &zero, 1);
+//		if(strlen<2)
+//			UART_write(debug_uart, &zero, 1);
+//		if(strlen>4)
+//			strlen = 4;
+//		sec_buf[strlen]=',';
+//		sec_buf[strlen+1]=type;
+//		sec_buf[strlen+2]=',';
+//		UART_write(debug_uart, sec_buf, strlen+3);
 		UART_write(debug_uart, data, n);
 		UART_write(debug_uart, &newline, 1);
 

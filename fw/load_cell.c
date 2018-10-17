@@ -48,7 +48,7 @@
 #define T_LOADCELL_POLL	1000 	//ms
 
 #define SAMPLE_TOLERANCE 	2000		// maximum variation of the sampled values within N_AVERAGES samples
-#define WEIGHT_TOLERANCE 	1000 	// maximum deviation from average value within one measurement series
+#define WEIGHT_TOLERANCE 	10 	// -->this value will change to "stable" and detection mode again maximum deviation from average value within one measurement series
 #define WEIGHT_MAX_CHANGE	500	// maximum change within one "event"
 
 //#define RAW_THRESHOLD       1000
@@ -246,15 +246,15 @@ void load_cell_Task()
 
     Task_sleep(100);
 
-	int32_t max_deviation = 0;
-	averaged_weight_threshold = ads1220_read_average(20, &max_deviation, &ads) + WEIGHT_THRESHOLD;
-
-
-    ads1220_change_mode(&ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT, ADS1220_TEMPERATURE_DISABLED);
-    GPIO_enableInt(nbox_loadcell_data_ready);
-
-	ads1220_tare(20, &ads);
-	ads1220_set_raw_threshold(&raw_threshold, WEIGHT_THRESHOLD);
+//	int32_t max_deviation = 0;
+//	averaged_weight_threshold = ads1220_read_average(20, &max_deviation, &ads) + WEIGHT_THRESHOLD;
+//
+//
+//    ads1220_change_mode(&ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT, ADS1220_TEMPERATURE_DISABLED);
+//    GPIO_enableInt(nbox_loadcell_data_ready);
+//
+//	ads1220_tare(20, &ads);
+//	ads1220_set_raw_threshold(&raw_threshold, WEIGHT_THRESHOLD);
 
 	ads1220_change_mode(&ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT, ADS1220_TEMPERATURE_DISABLED);
 	// !! "every write access to any configuration register also starts a new conversion" !!
@@ -297,19 +297,20 @@ void load_cell_Task()
 
 			// hx711_power_down();
 #endif
-
-			if((ads.data)>raw_threshold)
+			if(1)
+//			if((ads.data)>raw_threshold)
             {
-	            log_write_new_entry('D', ((ads.data)>>8) & 0x0000ffff);
+//	            log_write_new_entry('D', ((ads.data)>>8) & 0x0000ffff);
 				if(event_ongoing==0)
 				{
-                    rfid_start_detection();
-                    Semaphore_pend((Semaphore_Handle)semLoadCell,RFID_TIMEOUT);
-                    rfid_stop_detection();
+                    //rfid_start_detection();
+                    //Semaphore_pend((Semaphore_Handle)semLoadCell,RFID_TIMEOUT);
+                    //rfid_stop_detection();
 
-					rfid_type = rfid_get_id(&owl_ID);
+					rfid_type = 0;//rfid_get_id(&owl_ID);
 
-					if(rfid_type>0)
+					//if(rfid_type>0)
+					if(1)
 					{
 						// now start the weight measurement
 
@@ -365,7 +366,7 @@ void load_cell_Task()
 			ads1220_convert_temperature(&ads);
 
 			uint16_t temp = (uint16_t)((ads.temperature+273.15) * 10); //deci kelvins
-            log_write_new_entry('T', temp);
+//            log_write_new_entry('T', temp);
 
             GPIO_disableInt(nbox_loadcell_data_ready);
 			ads1220_change_mode(&ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION, ADS1220_TEMPERATURE_DISABLED);

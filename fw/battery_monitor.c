@@ -142,21 +142,21 @@ void battery_Task()
 
 	while(1)
 	{
-		//Test battery status every 5 minutes
-		GPIO_write(nbox_vbat_test_enable,1);
-		//100 us turn-on time max
-		ADC_update();
-		GPIO_write(nbox_vbat_test_enable,0);
-		display_result();
-
-		if(ADC_val < BAT_EMPTY_16)
-			counter++;
-		else
-			counter=0;
-
-		if(counter > BAT_N_MEAS_BELOW_THRESHOLD)
-			goto_deepsleep();
-
+//		//Test battery status every 5 minutes
+//		GPIO_write(nbox_vbat_test_enable,1);
+//		//100 us turn-on time max
+//		ADC_update();
+//		GPIO_write(nbox_vbat_test_enable,0);
+//		display_result();
+//
+//		if(ADC_val < BAT_EMPTY_16)
+//			counter++;
+//		else
+//			counter=0;
+//
+//		if(counter > BAT_N_MEAS_BELOW_THRESHOLD)
+//			goto_deepsleep();
+//
 
 		Task_sleep(BAT_TEST_INTERVAL); //300000
 	}
