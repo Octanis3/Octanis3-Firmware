@@ -177,9 +177,10 @@ bool spi_submit(struct spi_periph *p, struct spi_transaction *t)
 	spiTransaction.rxBuf = t->input_buf;
 
 	SpiSlaveSelect(nbox_loadcell_spi_cs_n);
+	Task_sleep(100);
 	transferOK = SPI_transfer(nestbox_spi_handle, &spiTransaction);
 	//if(keep_selected == 0)
-		SpiSlaveUnselect(nbox_loadcell_spi_cs_n);
+//		SpiSlaveUnselect(nbox_loadcell_spi_cs_n);
 
 
 	if (!transferOK) {

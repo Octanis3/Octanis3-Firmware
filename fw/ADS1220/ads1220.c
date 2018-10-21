@@ -134,8 +134,27 @@ void ads1220_change_mode(struct Ads1220 *ads, enum Ads1220SampleRate rate, enum 
     Task_sleep(100); // empirically required!!
 
 	//start readout:
-//	ads1220_start_conversion(ads);
+	ads1220_start_conversion(ads);
 }
+
+void ads1220_read_registers(struct Ads1220 *ads)
+{
+    ads->spi_trans.output_length = 0;
+    ads->spi_trans.input_length = 5;
+    ads->tx_buf[0] = ADS1220_RREG(ADS1220_CONF0, 4);
+    ads->tx_buf[1] = 0x0;
+    ads->tx_buf[2] = 0x0;
+    ads->tx_buf[3] = 0x0;
+    ads->tx_buf[4] = 0x0;
+
+    spi_submit(ads->spi_p, &(ads->spi_trans));
+
+    Task_sleep(100); // empirically required!!
+
+    //start readout:
+//    ads1220_start_conversion(ads);
+}
+
 
 // Configuration function called before normal use
 void ads1220_configure(struct Ads1220 *ads)

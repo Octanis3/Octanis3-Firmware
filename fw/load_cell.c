@@ -45,10 +45,10 @@
 
 #define RFID_TIMEOUT		200 	//ms
 #define T_RFID_RETRY		1000 	//ms
-#define T_LOADCELL_POLL	1000 	//ms
+#define T_LOADCELL_POLL	500 	//ms
 
-#define SAMPLE_TOLERANCE 	2000		// maximum variation of the sampled values within N_AVERAGES samples
-#define WEIGHT_TOLERANCE 	10 	// -->this value will change to "stable" and detection mode again maximum deviation from average value within one measurement series
+#define SAMPLE_TOLERANCE 	200		// maximum variation of the sampled values within N_AVERAGES samples
+#define WEIGHT_TOLERANCE 	1 	// -->this value will change to "stable" and detection mode again maximum deviation from average value within one measurement series
 #define WEIGHT_MAX_CHANGE	500	// maximum change within one "event"
 
 //#define RAW_THRESHOLD       1000
@@ -97,8 +97,8 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 		    {
                 first_valid = 0;
                 threshold_cnt = 0;
-    //			first_invalid = 0;
-                return OWL_LEFT;
+//    			    first_invalid = 0;
+//                return OWL_LEFT;
 		    }
 		    else
 		        continue;
@@ -168,7 +168,7 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 
 void ads1220_set_loadcell_config(struct Ads1220 *ads){
 	ads->config.mux = ADS1220_MUX_AIN1_AIN2;
-	ads->config.gain = ADS1220_GAIN_128;
+	ads->config.gain = ADS1220_GAIN_128; //became non-linear at gain >= 32
 	ads->config.pga_bypass = 0;
 	ads->config.rate = ADS1220_RATE_20_HZ;
 	// todo: change operating mode to duty-cycle mode
@@ -277,6 +277,7 @@ void load_cell_Task()
 
         Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
 		ads1220_start_conversion(&ads);
+		Task_sleep(100);
 		Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, 100); // timeout 100 ms in case DRDY pin is not connected
 
 		ads1220_periodic(&ads);
@@ -297,10 +298,19 @@ void load_cell_Task()
 
 			// hx711_power_down();
 #endif
+            log_write_new_weight_entry('D', (ads.data), 0x0000ffff);
+
+            ads1220_read_registers(&ads);
+
+//            log_write_new_entry('0', ads.rx_buf[1]);
+//            log_write_new_entry('1', ads.rx_buf[2]);
+//            log_write_new_entry('2', ads.rx_buf[3]);
+//            log_write_new_entry('3', ads.rx_buf[4]);
+
+
 			if(1)
 //			if((ads.data)>raw_threshold)
             {
-//	            log_write_new_entry('D', ((ads.data)>>8) & 0x0000ffff);
 				if(event_ongoing==0)
 				{
                     //rfid_start_detection();

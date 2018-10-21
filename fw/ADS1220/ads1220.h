@@ -65,7 +65,7 @@ enum Ads1220Mux {
   ADS1220_MUX_AIN3_AVSS,
   ADS1220_MUX_REFP_REFN,
   ADS1220_MUX_AVDD_AVSS,
-  ADS1220_MUX_AVDD_AVSS_2
+  ADS1220_MUX_AVDD_AVSS_2_SHORT
 };
 
 // Gain config
@@ -193,6 +193,7 @@ struct Ads1220 {
 // Functions
 extern void ads1220_init(struct Ads1220 *ads, struct spi_periph *spi_p, uint8_t slave_idx);
 extern void ads1220_configure(struct Ads1220 *ads);
+void ads1220_read_registers(struct Ads1220 *ads);
 extern void ads1220_read(struct Ads1220 *ads);
 extern void ads1220_event(struct Ads1220 *ads);
 extern void ads1220_powerdown(struct Ads1220 *ads);

@@ -98,7 +98,7 @@ void uart_serial_print_event(char type, const uint8_t* data, unsigned int n)
 
 		uint32_t rtc_sec = Seconds_get();
 
-		uint8_t strlen;
+		uint8_t strlen=0;
 		uint8_t sec_buf[7];
 //		strlen = ui2a(rtc_sec, 10, 1, HIDE_LEADING_ZEROS, sec_buf);
 //		sec_buf[strlen]=',';
@@ -117,9 +117,9 @@ void uart_serial_print_event(char type, const uint8_t* data, unsigned int n)
 //		if(strlen>4)
 //			strlen = 4;
 //		sec_buf[strlen]=',';
-//		sec_buf[strlen+1]=type;
-//		sec_buf[strlen+2]=',';
-//		UART_write(debug_uart, sec_buf, strlen+3);
+		sec_buf[0]=type;
+		sec_buf[1]=',';
+		UART_write(debug_uart, sec_buf, 2);
 		UART_write(debug_uart, data, n);
 		UART_write(debug_uart, &newline, 1);
 
