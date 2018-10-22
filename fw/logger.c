@@ -350,6 +350,19 @@ void log_send_data_via_uart(uint16_t* FRAM_read_end_ptr)
 
 
 	uint8_t outbuffer[OUTPUT_BUF_LEN];
+
+	//print load cell offset at beginning of each file:
+	outbuffer[0] = 'O';
+	outbuffer[1] = ',';
+	int strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_TIME_32b_OFS), 10, 1, HIDE_LEADING_ZEROS, &(outbuffer[2]));
+	outbuffer[strlen+2] = ',';
+    uart_serial_write(&debug_uart, outbuffer, strlen+3);
+
+    strlen = ui2a(get_weight_offset(), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
+    outbuffer[strlen] = '\n';
+    uart_serial_write(&debug_uart, outbuffer, strlen+1);
+
+
 	while(FRAM_read_ptr < FRAM_read_end_ptr)
 	{
 		//send out log character and time stamp:
@@ -361,7 +374,7 @@ void log_send_data_via_uart(uint16_t* FRAM_read_end_ptr)
 
         unsigned char logchar = outbuffer[0];
 
-		if(logchar == 'X' || logchar == 'S' || logchar == 'A' || logchar == 'R')
+		if(logchar == 'X' || logchar == 'O' || logchar == 'S' || logchar == 'A' || logchar == 'R')
 		{
 		    //send out milliseconds:
 //		    strlen = ui2a((*((uint8_t*)FRAM_read_ptr+LOG_MSEC_8b_OFS)<<2), 10, 1,HIDE_LEADING_ZEROS, outbuffer);

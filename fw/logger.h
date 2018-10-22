@@ -18,6 +18,9 @@ int log_write_new_weight_entry(uint8_t logchar, uint32_t weight, uint16_t stdev)
 
 void log_send_data_via_uart(unsigned int* FRAM_read_end_ptr);
 
+int32_t get_weight_offset(); //inside loadcell.c
+
+
 void log_Task();
 
 #endif /* FW_LOGGER_H_ */

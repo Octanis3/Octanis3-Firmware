@@ -28,7 +28,8 @@
 #include <xdc/runtime/Error.h>
 #include <xdc/runtime/System.h>
 
-#define WEIGHT_THRESHOLD 20000 // raw ADC units
+#define WEIGHT_THRESHOLD 50000 // raw ADC units --> ADC_VAL = 1098.9 * GRAMS + OFFSET; R² = 0.99999
+
 #ifdef USE_HX
 	#define SAMPLE_RATE		HX_SAMPLE_RATE //Hz
 #endif
@@ -47,26 +48,32 @@
 #define T_RFID_RETRY		1000 	//ms
 #define T_LOADCELL_POLL	1000 	//ms
 
-#define SAMPLE_TOLERANCE 	2000		// maximum variation of the sampled values within N_AVERAGES samples
-#define WEIGHT_TOLERANCE 	1000 	// maximum deviation from average value within one measurement series
-#define WEIGHT_MAX_CHANGE	500	// maximum change within one "event"
+#define SAMPLE_TOLERANCE 	1000		// maximum variation of the sampled values within N_AVERAGES samples
+#define WEIGHT_TOLERANCE 	50 	// maximum deviation from average value within one measurement series
+//#define WEIGHT_MAX_CHANGE	100	// maximum change within one "event"
 
 //#define RAW_THRESHOLD       1000
 // TODO: above values should be in %FS
 
 Semaphore_Handle semLoadCellDRDY;
 
-int32_t averaged_weight_threshold = 5000; // TODO!!!
+int32_t averaged_weight_threshold = 250000; // TODO!!!
+
+int32_t get_weight_offset()
+{
+    return averaged_weight_threshold-WEIGHT_THRESHOLD;
+}
 
 typedef enum weightResultStatus_
 {
 	OWL_LEFT = 0,
 	UNSTABLE,
-	STABLE
+	STABLE,
+	OWL_CAME_BACK
 } weightResultStatus;
 
 
-weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
+weightResultStatus load_cell_get_stable(struct Ads1220 *ads, uint8_t type) //type = 'X' for owl or 'O' for offset measurement
 {
 	static int32_t meas_buf[EVENT_BUF_SIZE] = {0,};
 	static int first_valid = 0;
@@ -77,6 +84,8 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 	int values_recorded = 0;
 	int32_t deviation = 0;
 
+    static unsigned int threshold_cnt = 0;
+
 	// fill circular buffer with new measurements
 	while(values_recorded < EVENT_BUF_SIZE)
 	{
@@ -86,14 +95,13 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 #ifdef USE_ADS
 		meas_buf[tmp] = ads1220_read_average(N_AVERAGES, &deviation, ads);
 #endif
-		log_write_new_weight_entry('X', meas_buf[tmp], 0x0000ffff & deviation);
+		log_write_new_weight_entry(type, meas_buf[tmp], 0x0000ffff & deviation);
 
 		if(meas_buf[tmp] < averaged_weight_threshold)
 		{
-		    static unsigned int threshold_cnt = 0; //
 		    threshold_cnt = threshold_cnt+1;
 
-		    if(threshold_cnt>3)
+		    if(threshold_cnt>100) // measure zero value 100 times!
 		    {
                 first_valid = 0;
                 threshold_cnt = 0;
@@ -103,6 +111,18 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads)
 		    else
 		        continue;
 		}
+		else
+		{
+		    if(threshold_cnt>4 || type == 'O') // the owl clearly left and potentially another came back --> re-start the series!
+		    {
+	            threshold_cnt = 0;
+		        return OWL_CAME_BACK;
+		    }
+		    //else:
+            threshold_cnt = 0;
+		}
+
+
 		if(deviation > SAMPLE_TOLERANCE)
 			continue;
 
@@ -194,6 +214,7 @@ void load_cell_Task()
 	//storage for measurement series
 	char event_ongoing = 0;
 	char series_completed = 0;
+    unsigned int offset_counter = 7100;
 
 	uint64_t owl_ID = 0;
 	int rfid_type = 0;
@@ -326,7 +347,7 @@ void load_cell_Task()
 						ads.tolerance = SAMPLE_TOLERANCE;
 #endif
 
-						event_ongoing = 1;
+						event_ongoing ='X';
 						series_completed = 0;
 					}
 					else
@@ -335,20 +356,37 @@ void load_cell_Task()
 			}
 			else
 			{
-				event_ongoing = 0;
+				// periodically measure tare offset again
+				if(offset_counter >= 3600 || event_ongoing == 'S') // ca. every 1 hour AND after a finished event that got a stable result
+				{
+				    event_ongoing = 'O'; //start a new offset measurement!
+				    series_completed = 0;
+                    // change to slow = exact mode
+                    GPIO_disableInt(nbox_loadcell_data_ready);
+
+                    ads1220_change_mode(&ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION, ADS1220_TEMPERATURE_DISABLED);
+
+				    offset_counter = 0;
+				}
+				else
+				{
+                    event_ongoing = 0;
+                    offset_counter += 1;
+				}
+
 			}
 
 			// polling delay...
 			Task_sleep(T_LOADCELL_POLL);
 		}
 
-		if(event_ongoing==1 && series_completed==0)
+		if(event_ongoing>0 && series_completed==0)
 		{
 			// -->ID WAS DETECTED!
 
 			//measure weight again with 10 averages:
 
-			weightResultStatus res = load_cell_get_stable(&ads);
+			weightResultStatus res = load_cell_get_stable(&ads, event_ongoing);
 
 			// measure temperature
 			ads1220_change_mode(&ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION, ADS1220_TEMPERATURE_ENABLED);
@@ -370,10 +408,19 @@ void load_cell_Task()
             GPIO_disableInt(nbox_loadcell_data_ready);
 			ads1220_change_mode(&ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION, ADS1220_TEMPERATURE_DISABLED);
 
-			if(res == STABLE || res == OWL_LEFT)
+			if(res == STABLE || res == OWL_LEFT || res == OWL_CAME_BACK)
 			{
 				//stable event!! + mark series completed, but keep event ongoing (in order to not count it twice)!
 				series_completed = 1;
+
+	            if(res == OWL_CAME_BACK || res == OWL_LEFT)
+	            {
+	                event_ongoing = 0;
+	            }
+	            else if(res == STABLE)
+	            {
+	                event_ongoing = 'S';
+	            }
 
 				// stop the weight measurement
 #ifdef USE_ADS
@@ -383,6 +430,7 @@ void load_cell_Task()
 
 #endif
 			}
+
 //			else if(res == OWL_LEFT)
 //			{
 //				// owl has left the perch...
