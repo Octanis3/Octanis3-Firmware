@@ -42,29 +42,29 @@ void user_button_Task()
 
 	while(1)
 	{
-//	    n_rx = uart_serial_read(&wifi_uart, rx_bytes, 8);
+////	    n_rx = uart_serial_read(&wifi_uart, rx_bytes, 8);
+////
+//	    if(n_rx)
+//	    {
+//	        min_poll(&min_ctx, rx_bytes, n_rx);
+//	        uart_serial_write(&debug_uart, min_ctx.rx_frame_payload_buf, min_ctx.rx_frame_payload_bytes);
+//	    }
+//	    else
+//	    {
+////	        const char test_string[] = "W\n";
+////	        uart_serial_write(&debug_uart, (uint8_t*)test_string, sizeof(test_string));
+//	    }
 //
-	    if(n_rx)
-	    {
-	        min_poll(&min_ctx, rx_bytes, n_rx);
-	        uart_serial_write(&debug_uart, min_ctx.rx_frame_payload_buf, min_ctx.rx_frame_payload_bytes);
-	    }
-	    else
-	    {
-//	        const char test_string[] = "W\n";
-//	        uart_serial_write(&debug_uart, (uint8_t*)test_string, sizeof(test_string));
-	    }
+//	    uint32_t now = Seconds_get();
+//	    min_send_frame(&min_ctx, 0x33U, (uint8_t *)&now, 4U);
 
-	    uint32_t now = Seconds_get();
-	    min_send_frame(&min_ctx, 0x33U, (uint8_t *)&now, 4U);
+		Semaphore_pend((Semaphore_Handle)semButton, BIOS_WAIT_FOREVER);
 
-//		Semaphore_pend((Semaphore_Handle)semButton, BIOS_WAIT_FOREVER);
-//
-//		/* Turn on data LED  */
-//		GPIO_write(Board_led_blue, Board_LED_ON);
-//
-//
-//		log_restart();
+		/* Turn on data LED  */
+		GPIO_write(Board_led_blue, Board_LED_ON);
+
+
+		log_restart();
 
 		Task_sleep(1000); //avoid too many subsequent memory readouts
         GPIO_write(Board_led_blue, Board_LED_OFF);

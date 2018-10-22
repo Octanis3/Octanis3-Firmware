@@ -162,7 +162,10 @@ void quick_print(long value, char log_symbol)
     }
     uint8_t strlen;
     uint8_t weight_buf[20];
-    strlen = ui2a(value, 10, 1, HIDE_LEADING_ZEROS, &weight_buf[1]);
+    if(log_symbol == 'D')
+        strlen = ui2a(value<<8, 10, 1, HIDE_LEADING_ZEROS, &weight_buf[1]);
+    else
+        strlen = ui2a(value, 10, 1, HIDE_LEADING_ZEROS, &weight_buf[1]);
     weight_buf[0] = sign;
 
     Semaphore_pend((Semaphore_Handle)semSerial,BIOS_WAIT_FOREVER);
@@ -390,7 +393,11 @@ void log_send_data_via_uart(uint16_t* FRAM_read_end_ptr)
 
 
 		//print short value:
-		strlen = ui2a(*((uint16_t*)FRAM_read_ptr+LOG_VALUE_SHORT_16b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
+		if(logchar == 'D')
+		    strlen = ui2a(((uint32_t)(*((uint16_t*)FRAM_read_ptr+LOG_VALUE_SHORT_16b_OFS)))<<8, 10, 1, HIDE_LEADING_ZEROS, outbuffer);
+		else
+		    strlen = ui2a(*((uint16_t*)FRAM_read_ptr+LOG_VALUE_SHORT_16b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
+
         outbuffer[strlen] = '\n';
         uart_serial_write(&debug_uart, outbuffer, strlen+1);
 
