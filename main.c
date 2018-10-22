@@ -65,7 +65,7 @@ Task_Struct rfid_task_Struct;
 Char rfid_task_Stack[RFID_TASKSTACKSIZE];
 
 // user button task
-#define BUTTON_TASKSTACKSIZE   512
+#define BUTTON_TASKSTACKSIZE   1024 //TODO: decrease size again!
 Task_Struct button_task_Struct;
 Char button_task_Stack[BUTTON_TASKSTACKSIZE];
 
@@ -95,7 +95,7 @@ Char pir_task_Stack[PIR_TASKSTACKSIZE];
  *  ======== main ========
  */
 int main(void)
- {
+{
 #ifdef LIGHTBARRIER_VERSION
     Task_Params lb_taskParams;
 #endif
