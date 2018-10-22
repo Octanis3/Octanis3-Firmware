@@ -351,8 +351,8 @@ void log_send_data_via_uart(uint16_t* FRAM_read_end_ptr)
 
 	uint8_t outbuffer[OUTPUT_BUF_LEN];
 
-	//print load cell offset at beginning of each file:
-	outbuffer[0] = 'O';
+	//print load cell offset as header of each file:
+	outbuffer[0] = 'H';
 	outbuffer[1] = ',';
 	int strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_TIME_32b_OFS), 10, 1, HIDE_LEADING_ZEROS, &(outbuffer[2]));
 	outbuffer[strlen+2] = ',';

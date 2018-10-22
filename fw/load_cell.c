@@ -332,6 +332,8 @@ void load_cell_Task()
 
 					if(rfid_type>0)
 					{
+	                    rfid_reset_detection_counts();
+
 						// now start the weight measurement
 
 //					    //indicate calibration mode if calib UID detected:
@@ -370,6 +372,7 @@ void load_cell_Task()
 				}
 				else
 				{
+				    rfid_reset_detection_counts();
                     event_ongoing = 0;
                     offset_counter += 1;
 				}

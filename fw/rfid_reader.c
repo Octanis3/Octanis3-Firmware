@@ -49,8 +49,14 @@ void rfid_Task()
 		{
 			if(em4100_format(&mlx_dev, &lf_tagdata) == MLX90109_OK)
 			{
-				lf_tagdata.valid = 1;
-				rfid_stop_detection();
+			    lf_tagdata.detection_counts += 1;
+
+			    lf_tagdata.valid = 1;
+
+				if(lf_tagdata.detection_counts>2)
+				{
+				    rfid_stop_detection();
+				}
 			}
 		}
 
@@ -69,7 +75,7 @@ void rfid_Task()
 
 int rfid_get_id(uint64_t* id)
 {
-	if(lf_tagdata.valid)
+	if(lf_tagdata.detection_counts)
 	{
 		*id = lf_tagdata.tagId;
 //		if(lf_tagdata.tagId == CALIB162_UID)
@@ -91,6 +97,11 @@ void rfid_start_detection()
 	GPIO_write(nbox_5v_enable,1);
 	mlx90109_activate_reader(&mlx_dev);
 	em4095_startRfidCapture();
+}
+
+void rfid_reset_detection_counts()
+{
+    lf_tagdata.detection_counts = 0;
 }
 
 void rfid_stop_detection()

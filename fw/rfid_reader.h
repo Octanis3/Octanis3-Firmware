@@ -22,6 +22,8 @@ int rfid_get_id(uint64_t* id);
 
 void rfid_start_detection();
 void rfid_stop_detection();
+void rfid_reset_detection_counts();
+
 
 void lf_tag_read_isr();
 
