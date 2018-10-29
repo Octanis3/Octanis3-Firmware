@@ -28,7 +28,7 @@
 #include <xdc/runtime/Error.h>
 #include <xdc/runtime/System.h>
 
-#define WEIGHT_THRESHOLD 50000 // raw ADC units --> ADC_VAL = 1098.9 * GRAMS + OFFSET; R² = 0.99999
+#define WEIGHT_THRESHOLD 80000 // raw ADC units --> ADC_VAL = 1098.9 * GRAMS + OFFSET; R² = 0.99999
 
 #ifdef USE_HX
 	#define SAMPLE_RATE		HX_SAMPLE_RATE //Hz

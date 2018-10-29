@@ -163,7 +163,7 @@ void quick_print(long value, char log_symbol)
     uint8_t strlen;
     uint8_t weight_buf[20];
     if(log_symbol == 'D')
-        strlen = ui2a(value<<8, 10, 1, HIDE_LEADING_ZEROS, &weight_buf[1]);
+        strlen = ui2a(((value<<8)-get_weight_offset())/1099, 10, 1, HIDE_LEADING_ZEROS, &weight_buf[1]);
     else
         strlen = ui2a(value, 10, 1, HIDE_LEADING_ZEROS, &weight_buf[1]);
     weight_buf[0] = sign;
@@ -240,7 +240,7 @@ int log_write_new_weight_entry( uint8_t logchar, uint32_t weight, uint16_t stdev
     unsigned int* FRAM_write_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); // = base address plus *FRAM_offset_ptr
 
 #if(LOG_VERBOSE)
-    quick_print(weight, logchar);
+    quick_print((weight-get_weight_offset())/1099, logchar);
 #endif
 
     *((uint32_t*)FRAM_write_ptr+LOG_TIME_32b_OFS) = timestamp;
@@ -675,14 +675,14 @@ void log_Task()
 	    if(current_log_partition == FIRST && *FRAM_offset_ptr > LOG_MIDDLE_OFS)
 	    {
 	        //Flush out the first half of the internal log via UART
-	        log_send_data_via_uart((uint16_t*)LOG_MIDDLE_POS);
+//	        log_send_data_via_uart((uint16_t*)LOG_MIDDLE_POS);
 	        current_log_partition = SECOND;
 	    }
 
 	    if(current_log_partition == SECOND && *FRAM_offset_ptr < LOG_MIDDLE_OFS)
         {
             //Flush out the first half of the internal log via UART
-            log_send_data_via_uart((uint16_t*)(FRAM_read_end_ptr_value+LOG_START_POS));
+//            log_send_data_via_uart((uint16_t*)(FRAM_read_end_ptr_value+LOG_START_POS));
             current_log_partition = FIRST;
             FRAM_read_ptr = (uint16_t*)LOG_START_POS; // points back to start of logged data.
         }
