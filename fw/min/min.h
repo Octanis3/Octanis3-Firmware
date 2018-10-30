@@ -100,6 +100,20 @@
 #error "Transport FIFO data allocated cannot exceed 64Kbytes"
 #endif
 
+// Receiving state machine
+enum {
+    SEARCHING_FOR_SOF,
+    RECEIVING_ID_CONTROL,
+    RECEIVING_SEQ,
+    RECEIVING_LENGTH,
+    RECEIVING_PAYLOAD,
+    RECEIVING_CHECKSUM_3,
+    RECEIVING_CHECKSUM_2,
+    RECEIVING_CHECKSUM_1,
+    RECEIVING_CHECKSUM_0,
+    RECEIVING_EOF,
+};
+
 struct crc32_context {
     uint32_t crc;
 };

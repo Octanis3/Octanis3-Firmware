@@ -96,7 +96,7 @@ int uart_wifi_open(){
         uartParams.readEcho = UART_ECHO_OFF;
         uartParams.baudRate = 9600;
         //uartParams.readMode = UART_MODE_BLOCKING;
-        uartParams.readTimeout = 100;
+        uartParams.readTimeout = 1000;
         //uartParams.dataLength = UART_LEN_8;
 
         //Correct port for the mainboard
@@ -108,7 +108,10 @@ int uart_wifi_open(){
 #if(WIFI_UART_VERBOSE)
 
         const char test_string[] = "nestbox wifi UART initialized\n";
-        uart_serial_write(&wifi_uart, (uint8_t*)test_string, sizeof(test_string));
+        uart_serial_write(&debug_uart, (uint8_t*)test_string, sizeof(test_string));
+
+                uart_serial_write(&wifi_uart, (uint8_t*)test_string, sizeof(test_string));
+
 #endif
 
         wifi_uart_initialized = 1;

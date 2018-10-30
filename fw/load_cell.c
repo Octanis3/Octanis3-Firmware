@@ -214,7 +214,7 @@ void load_cell_Task()
 	//storage for measurement series
 	char event_ongoing = 0;
 	char series_completed = 0;
-    unsigned int offset_counter = 7100;
+    unsigned int offset_counter = 2000;
 
 	uint64_t owl_ID = 0;
 	int rfid_type = 0;

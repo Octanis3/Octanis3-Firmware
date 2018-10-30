@@ -65,12 +65,12 @@ Task_Struct rfid_task_Struct;
 Char rfid_task_Stack[RFID_TASKSTACKSIZE];
 
 // user button task
-#define BUTTON_TASKSTACKSIZE   1024 //TODO: decrease size again!
+#define BUTTON_TASKSTACKSIZE   2048 //TODO: check appropriate size!
 Task_Struct button_task_Struct;
 Char button_task_Stack[BUTTON_TASKSTACKSIZE];
 
 // log task
-#define LOG_TASKSTACKSIZE   4000
+#define LOG_TASKSTACKSIZE   2048
 Task_Struct log_task_Struct;
 Char log_task_Stack[LOG_TASKSTACKSIZE];
 
