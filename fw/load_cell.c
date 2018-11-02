@@ -44,8 +44,8 @@
 #define PLUS_SIGN 		' '
 #define MINUS_SIGN		'-'
 
-#define RFID_TIMEOUT		200 	//ms
-#define T_RFID_RETRY		1000 	//ms
+#define RFID_TIMEOUT		500 	//ms
+#define T_RFID_RETRY		500 	//ms
 #define T_LOADCELL_POLL	1000 	//ms
 
 #define SAMPLE_TOLERANCE 	1000		// maximum variation of the sampled values within N_AVERAGES samples
@@ -319,17 +319,21 @@ void load_cell_Task()
 			// hx711_power_down();
 #endif
 
-			if((ads.data)>raw_threshold)
+//			if((ads.data)>raw_threshold)
+			if(1)
             {
 	            log_write_new_entry('D', ((ads.data)>>8) & 0x0000ffff);
 				if(event_ongoing==0)
 				{
-                    rfid_start_detection();
-                    Semaphore_pend((Semaphore_Handle)semLoadCell,RFID_TIMEOUT);
-                    rfid_stop_detection();
+				    while(1)
+				    {
+                        rfid_start_detection();
+                        Semaphore_pend((Semaphore_Handle)semLoadCell,RFID_TIMEOUT);
+                        rfid_stop_detection();
 
-					rfid_type = rfid_get_id(&owl_ID);
-
+                        rfid_type = rfid_get_id(&owl_ID);
+                        Task_sleep(T_RFID_RETRY);
+				    }
 					if(rfid_type>0)
 					{
 	                    rfid_reset_detection_counts();
