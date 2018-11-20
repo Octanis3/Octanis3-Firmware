@@ -22,6 +22,10 @@ static int uart_initialized = 0;
 int uart_debug_open(){
 	static UART_Params uartParams;
 
+	GPIO_write(Board_led_green, 1);
+	Task_sleep(1000);
+	GPIO_write(Board_led_green, 0);
+
 	if(uart_initialized == 0)
 	{
 	    //reset TX gpio register settings:
@@ -52,6 +56,11 @@ int uart_debug_open(){
 #endif
 
 		Semaphore_post((Semaphore_Handle)semSerial);
+
+        Task_sleep(500);
+		GPIO_write(Board_led_green, 1);
+        Task_sleep(500);
+        GPIO_write(Board_led_green, 0);
 
 		uart_initialized = 1;
 	}
