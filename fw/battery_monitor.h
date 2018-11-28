@@ -8,8 +8,10 @@
 #ifndef FW_BATTERY_MONITOR_H_
 #define FW_BATTERY_MONITOR_H_
 
+
+
 void battery_Task();
 void ADC_ISR();
-
+unsigned int battery_get_vbat();
 
 #endif /* FW_BATTERY_MONITOR_H_ */

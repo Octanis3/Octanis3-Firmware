@@ -10,6 +10,7 @@
 #include "user_button.h"
 #include "logger.h"
 #include "rfid_reader.h"
+#include "battery_monitor.h"
 #include "../Board.h"
 
 #include <ti/sysbios/hal/Hwi.h>
@@ -68,7 +69,16 @@ void user_button_Task()
 
 	    switch(ctrl_byte & 0x7f)
 	    {
+	    case 'H': // heartbeat; just send a confirmation
+	    {
+            unsigned char tx_buf[2];
+            tx_buf[0] = 'H';
+            tx_buf[1] = 1;
+
+            min_send_frame(&min_ctx, 0x33U, tx_buf, 2);
+	    }
 	    case 'Z':
+	    {
 	        if(ctrl_byte & WRITE_REQ)
 	        {
 	            uint32_t timestamp = min_ctx.rx_frame_payload_buf[1];
@@ -83,7 +93,7 @@ void user_button_Task()
 
 	        }
 	        uint32_t timestamp = Seconds_get();
-	        unsigned char tx_buf[32];
+	        unsigned char tx_buf[5];
 	        tx_buf[0] = 'Z';
 	        tx_buf[1] = timestamp >> 24;
             tx_buf[2] = timestamp >> 16;
@@ -92,6 +102,19 @@ void user_button_Task()
 
 	        min_send_frame(&min_ctx, 0x33U, tx_buf, 5);
 	        break;
+	    }
+	    case 'B':
+	    {
+	        uint16_t vbat = battery_get_vbat();
+            unsigned char tx_buf[3];
+            tx_buf[0] = 'B';
+            tx_buf[1] = vbat >> 8;
+            tx_buf[2] = vbat;
+
+            min_send_frame(&min_ctx, 0x33U, tx_buf, 3);
+
+	        break;
+	    }
 	    default:
 	        break;
 	    }

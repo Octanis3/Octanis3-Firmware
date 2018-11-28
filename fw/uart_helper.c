@@ -26,6 +26,9 @@ int uart_debug_open(){
 	static UART_Params uartParams;
 
 //	Task_sleep(30000);
+	GPIO_write(Board_led_green, 1);
+	Task_sleep(1000);
+	GPIO_write(Board_led_green, 0);
 
 	if(debug_uart_initialized == 0)
 	{
@@ -55,6 +58,11 @@ int uart_debug_open(){
 		const char test_string[] = "nestbox UART initialized\n";
 		uart_serial_write(&debug_uart, (uint8_t*)test_string, sizeof(test_string));
 #endif
+
+		Task_sleep(500);
+		GPIO_write(Board_led_green, 1);
+		Task_sleep(500);
+		GPIO_write(Board_led_green, 0);
 
 		Semaphore_post((Semaphore_Handle)semSerial);
 

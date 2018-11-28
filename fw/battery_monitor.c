@@ -13,6 +13,7 @@
 
 
 volatile uint16_t ADC_val = 0;
+static unsigned int last_vbat = 0;
 volatile uint8_t ADC_summing = 0;
 
 #define ANALOG_PORTS			1
@@ -83,14 +84,18 @@ void ADC_update()
 
 }
 
-void display_result()
+void store_result()
 {
 	float vbat = ADC_val;
 	vbat = vbat * 0.1047; // (1000/2^12*2.5*(82+47)/47/16) --> mV;
 
-	log_write_new_entry('P', (uint16_t)vbat);
+	last_vbat = (uint16_t)vbat;
+	log_write_new_entry('P', last_vbat);
+}
 
-//	print_load_cell_value(vbat, 'P');
+unsigned int battery_get_vbat()
+{
+    return last_vbat;
 }
 
 void goto_deepsleep()
@@ -147,7 +152,7 @@ void battery_Task()
 		//100 us turn-on time max
 		ADC_update();
 		GPIO_write(nbox_vbat_test_enable,0);
-		display_result();
+		store_result();
 
 		if(ADC_val < BAT_EMPTY_16)
 			counter++;
