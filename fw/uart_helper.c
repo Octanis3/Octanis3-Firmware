@@ -117,9 +117,15 @@ int uart_wifi_open(){
 
         const char test_string[] = "nestbox wifi UART initialized\n";
         uart_serial_write(&debug_uart, (uint8_t*)test_string, sizeof(test_string));
+        uart_serial_write(&wifi_uart, (uint8_t*)test_string, sizeof(test_string));
 
-                uart_serial_write(&wifi_uart, (uint8_t*)test_string, sizeof(test_string));
+        {
+            uint8_t my_rx_bytes[32];
+            int len=uart_serial_read(&wifi_uart, my_rx_bytes, 8);
 
+            wifi_uart_initialized = 1;
+            uart_serial_write(&wifi_uart, my_rx_bytes, len);
+        }
 #endif
 
         wifi_uart_initialized = 1;
