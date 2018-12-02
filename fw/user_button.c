@@ -76,6 +76,7 @@ void user_button_Task()
             tx_buf[1] = 1;
 
             min_send_frame(&min_ctx, 0x33U, tx_buf, 2);
+            break; // DONT FORGET THIS!
 	    }
 	    case 'Z':
 	    {
@@ -94,7 +95,7 @@ void user_button_Task()
 	        }
 	        uint32_t new_timestamp = Seconds_get();
 	        unsigned char tx_buf[5];
-	        tx_buf[0] = 'I';
+	        tx_buf[0] = 'Z';
 	        tx_buf[1] = new_timestamp >> 24;
             tx_buf[2] = new_timestamp >> 16;
             tx_buf[3] = new_timestamp >> 8;
