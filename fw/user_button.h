@@ -9,6 +9,8 @@
 #define FW_USER_BUTTON_H_
 
 void user_button_Task();
+int user_wifi_enabled();
+
 
 void user_button_isr(unsigned int index);
 

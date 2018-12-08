@@ -25,8 +25,13 @@
 
 #define WRITE_REQ 0x80
 
+static int interrupt_triggered = 0;
+
+
 void user_button_Task()
 {
+    GPIO_write(nbox_wifi_enable_n, 0);
+
 	GPIO_enableInt(Board_button);
 	Task_sleep(5000);
 //
@@ -124,25 +129,55 @@ void user_button_Task()
 //		Semaphore_pend((Semaphore_Handle)semButton, BIOS_WAIT_FOREVER);
 
 		/* Turn on data LED  */
-		GPIO_write(Board_led_blue, Board_LED_ON);
 
 
 //		log_restart();
 
 		Task_sleep(1000); //avoid too many subsequent memory readouts
-        GPIO_write(Board_led_blue, Board_LED_OFF);
+		if(interrupt_triggered)
+		{
+		    GPIO_clearInt(Board_button);
+		    GPIO_enableInt(Board_button);
+		}
 
 //		GPIO_clearInt(Board_button);
 //		GPIO_enableInt(Board_button);
 	}
 }
 
+static int wifi_on = 0;
+
+int user_wifi_enabled()
+{
+    return wifi_on;
+}
 
 void user_button_isr(unsigned int index)
 {
-//	button_pressed = 1;
 	GPIO_disableInt(Board_button);
 
+	if(wifi_on == 0)
+	{
+	    GPIO_write(nbox_wifi_enable_n, 1);
+#ifdef WIFI_USE_5V
+	    GPIO_write(nbox_5v_enable, 1);
+#endif
+        GPIO_write(Board_led_blue, Board_LED_ON);
+	    wifi_on = 1;
+
+	}
+	else // TODO: enable int again!!!
+	{
+        GPIO_write(nbox_wifi_enable_n, 0);
+#ifdef WIFI_USE_5V
+        GPIO_write(nbox_5v_enable, 0);
+#endif
+        GPIO_write(Board_led_blue, Board_LED_OFF);
+        wifi_on = 0;
+	}
+
+
 	//check interrupt source
+	interrupt_triggered = 1;
 	Semaphore_post((Semaphore_Handle)semButton);
 }

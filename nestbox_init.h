@@ -52,6 +52,8 @@ extern "C" {
 //#define VERBOSE 		1
 // #define LAUNCHPAD_PINDEF 1
 
+//#define ESP12_FLASH_MODE    1
+
 #define LOG_VERBOSE 1 // define as 0 or 1!
 //#define WIFI_UART_VERBOSE 1
 
@@ -59,6 +61,8 @@ extern "C" {
 #ifndef MLX_READER
 	#define EM_READER		1
 #endif
+
+#define WIFI_USE_5V         1 //def or undef
 
 #define USE_PIR     0 // define as 0 or 1!
 
@@ -89,6 +93,9 @@ typedef enum nbox_GPIOName {
 	nbox_lf_clk,
 	nbox_lf_data,
 #endif
+#ifdef ESP12_FLASH_MODE
+	nbox_wifi_enable_floating,
+#endif
 	//outputs
     nbox_led_blue,
 #ifndef LAUNCHPAD_PINDEF
@@ -112,7 +119,9 @@ typedef enum nbox_GPIOName {
 						* to command Burst Mode operation. Applying a voltage below
 						* 400mV enables Burst Mode operation, providing a significant
 						* efficiency improve- ment at light loads*/
+#ifndef ESP12_FLASH_MODE
 	nbox_wifi_enable_n,
+#endif
 	nbox_sdcard_enable_n,
 	nbox_vbat_test_enable,
 	nbox_pir_enable,

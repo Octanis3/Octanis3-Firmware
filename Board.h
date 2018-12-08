@@ -71,6 +71,10 @@ extern "C" {
 #endif
 #define Board_led_red               Board_led_green
 
+#ifdef ESP12_FLASH_MODE
+    #define nbox_wifi_enable_n      nbox_5v_enable
+#endif
+
 #define Board_LED_ON					nbox_LED_ON
 #define Board_LED_OFF				nbox_LED_OFF
 

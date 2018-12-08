@@ -11,7 +11,7 @@
 #include "MLX90109_library/mlx90109_params.h"
 #include "logger.h"
 #include <msp430.h>
-
+#include "user_button.h"
 
 #include <time.h>
 #include <ti/sysbios/hal/Seconds.h>
@@ -108,6 +108,9 @@ void rfid_stop_detection()
 {
 	em4095_stopRfidCapture();
 	mlx90109_disable_reader(&mlx_dev, &lf_tagdata);
+#ifdef WIFI_USE_5V
+	if(!user_wifi_enabled())
+#endif
 	GPIO_write(nbox_5v_enable,0);
 }
 
