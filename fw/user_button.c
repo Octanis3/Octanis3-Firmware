@@ -9,7 +9,10 @@
 
 #include "user_button.h"
 #include "logger.h"
+
+// get sensor values from these sources:
 #include "rfid_reader.h"
+#include "load_cell.h"
 #include "battery_monitor.h"
 #include "../Board.h"
 
@@ -121,6 +124,72 @@ void user_button_Task()
 
 	        break;
 	    }
+	    case 'W':
+        {
+            int32_t weight = get_last_stored_weight();
+            unsigned char tx_buf[5];
+            tx_buf[0] = 'W';
+            tx_buf[1] = (unsigned char)(weight >> 24);
+            tx_buf[2] = (unsigned char)(weight >> 16);
+            tx_buf[3] = (unsigned char)(weight >> 8);
+            tx_buf[4] = (unsigned char)(weight);
+
+            min_send_frame(&min_ctx, 0x33U, tx_buf, 5);
+
+            break;
+        }
+        case 'O':
+        {
+            int32_t weight = get_last_measured_tare();
+            unsigned char tx_buf[5];
+            tx_buf[0] = 'O';
+            tx_buf[1] = (unsigned char)(weight >> 24);
+            tx_buf[2] = (unsigned char)(weight >> 16);
+            tx_buf[3] = (unsigned char)(weight >> 8);
+            tx_buf[4] = (unsigned char)(weight);
+
+            min_send_frame(&min_ctx, 0x33U, tx_buf, 5);
+
+            break;
+        }
+        case 'D':
+        {
+            if(ctrl_byte & WRITE_REQ)
+            {
+                uint32_t new_th = (min_ctx.rx_frame_payload_buf[1]);
+                new_th = (new_th<<8) + (min_ctx.rx_frame_payload_buf[2]);
+                new_th = (new_th<<8) + (min_ctx.rx_frame_payload_buf[3]);
+                new_th = (new_th<<8) + (min_ctx.rx_frame_payload_buf[4]);
+                set_weight_threshold(new_th);
+            }
+            int32_t weight = get_weight_threshold();
+            unsigned char tx_buf[5];
+            tx_buf[0] = 'D';
+            tx_buf[1] = (unsigned char)(weight >> 24);
+            tx_buf[2] = (unsigned char)(weight >> 16);
+            tx_buf[3] = (unsigned char)(weight >> 8);
+            tx_buf[4] = (unsigned char)(weight);
+
+            min_send_frame(&min_ctx, 0x33U, tx_buf, 5);
+
+            break;
+        }
+        case 'R':
+        {
+            uint64_t tag_id = 0;
+            rfid_get_id(&tag_id);
+
+            unsigned char tx_buf[5];
+            tx_buf[0] = 'R';
+            tx_buf[1] = (unsigned char)(tag_id >> 24);
+            tx_buf[2] = (unsigned char)(tag_id >> 16);
+            tx_buf[3] = (unsigned char)(tag_id >> 8);
+            tx_buf[4] = (unsigned char)(tag_id);
+
+            min_send_frame(&min_ctx, 0x33U, tx_buf, 5);
+
+            break;
+        }
 	    default:
 	        break;
 	    }

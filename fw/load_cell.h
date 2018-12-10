@@ -15,6 +15,10 @@
 #include <ti/sysbios/knl/Semaphore.h>
 
 // Semaphore_Handle semLoadCellDRDY;
+int32_t get_last_stored_weight();
+int32_t get_last_measured_tare();
+int32_t get_weight_threshold();
+void set_weight_threshold(int32_t new_th);
 
 void load_cell_Task();
 

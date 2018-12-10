@@ -57,7 +57,26 @@
 
 Semaphore_Handle semLoadCellDRDY;
 
-int32_t averaged_weight_threshold = 250000; // TODO!!!
+static int32_t averaged_weight_threshold = 250000; // TODO!!!
+static int32_t last_stored_weight = 0;
+static int32_t last_measured_tare = 0;
+
+int32_t get_last_stored_weight()
+{
+    return last_stored_weight;
+}
+int32_t get_last_measured_tare()
+{
+    return last_measured_tare;
+}
+int32_t get_weight_threshold()
+{
+    return averaged_weight_threshold;
+}
+void set_weight_threshold(int32_t new_th)
+{
+    averaged_weight_threshold = new_th;
+}
 
 int32_t get_weight_offset()
 {
@@ -96,6 +115,7 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads, uint8_t type) //typ
 		meas_buf[tmp] = ads1220_read_average(N_AVERAGES, &deviation, ads);
 #endif
 		log_write_new_weight_entry(type, meas_buf[tmp], 0x0000ffff & deviation);
+		last_stored_weight = meas_buf[tmp];
 
 		if(meas_buf[tmp] < averaged_weight_threshold)
 		{
@@ -103,6 +123,11 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads, uint8_t type) //typ
 
 		    if(threshold_cnt>100) // measure zero value 100 times!
 		    {
+		        if(type == 'O')
+		        {
+                    last_measured_tare = meas_buf[tmp];
+		        }
+
                 first_valid = 0;
                 threshold_cnt = 0;
     //			first_invalid = 0;
@@ -134,9 +159,9 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads, uint8_t type) //typ
 	}
 
 	// calculate average over circular buffer:
-	float average = meas_buf[0];
-	float min = average;
-	float max = average;
+	int32_t average = meas_buf[0];
+	int32_t min = average;
+	int32_t max = average;
 
 	for(i=1; i<EVENT_BUF_SIZE; i++)
 	{
@@ -159,7 +184,7 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads, uint8_t type) //typ
 //		average =
 //	}
 
-	float tol = (max - min);
+	int32_t tol = (max - min);
 	if(tol < ads->tolerance)
 	{
 		ads->stable_weight = average;
@@ -268,7 +293,8 @@ void load_cell_Task()
     Task_sleep(100);
 
 	int32_t max_deviation = 0;
-	averaged_weight_threshold = ads1220_read_average(20, &max_deviation, &ads) + WEIGHT_THRESHOLD;
+	last_measured_tare = ads1220_read_average(20, &max_deviation, &ads);
+	averaged_weight_threshold = last_measured_tare + WEIGHT_THRESHOLD;
 
 
     ads1220_change_mode(&ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT, ADS1220_TEMPERATURE_DISABLED);

@@ -184,8 +184,8 @@ struct Ads1220 {
   struct Ads1220Config config;                  ///< configuration
   // Data
   int32_t data;                                ///< raw ADC value
-  float stable_weight;
-  float tolerance;
+  int32_t stable_weight;
+  int32_t tolerance;
   float temperature;
   volatile bool data_available;               ///< data ready flag
 };

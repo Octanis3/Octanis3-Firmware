@@ -20,7 +20,6 @@ void log_send_data_via_uart(unsigned int* FRAM_read_end_ptr);
 
 int32_t get_weight_offset(); //inside loadcell.c
 
-
 void log_Task();
 
 #endif /* FW_LOGGER_H_ */
