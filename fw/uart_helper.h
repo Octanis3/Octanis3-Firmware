@@ -26,6 +26,7 @@ void uart_debug_close();
 
 int uart_wifi_open();
 void uart_wifi_close();
+void uart_wifi_set_floating();
 
 size_t uart_serial_write(UART_Handle *dev, const uint8_t *data, unsigned int n);
 

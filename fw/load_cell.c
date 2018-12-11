@@ -350,7 +350,8 @@ void load_cell_Task()
 	            log_write_new_entry('D', ((ads.data)>>8) & 0x0000ffff);
 				if(event_ongoing==0)
 				{
-                    rfid_start_detection();
+				    rfid_start_detection();
+				    last_stored_weight = ads.data;
                     Semaphore_pend((Semaphore_Handle)semLoadCell,RFID_TIMEOUT);
                     rfid_stop_detection();
 

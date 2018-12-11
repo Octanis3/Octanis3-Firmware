@@ -139,10 +139,15 @@ void uart_wifi_close(){
     UART_close(wifi_uart);
 
     //force write TX gpio to zero:
-//    P2OUT &= ~BIT5;
+//    P2OUT &= ~BIT5; // !!! this actually sets it as input --> TODO!!!
 //    P2SEL1 &= ~BIT5;
 
     wifi_uart_initialized = 0;
+}
+
+void uart_wifi_set_floating(){
+    P2OUT &= ~BIT5;
+    P2SEL1 &= ~BIT5;
 }
 
 

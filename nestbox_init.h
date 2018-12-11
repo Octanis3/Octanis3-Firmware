@@ -62,7 +62,7 @@ extern "C" {
 	#define EM_READER		1
 #endif
 
-#define WIFI_USE_5V         1 //def or undef
+//#define WIFI_USE_5V         1 //def or undef
 
 #define USE_PIR     0 // define as 0 or 1!
 
