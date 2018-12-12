@@ -26,9 +26,9 @@ int uart_debug_open(){
 	static UART_Params uartParams;
 
 //	Task_sleep(30000);
-	GPIO_write(Board_led_green, 1);
+	GPIO_write(Board_led_status, 1);
 	Task_sleep(1000);
-	GPIO_write(Board_led_green, 0);
+	GPIO_write(Board_led_status, 0);
 
 	if(debug_uart_initialized == 0)
 	{
@@ -60,9 +60,9 @@ int uart_debug_open(){
 #endif
 
 		Task_sleep(500);
-		GPIO_write(Board_led_green, 1);
+		GPIO_write(Board_led_status, 1);
 		Task_sleep(500);
-		GPIO_write(Board_led_green, 0);
+		GPIO_write(Board_led_status, 0);
 
 		Semaphore_post((Semaphore_Handle)semSerial);
 
@@ -75,8 +75,8 @@ int uart_debug_open(){
 void uart_debug_close(){
 
 #if(!LOG_VERBOSE)
-
-    UART_close(debug_uart);
+    if(debug_uart != NULL)
+        UART_close(debug_uart);
 
     //force write TX gpio to zero:
     P2OUT &= ~BIT5;

@@ -63,13 +63,8 @@ extern "C" {
 #define Board_button           		nbox_button
 #define PIR_pin                     nbox_pir_in1
 
-#define Board_led_blue          		nbox_led_blue
-#ifndef LAUNCHPAD_PINDEF
-	#define Board_led_green          nbox_led_green
-#else
-	#define Board_led_green     		nbox_led_blue
-#endif
-#define Board_led_red               Board_led_green
+#define Board_led_data              nbox_led_data
+#define Board_led_status            nbox_led_status
 
 #ifdef ESP12_FLASH_MODE
     #define nbox_wifi_enable      nbox_5v_enable

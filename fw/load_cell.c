@@ -187,18 +187,18 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads, uint8_t type) //typ
 	{
 		ads->stable_weight = average;
 		ads->tolerance = tol;
-        GPIO_write(Board_led_blue,1);
+        GPIO_write(Board_led_status,1);
         Task_sleep(200);
-        GPIO_write(Board_led_blue,0);
+        GPIO_write(Board_led_status,0);
 	}
 
 	if(tol < WEIGHT_TOLERANCE)
 	{
         log_write_new_weight_entry('S', average, tol);
 
-		GPIO_write(Board_led_blue,1);
+		GPIO_write(Board_led_status,1);
         Task_sleep(2000);
-        GPIO_write(Board_led_blue,0);
+        GPIO_write(Board_led_status,0);
 		return STABLE;
 	}
 

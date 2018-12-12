@@ -91,7 +91,7 @@ int16_t mlx90109_init(mlx90109_t *dev, const mlx90109_params_t *params)
 
 void mlx90109_activate_reader(mlx90109_t *dev)
 {
-	GPIO_write(Board_led_green,1);
+	GPIO_write(Board_led_status,1);
 
 	time_on = Timestamp_get32();
 	GPIO_write(dev->p.modu, 1); //turns ON CW field
@@ -111,7 +111,7 @@ void mlx90109_disable_reader(mlx90109_t *dev, tagdata *tag)
 	//disable clk interrupt
 	GPIO_disableInt(nbox_lf_clk);
 
-	GPIO_write(Board_led_green,0);
+	GPIO_write(Board_led_status,0);
 
 #ifdef VERBOSE
 	//send out tag ID:

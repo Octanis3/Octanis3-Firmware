@@ -502,11 +502,17 @@ void spi1_arch_init(void)
         if (nestbox_spi_handle == NULL) {
            /* Error opening SPI */
 
-            GPIO_toggle(Board_led_blue);
+            GPIO_toggle(Board_led_status);
             Task_sleep(100);
-            GPIO_toggle(Board_led_blue);
+            GPIO_toggle(Board_led_status);
             Task_sleep(100);
-            GPIO_toggle(Board_led_blue);
+            GPIO_toggle(Board_led_status);
+            Task_sleep(100);
+            GPIO_toggle(Board_led_status);
+            Task_sleep(100);
+            GPIO_toggle(Board_led_status);
+            Task_sleep(100);
+            GPIO_toggle(Board_led_status);
             Task_sleep(100);
         }
 

@@ -286,7 +286,7 @@ void user_button_isr(unsigned int index)
 
 	if(wifi_on == 0)
 	{
-        GPIO_write(Board_led_blue, Board_LED_ON);
+        GPIO_write(Board_led_data, Board_LED_ON);
 	    wifi_on = 1;
 	    Semaphore_post((Semaphore_Handle)semButton);
 	}
@@ -296,7 +296,7 @@ void user_button_isr(unsigned int index)
 #ifdef WIFI_USE_5V
         GPIO_write(nbox_5v_enable, 0);
 #endif
-        GPIO_write(Board_led_blue, Board_LED_OFF);
+        GPIO_write(Board_led_data, Board_LED_OFF);
         wifi_on = 0;
 	}
 

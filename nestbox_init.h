@@ -97,9 +97,9 @@ typedef enum nbox_GPIOName {
 	nbox_wifi_enable_floating,
 #endif
 	//outputs
-    nbox_led_blue,
+    nbox_led_data,
 #ifndef LAUNCHPAD_PINDEF
-    nbox_led_green,
+    nbox_led_status,
 #endif
 	nbox_led_ir,
 //	nbox_loadcell_clk,

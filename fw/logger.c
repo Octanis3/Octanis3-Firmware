@@ -297,14 +297,17 @@ void log_send_data_via_uart(uint16_t* FRAM_read_end_ptr)
     unsigned int sd_retry = 0;
 
     for(sd_retry = 0; sd_retry <= MAX_SD_RETRY; sd_retry++){
-        GPIO_write(nbox_spi_cs_n, 0); //turn on SD card
 
     #if LOG_VERBOSE
+        GPIO_write(nbox_spi_cs_n, 0); //turn on SD card
+
         uart_stop_debug_prints();
         uart_serial_write(&debug_uart, start_string, sizeof(start_string));
         //  uart_serial_write(&debug_uart, title_row, sizeof(title_row));
     #else
         uart_debug_open();
+        GPIO_write(nbox_spi_cs_n, 0); //turn on SD card
+
     #endif
 
         unsigned int sd_delay = 0;
@@ -343,7 +346,6 @@ void log_send_data_via_uart(uint16_t* FRAM_read_end_ptr)
         #endif
 
             GPIO_write(nbox_spi_cs_n, 1); //turn off SD card
-
             Task_sleep(5000);
         }
     }
@@ -420,7 +422,7 @@ void log_send_data_via_uart(uint16_t* FRAM_read_end_ptr)
 	}
 
 
-    Task_sleep(1000); //wait for data to be written
+    Task_sleep(3000); //wait for data to be written
 
 #if LOG_VERBOSE
     uart_serial_write(&debug_uart, end_string, sizeof(end_string));
@@ -633,6 +635,8 @@ void log_Task()
 #if(LOG_VERBOSE)
     uart_debug_open();
 	uart_start_debug_prints(); // disable all UART comm except when SD card is on
+#else
+    uart_debug_close();
 #endif
 
 
