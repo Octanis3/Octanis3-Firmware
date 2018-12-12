@@ -6,15 +6,7 @@
  */
 
 #include "load_cell.h"
-
-#ifdef USE_HX
-#include "HX711/HX711.h"
-#endif
-
-#ifdef USE_ADS
 #include "ADS1220/ads1220.h"
-
-#endif
 
 #include "../Board.h"
 
@@ -28,7 +20,7 @@
 #include <xdc/runtime/Error.h>
 #include <xdc/runtime/System.h>
 
-#define WEIGHT_THRESHOLD 50000 // raw ADC units --> ADC_VAL = 1098.9 * GRAMS + OFFSET; R² = 0.99999
+#define WEIGHT_THRESHOLD 50000 // raw ADC units --> ADC_VAL = 1098.9 * GRAMS + OFFSET; R^2 = 0.99999
 
 #ifdef USE_HX
 	#define SAMPLE_RATE		HX_SAMPLE_RATE //Hz
@@ -37,8 +29,9 @@
 	#define SAMPLE_RATE		ADS_SLOW_SAMPLE_RATE //Hz
 #endif
 
-#define MIN_EVENT_TIME 	10 //seconds
-#define N_AVERAGES		10
+#define MIN_EVENT_TIME 	    10 //seconds
+#define MIN_ABSENCE_TIME    10 //cycles ~ seconds
+#define N_AVERAGES		    10
 #define EVENT_BUF_SIZE	SAMPLE_RATE*MIN_EVENT_TIME/N_AVERAGES //need to account for 10 averaging window already in place!
 
 #define PLUS_SIGN 		' '
@@ -48,6 +41,7 @@
 #define T_RFID_RETRY		1000 	//ms
 #define T_LOADCELL_POLL	1000 	//ms
 
+#define TARE_TOLERANCE      6000    // maximum variation to get a new tare value
 #define SAMPLE_TOLERANCE 	1000		// maximum variation of the sampled values within N_AVERAGES samples
 #define WEIGHT_TOLERANCE 	50 	// maximum deviation from average value within one measurement series
 //#define WEIGHT_MAX_CHANGE	100	// maximum change within one "event"
@@ -57,32 +51,38 @@
 
 Semaphore_Handle semLoadCellDRDY;
 
-static int32_t averaged_weight_threshold = 250000; // TODO!!!
 static int32_t last_stored_weight = 0;
-static int32_t last_measured_tare = 0;
+static int32_t last_measured_offset = 0;
+static int tare_request = 0;
+static int threshold_bypass_request = 0;
 
 int32_t get_last_stored_weight()
 {
     return last_stored_weight;
 }
-int32_t get_last_measured_tare()
+int32_t get_weight_offset()
 {
-    return last_measured_tare;
+    return last_measured_offset;
 }
 int32_t get_weight_threshold()
 {
-    return averaged_weight_threshold;
+    return last_measured_offset + WEIGHT_THRESHOLD;
+    // todo
 }
 void set_weight_threshold(int32_t new_th)
 {
-    averaged_weight_threshold = new_th;
+    //todo
 }
 
-int32_t get_weight_offset()
+void load_cell_bypass_threshold(int status)
 {
-    return averaged_weight_threshold-WEIGHT_THRESHOLD;
+    threshold_bypass_request = status;
 }
 
+void load_cell_trigger_tare()
+{
+    tare_request = 1;
+}
 typedef enum weightResultStatus_
 {
 	OWL_LEFT = 0,
@@ -117,28 +117,26 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads, uint8_t type) //typ
 		log_write_new_weight_entry(type, meas_buf[tmp], 0x0000ffff & deviation);
 		last_stored_weight = meas_buf[tmp];
 
-		if(meas_buf[tmp] < averaged_weight_threshold)
+		if(meas_buf[tmp] < ads->cont_threshold)
 		{
 		    threshold_cnt = threshold_cnt+1;
 
 		    if(threshold_cnt>100) // measure zero value 100 times!
 		    {
-		        if(type == 'O')
-		        {
-                    last_measured_tare = meas_buf[tmp];
-		        }
-
                 first_valid = 0;
                 threshold_cnt = 0;
     //			first_invalid = 0;
                 return OWL_LEFT;
 		    }
-		    else
-		        continue;
+		    else if(threshold_cnt > MIN_ABSENCE_TIME)
+		    {
+		        type = 'O';
+		    }
+		    continue;
 		}
 		else
 		{
-		    if(threshold_cnt>4 || type == 'O') // the owl clearly left and potentially another came back --> re-start the series!
+		    if(type == 'O') // the owl clearly left and potentially another came back --> re-start the series!
 		    {
 	            threshold_cnt = 0;
 		        return OWL_CAME_BACK;
@@ -211,7 +209,7 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads, uint8_t type) //typ
 	}
 }
 
-void ads1220_set_loadcell_config(struct Ads1220 *ads){
+void ads1220_set_init_loadcell_config(struct Ads1220 *ads){
 	ads->config.mux = ADS1220_MUX_AIN1_AIN2;
 	ads->config.gain = ADS1220_GAIN_128;
 	ads->config.pga_bypass = 0;
@@ -231,11 +229,6 @@ void load_cell_Task()
 {
 	Task_sleep(1000); //wait until things are settled...
 
-	//weight value
-//	float value = 0;
-
-	int32_t raw_threshold = 0;
-
 	//storage for measurement series
 	char event_ongoing = 0;
 	char series_completed = 0;
@@ -244,21 +237,6 @@ void load_cell_Task()
 	uint64_t owl_ID = 0;
 	int rfid_type = 0;
 
-
-#ifdef USE_HX
-
-	hx711_begin(nbox_loadcell_data, nbox_loadcell_clk, 128);
-
-	hx711_power_up();
-
-	Task_sleep(1000); //wait until things are settled...
-	//todo: check if tare is successful!!
-	hx711_tare(20);
-
-	hx711_power_up();
-#endif
-
-#ifdef USE_ADS
 	/* Initialize the Data READY semaphore */
 	Semaphore_Params semParams;
 	Error_Block eb;
@@ -269,112 +247,84 @@ void load_cell_Task()
 
 	// turn on analog supply:
 	GPIO_write(nbox_loadcell_ldo_enable, 1);
-//	GPIO_write(nbox_loadcell_exc_a_p, 0); //pmos, turn on
-//	GPIO_write(nbox_loadcell_exc_b_n, 1); //nmos, turn on
-	//TODO: check if delay is needed!
 
 	spi1_init();
 	struct spi_periph ads_spi;
 	struct Ads1220 ads;
 
-
 	ads1220_init(&ads, &ads_spi, nbox_loadcell_spi_cs_n);
-	ads1220_set_loadcell_config(&ads);
-	ads.config.rate = ADS1220_RATE_20_HZ; //first tare is done with correct averaging method.
-    ads.config.conv = ADS1220_CONTINIOUS_CONVERSION;
-
-	// IMPORTANT TO NOTE: 20 Hz and 1000 Hz in single shot mode do not result in the same value!
-    // --> due to power down, the analog input voltages do not settle quick enough, therefore tare is done in single-shot mode!
+	ads1220_set_init_loadcell_config(&ads);
 	Task_sleep(10);
 	ads1220_event(&ads);
-
 	ads1220_configure(&ads); // this one sends the reset and config
 
     Task_sleep(100);
 
-	int32_t max_deviation = 0;
-	last_measured_tare = ads1220_read_average(20, &max_deviation, &ads);
-	averaged_weight_threshold = last_measured_tare + WEIGHT_THRESHOLD;
+	int32_t max_cont_deviation = 0;
+    int32_t max_periodic_deviation = 0;
 
 
-    ads1220_change_mode(&ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT, ADS1220_TEMPERATURE_DISABLED);
-    GPIO_enableInt(nbox_loadcell_data_ready);
-
-	ads1220_tare(20, &ads);
-	ads1220_set_raw_threshold(&raw_threshold, WEIGHT_THRESHOLD);
+    // Try to find the zero offset
+    while(1)
+    {
+        int i = 1;
+        for(i=1; i<20; i++)
+        {
+            ads1220_tare(20, &max_cont_deviation, &max_periodic_deviation, &ads);
+            if((max_cont_deviation + max_periodic_deviation) < i*TARE_TOLERANCE)
+            {
+                last_measured_offset = ads.periodic_offset;
+                ads1220_set_thresholds(&ads, WEIGHT_THRESHOLD);
+                break;
+            }
+        }
+        if(i<20)
+            break;
+        else // Tare failed
+            Task_sleep(30000);
+    }
 
 	ads1220_change_mode(&ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT, ADS1220_TEMPERATURE_DISABLED);
 	// !! "every write access to any configuration register also starts a new conversion" !!
 
 	Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, 100); // timeout 100 ms in case DRDY pin is not connected
-
     Task_sleep(100);
-
-
-#endif
 
 	while(1)
 	{
 		// currently no event detected & reader was off
 		if(!event_ongoing || series_completed)
 		{
-#ifdef USE_ADS
-		/************ADS1220 POLLING*************/
-//
+            /************ADS1220 POLLING*************/
+            Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
+            ads1220_start_conversion(&ads);
+            Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, 100); // timeout 100 ms in case DRDY pin is not connected
 
-        Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
-		ads1220_start_conversion(&ads);
-		Semaphore_pend((Semaphore_Handle)semLoadCellDRDY, 100); // timeout 100 ms in case DRDY pin is not connected
+            ads1220_periodic(&ads);
+            ads1220_event(&ads);
+            ads1220_powerdown(&ads);
 
-		ads1220_periodic(&ads);
-		ads1220_event(&ads);
-		ads1220_powerdown(&ads);
-
-		// TODO: remove conversion
-		// value = ads1220_convert_units(&ads);
-		/**********END ADS1220 TEST***********/
-#endif
-
-#ifdef USE_HX
-			// hx711_power_up();
-
-			// check if bird is present:
-			float dummy_tol;
-			value = hx711_get_units(1,&dummy_tol);
-
-			// hx711_power_down();
-#endif
-
-			if((ads.data)>raw_threshold)
+            if((ads.data)>ads.periodic_threshold || threshold_bypass_request>0)
             {
 	            log_write_new_entry('D', ((ads.data)>>8) & 0x0000ffff);
 				if(event_ongoing==0)
 				{
 				    rfid_start_detection();
-				    last_stored_weight = ads.data;
                     Semaphore_pend((Semaphore_Handle)semLoadCell,RFID_TIMEOUT);
                     rfid_stop_detection();
 
 					rfid_type = rfid_get_id(&owl_ID);
 
-					if(rfid_type>0)
+					if(rfid_type>0 || threshold_bypass_request>0)
 					{
 	                    rfid_reset_detection_counts();
 
-						// now start the weight measurement
-
-//					    //indicate calibration mode if calib UID detected:
-//					    if(rfid_type > 1)
-//					        GPIO_write(Board_led_blue,1);
-
-#ifdef USE_ADS
 						// change to slow = exact mode
 					    GPIO_disableInt(nbox_loadcell_data_ready);
 
 						ads1220_change_mode(&ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION, ADS1220_TEMPERATURE_DISABLED);
 						ads.stable_weight = 0;
 						ads.tolerance = SAMPLE_TOLERANCE;
-#endif
 
 						event_ongoing ='X';
 						series_completed = 0;
@@ -383,6 +333,16 @@ void load_cell_Task()
 						Task_sleep(T_RFID_RETRY);
 				}
 			}
+            else if(tare_request) // user requested new tare
+            {
+                tare_request = 0;
+                ads1220_tare(20, &max_cont_deviation, &max_periodic_deviation, &ads);
+                if((max_cont_deviation + max_periodic_deviation) < TARE_TOLERANCE)
+                {
+                    last_measured_offset = ads.periodic_offset;
+                    ads1220_set_thresholds(&ads, WEIGHT_THRESHOLD);
+                }
+            }
 			else
 			{
 				// periodically measure tare offset again
@@ -453,12 +413,13 @@ void load_cell_Task()
 	            }
 
 				// stop the weight measurement
-#ifdef USE_ADS
-				// change to fast = inexact mode
-				ads1220_change_mode(&ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT, ADS1220_TEMPERATURE_DISABLED);
-                GPIO_enableInt(nbox_loadcell_data_ready);
 
-#endif
+	            // change to fast = inexact mode
+				ads1220_change_mode(&ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT, ADS1220_TEMPERATURE_DISABLED);
+	            ads1220_powerdown(&ads); //very important!
+
+				GPIO_enableInt(nbox_loadcell_data_ready);
+                Task_sleep(T_LOADCELL_POLL); // VERY IMPORTANT TO HAVE THIS, to get the ADC input discharged!
 			}
 
 //			else if(res == OWL_LEFT)

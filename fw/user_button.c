@@ -33,7 +33,7 @@ static int interrupt_triggered = 0;
 
 void user_button_Task()
 {
-    GPIO_write(nbox_wifi_enable_n, 0);
+    GPIO_write(nbox_wifi_enable, 0);
 
 	GPIO_enableInt(Board_button);
 	Task_sleep(5000);
@@ -67,7 +67,7 @@ void user_button_Task()
 #ifdef WIFI_USE_5V
         GPIO_write(nbox_5v_enable, 1);
 #endif
-        GPIO_write(nbox_wifi_enable_n, 1);
+        GPIO_write(nbox_wifi_enable, 1);
 
 	    Task_sleep(1000); //avoid too many subsequent memory readouts
         if(interrupt_triggered)
@@ -164,7 +164,7 @@ void user_button_Task()
             }
             case 'O':
             {
-                int32_t weight = get_last_measured_tare();
+                int32_t weight = get_weight_offset();
                 unsigned char tx_buf[5];
                 tx_buf[0] = 'O';
                 tx_buf[1] = (unsigned char)(weight >> 24);
@@ -214,6 +214,47 @@ void user_button_Task()
 
                 break;
             }
+            case 't': // trigger load cell tare and send confirmation
+            {
+                unsigned char tx_buf[2];
+                tx_buf[0] = 't';
+                tx_buf[1] = 1;
+
+                min_send_frame(&min_ctx, 0x33U, tx_buf, 2);
+                load_cell_trigger_tare();
+                break; // DONT FORGET THIS!
+            }
+            case 'L': // trigger load cell tare and send confirmation
+            {
+               unsigned char tx_buf[2];
+               tx_buf[0] = 'L';
+               tx_buf[1] = 1;
+
+               min_send_frame(&min_ctx, 0x33U, tx_buf, 2);
+               load_cell_bypass_threshold(1);
+               break; // DONT FORGET THIS!
+            }
+            case 'l': // trigger load cell tare and send confirmation
+            {
+                unsigned char tx_buf[2];
+                tx_buf[0] = 'l';
+                tx_buf[1] = 1;
+
+                min_send_frame(&min_ctx, 0x33U, tx_buf, 2);
+                load_cell_bypass_threshold(0);
+                break; // DONT FORGET THIS!
+            }
+            case 'F':
+            {
+                unsigned char tx_buf[2];
+                tx_buf[0] = 'F';
+                tx_buf[1] = 1;
+
+                min_send_frame(&min_ctx, 0x33U, tx_buf, 2);
+                log_restart();
+                break; // DONT FORGET THIS!
+            }
+
             default:
                 break;
             }
@@ -221,8 +262,11 @@ void user_button_Task()
 
 		/* Turn on data LED  */
 
-//		log_restart();
         uart_wifi_close();
+
+        // turn off all special user modes:
+        load_cell_bypass_threshold(0);
+
 
         GPIO_clearInt(Board_button);
    		GPIO_enableInt(Board_button);
@@ -248,7 +292,7 @@ void user_button_isr(unsigned int index)
 	}
 	else
 	{
-        GPIO_write(nbox_wifi_enable_n, 0);
+        GPIO_write(nbox_wifi_enable, 0);
 #ifdef WIFI_USE_5V
         GPIO_write(nbox_5v_enable, 0);
 #endif

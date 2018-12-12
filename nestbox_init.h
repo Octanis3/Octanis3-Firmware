@@ -54,7 +54,7 @@ extern "C" {
 
 //#define ESP12_FLASH_MODE    1
 
-#define LOG_VERBOSE 1 // define as 0 or 1!
+//#define LOG_VERBOSE 1 // define as 0 or 1!
 //#define WIFI_UART_VERBOSE 1
 
 //#define MLX_READER		1
@@ -120,7 +120,7 @@ typedef enum nbox_GPIOName {
 						* 400mV enables Burst Mode operation, providing a significant
 						* efficiency improve- ment at light loads*/
 #ifndef ESP12_FLASH_MODE
-	nbox_wifi_enable_n,
+	nbox_wifi_enable,
 #endif
 	nbox_sdcard_enable_n,
 	nbox_vbat_test_enable,

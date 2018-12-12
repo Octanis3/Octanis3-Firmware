@@ -121,7 +121,7 @@ void log_startup()
 void log_restart()
 {
     //reset time stamp:
-    Seconds_set(0);
+    // Seconds_set(0); // not anymore!
 
     // then flush out all the data recorded so far:
     log_send_data_via_uart((uint16_t*)(*FRAM_offset_ptr+LOG_START_POS));

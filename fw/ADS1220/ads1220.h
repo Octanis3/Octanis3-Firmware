@@ -182,6 +182,11 @@ struct Ads1220 {
   uint8_t rx_buf[ADS1220_BUFFER_LEN];  ///< receive buffer
   // Config
   struct Ads1220Config config;                  ///< configuration
+  // Tare values
+  int32_t cont_offset;
+  int32_t periodic_offset;
+  int32_t cont_threshold; // when in continuous measurement mode
+  int32_t periodic_threshold; // when in single shot mode
   // Data
   int32_t data;                                ///< raw ADC value
   int32_t stable_weight;
@@ -202,9 +207,9 @@ extern void ads1220_convert_temperature(struct Ads1220 *ads);
 
 //extern float ads1220_get_units(uint8_t times, float* max_deviation, struct Ads1220 *ads);
 //float ads1220_convert_units(struct Ads1220 *ads);
-extern int ads1220_tare(uint8_t times, struct Ads1220 *ads);
+extern int ads1220_tare(uint8_t times, int32_t* max_cont_deviation, int32_t* max_periodic_deviation, struct Ads1220 *ads);
 extern int32_t ads1220_read_average(uint8_t times, int32_t* max_deviation, struct Ads1220 *ads);
-extern void ads1220_set_raw_threshold(int32_t* threshold, int32_t threshold_delta);
+extern void ads1220_set_thresholds(struct Ads1220 *ads, int32_t threshold_delta);
 extern void ads1220_change_mode(struct Ads1220 *ads, enum Ads1220SampleRate rate, enum Ads1220ConvMode mode, enum Ads1220TempSensorMode temp);
 
 /// convenience function: read or start configuration if not already initialized

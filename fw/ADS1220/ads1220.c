@@ -297,11 +297,20 @@ int32_t ads1220_read_average(uint8_t times, int32_t* max_deviation, struct Ads12
 //	return (float)(ads->data - ADS_OFFSET)/ADS_SCALE;
 //}
 
-int ads1220_tare(uint8_t times, struct Ads1220 *ads)
+int ads1220_tare(uint8_t times, int32_t* max_cont_deviation, int32_t* max_periodic_deviation, struct Ads1220 *ads)
 {
 	int i;
 	int32_t sum = 0;
 
+	// measure continuous threshold:
+	GPIO_disableInt(nbox_loadcell_data_ready);
+    ads1220_change_mode(ads, ADS1220_RATE_20_HZ, ADS1220_CONTINIOUS_CONVERSION, ADS1220_TEMPERATURE_DISABLED);
+
+	ads->cont_offset = ads1220_read_average(20, max_cont_deviation, ads);
+
+    // measure periodic threshold:
+	ads1220_change_mode(ads, ADS1220_RATE_1000_HZ, ADS1220_SINGLE_SHOT, ADS1220_TEMPERATURE_DISABLED);
+	GPIO_enableInt(nbox_loadcell_data_ready);
 
 	for (i = 0; i < times; i++)
     {
@@ -317,16 +326,15 @@ int ads1220_tare(uint8_t times, struct Ads1220 *ads)
 
         sum += ads->data;
     }
+	ads ->periodic_offset = sum/times;
 
-	ADS_OFFSET = sum/times;
    return 0;
 }
 
-void ads1220_set_raw_threshold(int32_t* threshold, int32_t threshold_delta)
+void ads1220_set_thresholds(struct Ads1220 *ads, int32_t threshold_delta)
 {
-//	*raw_threshold = ADS_SCALE * weight_threshold + ADS_OFFSET;
-    *threshold = ADS_OFFSET + threshold_delta;
-
+    ads->periodic_threshold = ads->periodic_offset + threshold_delta;
+    ads->cont_threshold = ads->cont_offset + threshold_delta;
 }
 
 
