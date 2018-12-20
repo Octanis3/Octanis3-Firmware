@@ -115,7 +115,8 @@ Void nbox_isrDMA(UArg arg)
 #endif
 
 GPIO_PinConfig gpioPinConfigs[] = {
-    /* Input pins */
+    /* NESTBOX_WIFI_SENSE */
+    GPIOMSP430_P1_0 | GPIO_CFG_IN_NOPULL | GPIO_CFG_IN_INT_RISING,
     /* nestbox user button */
 #ifdef LAUNCHPAD_PINDEF
     GPIOMSP430_P4_5 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
@@ -146,10 +147,8 @@ GPIO_PinConfig gpioPinConfigs[] = {
 	/* NESTBOX_LF_DATA */
 	GPIOMSP430_P4_3 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_NONE,
 #endif
-#ifdef ESP12_FLASH_MODE
     /* NESTBOX_WIFI_ENABLE_N */
     GPIOMSP430_PJ_3 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_NONE,
-#endif
 
     /************ Output pins ***********/
 #ifdef LAUNCHPAD_PINDEF
@@ -161,11 +160,6 @@ GPIO_PinConfig gpioPinConfigs[] = {
 	/* NESTBOX_LED_GREEN */
     GPIOMSP430_P4_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 #endif
-
-	/* NESTBOX_LED_INFRARED ==> TODO: CAN WE USE P1.0 as TI-RTOS GPIO?;
-	 * --> directly modified at register level in lightbarrier task */
-	GPIOMSP430_P1_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
-
 //	/* NESTBOX_LOADCELL_CLK */
 //	GPIOMSP430_P3_4 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
 	/* NESTBOX_LF_MODUL */
@@ -190,7 +184,7 @@ GPIO_PinConfig gpioPinConfigs[] = {
 //	GPIOMSP430_P4_7 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_LOW | GPIO_CFG_OUT_HIGH,
 #ifndef ESP12_FLASH_MODE
 	/* NESTBOX_WIFI_ENABLE */
-	GPIOMSP430_PJ_3 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+//	GPIOMSP430_PJ_3 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_LOW | GPIO_CFG_OUT_LOW,
 #endif
 	/* NESTBOX_SD_ENABLE_N ---> IS SD_SPI_CS currently! */
 	GPIOMSP430_PJ_2 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
@@ -225,6 +219,7 @@ GPIO_PinConfig gpioPinConfigs[] = {
  *       reduce memory usage (if placed at end of gpioPinConfigs array).
  */
 GPIO_CallbackFxn gpioCallbackFunctions[] = {
+    wifi_sense_isr,  /* nestbox user button */
 	user_button_isr,  /* nestbox user button */
 	lightbarrier_input_isr, /* lightbarrier detection routine */
 	lightbarrier_input_isr, /* lightbarrier detection routine */
@@ -396,11 +391,12 @@ const UART_Config UART_config[] = {
  */
 void nbox_initUART(void)
 {
-    /* P2.0,1 = USCI_A0 TXD/RXD */
-    GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2,
-        GPIO_PIN0, GPIO_SECONDARY_MODULE_FUNCTION);
-    GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P2,
-        GPIO_PIN1, GPIO_SECONDARY_MODULE_FUNCTION);
+    // UART0 is used for ESP! this has to be left floating while off.
+//    /* P2.0,1 = USCI_A0 TXD/RXD */
+//    GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2,
+//        GPIO_PIN0, GPIO_SECONDARY_MODULE_FUNCTION);
+      GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P2,
+          GPIO_PIN1, GPIO_SECONDARY_MODULE_FUNCTION);
 
     /* P2.5,6 = USCI_A1 TXD/RXD */
     GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2,

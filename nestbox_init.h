@@ -77,7 +77,8 @@ extern "C" {
  */
 typedef enum nbox_GPIOName {
     //inputs
-	nbox_button = 0,
+    nbox_wifi_sense = 0,
+	nbox_button,
 
 	nbox_lightbarrier_ext,
 	nbox_lightbarrier_int,
@@ -93,15 +94,12 @@ typedef enum nbox_GPIOName {
 	nbox_lf_clk,
 	nbox_lf_data,
 #endif
-#ifdef ESP12_FLASH_MODE
 	nbox_wifi_enable_floating,
-#endif
 	//outputs
     nbox_led_data,
 #ifndef LAUNCHPAD_PINDEF
     nbox_led_status,
 #endif
-	nbox_led_ir,
 //	nbox_loadcell_clk,
 	nbox_lf_modul,
 	nbox_loadcell_spi_cs_n,
@@ -120,7 +118,7 @@ typedef enum nbox_GPIOName {
 						* 400mV enables Burst Mode operation, providing a significant
 						* efficiency improve- ment at light loads*/
 #ifndef ESP12_FLASH_MODE
-	nbox_wifi_enable,
+	//nbox_wifi_enable,
 #endif
 	nbox_sdcard_enable_n,
 	nbox_vbat_test_enable,

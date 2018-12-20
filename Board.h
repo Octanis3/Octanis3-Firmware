@@ -59,6 +59,7 @@ extern "C" {
 #define Board_initUART              nbox_initUART
 #define Board_initWatchdog          nbox_initWatchdog
 
+#define Board_wifi_sense            nbox_wifi_sense
 
 #define Board_button           		nbox_button
 #define PIR_pin                     nbox_pir_in1
@@ -66,9 +67,7 @@ extern "C" {
 #define Board_led_data              nbox_led_data
 #define Board_led_status            nbox_led_status
 
-#ifdef ESP12_FLASH_MODE
-    #define nbox_wifi_enable      nbox_5v_enable
-#endif
+#define nbox_wifi_enable            nbox_led_status
 
 #define Board_LED_ON					nbox_LED_ON
 #define Board_LED_OFF				nbox_LED_OFF

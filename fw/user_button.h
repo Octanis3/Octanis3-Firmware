@@ -11,6 +11,7 @@
 void user_button_Task();
 int user_wifi_enabled();
 
+void wifi_sense_isr(unsigned int index);
 
 void user_button_isr(unsigned int index);
 

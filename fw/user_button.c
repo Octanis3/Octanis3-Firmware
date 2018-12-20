@@ -4,6 +4,7 @@
  *  Created on: 01 Apr 2017
  *      Author: raffael
  */
+#include <msp430.h>
 
 #include <ti/drivers/GPIO.h>
 
@@ -29,13 +30,14 @@
 #define WRITE_REQ 0x80
 
 static int interrupt_triggered = 0;
+static int wifi_on = 0;
 
 
 void user_button_Task()
 {
-    GPIO_write(nbox_wifi_enable, 0);
+    GPIO_enableInt(Board_button);
+    GPIO_enableInt(Board_wifi_sense);
 
-	GPIO_enableInt(Board_button);
 	Task_sleep(5000);
 //
 	// MIN test program
@@ -60,7 +62,17 @@ void user_button_Task()
 
 	while(1)
 	{
-	    Semaphore_pend((Semaphore_Handle)semButton, BIOS_WAIT_FOREVER);
+	    if(GPIO_read(Board_wifi_sense))
+	    {
+	        GPIO_write(Board_led_data, Board_LED_ON);
+	        wifi_on = 1;
+	        P1IES |= BIT0; // set wifi sense to falling edge
+	    }
+	    else
+	    {
+	        P1IES &= ~BIT0; // set wifi sense to rising edge
+	        Semaphore_pend((Semaphore_Handle)semButton, BIOS_WAIT_FOREVER);
+	    }
 	    Task_sleep(100); // wait to power up.
         uart_wifi_open();
 
@@ -75,6 +87,8 @@ void user_button_Task()
             interrupt_triggered = 0;
             GPIO_clearInt(Board_button);
             GPIO_enableInt(Board_button);
+            GPIO_clearInt(Board_wifi_sense);
+            GPIO_enableInt(Board_wifi_sense);
         }
 
         while(interrupt_triggered == 0)
@@ -270,15 +284,49 @@ void user_button_Task()
 
         GPIO_clearInt(Board_button);
    		GPIO_enableInt(Board_button);
+
+   	    GPIO_clearInt(Board_wifi_sense);
+   	    GPIO_enableInt(Board_wifi_sense);
+
 	}
 }
 
-static int wifi_on = 0;
 
 int user_wifi_enabled()
 {
     return wifi_on;
 }
+
+void wifi_sense_isr(unsigned int index)
+{
+    //cautionary measure: set TX gpio to input
+    P2OUT &= ~BIT5;
+    P2SEL1 &= ~BIT5;
+
+    GPIO_disableInt(Board_wifi_sense);
+
+    if(GPIO_read(Board_wifi_sense)) //sense high voltage -> wifi module was turned on!
+    {
+        P1IES |= BIT0; // set wifi sense to falling edge
+        GPIO_write(Board_led_data, Board_LED_ON);
+        wifi_on = 1;
+        Semaphore_post((Semaphore_Handle)semButton);
+    }
+    else
+    {
+        GPIO_write(nbox_wifi_enable, 0);
+#ifdef WIFI_USE_5V
+        GPIO_write(nbox_5v_enable, 0);
+#endif
+        GPIO_write(Board_led_data, Board_LED_OFF);
+        wifi_on = 0;
+        P1IES &= ~BIT0; // set wifi sense to rising edge
+    }
+
+    //check interrupt source
+    interrupt_triggered = 1;
+}
+
 
 void user_button_isr(unsigned int index)
 {
