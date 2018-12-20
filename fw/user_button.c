@@ -300,8 +300,8 @@ int user_wifi_enabled()
 void wifi_sense_isr(unsigned int index)
 {
     //cautionary measure: set TX gpio to input
-    P2OUT &= ~BIT5;
-    P2SEL1 &= ~BIT5;
+    P2OUT &= ~BIT0;
+    P2SEL1 &= ~BIT0;
 
     GPIO_disableInt(Board_wifi_sense);
 

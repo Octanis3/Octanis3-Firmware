@@ -95,6 +95,7 @@ Char pir_task_Stack[PIR_TASKSTACKSIZE];
  *  ======== main ========
  */
 int main(void)
+
 {
 #ifdef LIGHTBARRIER_VERSION
     Task_Params lb_taskParams;

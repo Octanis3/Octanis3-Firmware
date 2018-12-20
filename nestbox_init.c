@@ -395,6 +395,11 @@ void nbox_initUART(void)
 //    /* P2.0,1 = USCI_A0 TXD/RXD */
 //    GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2,
 //        GPIO_PIN0, GPIO_SECONDARY_MODULE_FUNCTION);
+
+      //cautionary measure: set TX gpio to input
+      P2OUT &= ~BIT0;
+      P2SEL1 &= ~BIT0;
+
       GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P2,
           GPIO_PIN1, GPIO_SECONDARY_MODULE_FUNCTION);
 
