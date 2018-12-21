@@ -273,7 +273,7 @@ void load_cell_Task()
             ads1220_tare(20, &max_cont_deviation, &max_periodic_deviation, &ads);
             if((max_cont_deviation + max_periodic_deviation) < i*TARE_TOLERANCE)
             {
-                last_measured_offset = ads.periodic_offset;
+                last_measured_offset = ads.cont_offset;
                 ads1220_set_thresholds(&ads, WEIGHT_THRESHOLD);
                 break;
             }
@@ -339,7 +339,7 @@ void load_cell_Task()
                 ads1220_tare(20, &max_cont_deviation, &max_periodic_deviation, &ads);
                 if((max_cont_deviation + max_periodic_deviation) < TARE_TOLERANCE)
                 {
-                    last_measured_offset = ads.periodic_offset;
+                    last_measured_offset = ads.cont_offset;
                     ads1220_set_thresholds(&ads, WEIGHT_THRESHOLD);
                 }
             }

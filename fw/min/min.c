@@ -649,6 +649,4 @@ void min_application_handler(uint8_t min_id, uint8_t *min_payload, uint8_t len_p
     static uint8_t count = 0x30;
     count = count+1;
     uart_serial_print_event('N', &count, 1);
-
-    //min_send_frame(&min_ctx, min_id, min_payload, len_payload);
 }

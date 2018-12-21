@@ -110,8 +110,10 @@ void user_button_Task()
 
             }while(min_ctx.rx_frame_state != RECEIVING_EOF && interrupt_triggered==0);
 
-            ctrl_byte = min_ctx.rx_frame_payload_buf[0];
+            uart_serial_read(&wifi_uart, rx_bytes, 1); //receive the EOF character
+            min_poll(&min_ctx, rx_bytes, 1);
 
+            ctrl_byte = min_ctx.rx_frame_payload_buf[0];
 
             switch(ctrl_byte & 0x7f)
             {
