@@ -24,6 +24,7 @@ void load_cell_bypass_threshold(int status);
 
 void load_cell_Task();
 
+void load_cell_power_down();
 void load_cell_deep_sleep();
 
 void load_cell_isr();

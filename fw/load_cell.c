@@ -225,6 +225,8 @@ void ads1220_set_init_loadcell_config(struct Ads1220 *ads){
 	ads->config.filter = ADS1220_FILTER_NONE; //At data rates of 5 SPS and 20 SPS, the filter can be configured to reject 50-Hz or 60-Hz line frequencies or to simultaneously reject 50 Hz and 60 Hz!!!
 }
 
+struct Ads1220 ads;
+
 void load_cell_Task()
 {
 	Task_sleep(1000); //wait until things are settled...
@@ -250,7 +252,6 @@ void load_cell_Task()
 
 	spi1_init();
 	struct spi_periph ads_spi;
-	struct Ads1220 ads;
 
 	ads1220_init(&ads, &ads_spi, nbox_loadcell_spi_cs_n);
 	ads1220_set_init_loadcell_config(&ads);
@@ -442,8 +443,15 @@ void load_cell_Task()
 
 }
 
+void load_cell_power_down()
+{
+    ads1220_powerdown(&ads); //very important!
+
+}
+
 void load_cell_deep_sleep()
 {
+    load_cell_power_down();
 	spi1_arch_close();
     //todo: redefine load SPI pins to be GPIOs with 0 as output.
 

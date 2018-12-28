@@ -28,7 +28,7 @@
 
 #define LOG_NEXT_POS_VALID	0x12FFC // store the 16bit "password" (type unsigned int == uint16_t)
 #define LOG_NEXT_POS_OFS		0x12FFE // store the 16bit offset (type unsigned int == uint16_t)
-#define LOG_TIMESTAMP		0x12FF8 // store the 32bit timestamp (type unsigned int == uint16_t)
+#define LOG_TIMESTAMP		0x12FF8 // store the 32bit timestamp (type unsigned long == uint32_t)
 							// ^--- RESERVED SPACE STARTS HERE!! CHANGE nestbox_memory_map.cmd FILE IF MODIFYING THIS VALUE!
 #define LOG_START_POS		0x00013000
 #define LOG_END_POS			0x00013FF0 // this is the last byte position to write to; conservative...
@@ -105,15 +105,8 @@ void log_startup()
 		//LOG_BACKUP_PERIOD/2: add the average time difference that got lost due to backup interval
 	}
 
-	// compensate for LFX deviation:
-    RTCCTL01 = RTCHOLD;
-
-	//TODO: make correct compensation
-    // Here we compensate for 11.1ppm = 5*2.17 --> 5 = 0b101
-	RTCCTL23 = RTCCAL2 + RTCCAL0;
-	RTCCTL23 &= ~RTCCALS;
-
-    RTCCTL01 &= ~(RTCHOLD);                 // Start RTC
+	rtc_config();
+	rtc_set_clock(Seconds_get());
 
 	log_initialized = 1;
 }

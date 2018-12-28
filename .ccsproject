@@ -12,6 +12,6 @@
 	<createSlaveProjects value=""/>
 	<templateProperties value="id=com.ti.rtsc.TIRTOSmsp430.example_3,type=rtsc,products=com.ti.rtsc.TIRTOSmsp430,xdcToolsVersion=3_32_00_06_core,target=ti.targets.msp430.elf.MSP430X,platform=ti.platforms.msp430:MSP430FR5969,buildProfile=release,isHybrid=true,configuroOptions=--compileOptions &quot;${COMPILER_FLAGS} &quot;,"/>
 	<filesToOpen value=""/>
-	<origin value="C:/Users/Jeroen/Documents/GitHub/Octanis3-Firmware"/>
+	<origin value="/Users/raffael/Desktop/Octanis/Octanis3/ccs_workspace3_temp/Octanis3-Firmware"/>
 	<isTargetManual value="false"/>
 </projectOptions>

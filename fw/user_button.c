@@ -16,6 +16,7 @@
 #include "load_cell.h"
 #include "battery_monitor.h"
 #include "../Board.h"
+#include "rtc.h"
 
 #include <ti/sysbios/hal/Hwi.h>
 

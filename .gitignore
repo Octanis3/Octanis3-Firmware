@@ -46,3 +46,4 @@ src/*
 /.config/*
 .xdchelp
 /Debug__GNU/
+/Release/

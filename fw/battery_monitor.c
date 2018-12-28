@@ -10,6 +10,9 @@
 #include <msp430.h>
 #include "load_cell.h"
 #include "logger.h"
+#include "rtc.h"
+#include <xdc/cfg/global.h> //needed for semaphore
+#include <ti/sysbios/knl/Semaphore.h>
 
 
 volatile uint16_t ADC_val = 0;
@@ -135,7 +138,7 @@ void goto_deepsleep()
 	//TODO: disable all serial SPI/UART ports (redefine pins as outputs to zero):
 
 	//__bic_SR_register(GIE);
-	__bis_SR_register(LPM4_bits);        // Enter LPM0 with interrupts
+	__bis_SR_register(LPM4_bits);        // Enter LPM4 with interrupts
 }
 
 void battery_Task()
@@ -164,6 +167,29 @@ void battery_Task()
 
 
 		Task_sleep(BAT_TEST_INTERVAL); //300000
+
+		// Check RTC for system pause schedule:
+		if(rtc_is_it_time_to_pause())
+		{
+		    // shut down system for the day:
+		    //write stored data to flash before power down
+            log_restart();
+
+            // power off all modules
+            GPIO_write(nbox_vbat_test_enable, 0);
+            GPIO_write(nbox_sdcard_enable_n, 1);
+            GPIO_write(nbox_5v_enable, 0);
+            load_cell_power_down();
+            GPIO_write(nbox_loadcell_ldo_enable, 0); // LDO UNUSED; BECAUSE WHEN OFF, THIS DRAWS TOO MUCH CURRENT!!
+
+            // Stop tick and wait for RTC calendar alarm to wake up
+            rtc_pause_system();
+	        Semaphore_pend((Semaphore_Handle)semSystemPause, BIOS_WAIT_FOREVER);
+
+	        // power on modules again:
+            GPIO_write(nbox_loadcell_ldo_enable, 1);
+		}
+
 	}
 }
 
