@@ -136,12 +136,8 @@ void user_button_Task()
                     timestamp = (timestamp<<8) + (min_ctx.rx_frame_payload_buf[3]);
                     timestamp = (timestamp<<8) + (min_ctx.rx_frame_payload_buf[4]);
                     Seconds_set(timestamp);
-
-                    const char test_string[] = "set new time\n";
-
-                    uart_serial_write(&debug_uart, (uint8_t*)test_string, sizeof(test_string));
-
                 }
+                //send back (new) time value
                 uint32_t new_timestamp = Seconds_get();
                 unsigned char tx_buf[5];
                 tx_buf[0] = 'Z';
@@ -149,6 +145,26 @@ void user_button_Task()
                 tx_buf[2] = new_timestamp >> 16;
                 tx_buf[3] = new_timestamp >> 8;
                 tx_buf[4] = new_timestamp;
+
+                min_send_frame(&min_ctx, 0x33U, tx_buf, 5);
+                break;
+            }
+            case 'S':
+            {
+                if(ctrl_byte & WRITE_REQ)
+                {
+                    rtc_set_pause_times(min_ctx.rx_frame_payload_buf[1],
+                                        min_ctx.rx_frame_payload_buf[2],
+                                        min_ctx.rx_frame_payload_buf[3],
+                                        min_ctx.rx_frame_payload_buf[4]);
+                }
+                // send back (new) values
+                unsigned char tx_buf[5];
+                tx_buf[0] = 'S';
+                tx_buf[1] = rtc_get_p_hour();
+                tx_buf[2] = rtc_get_p_min();
+                tx_buf[3] = rtc_get_r_hour();
+                tx_buf[4] = rtc_get_r_min();
 
                 min_send_frame(&min_ctx, 0x33U, tx_buf, 5);
                 break;

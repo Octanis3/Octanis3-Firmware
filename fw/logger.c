@@ -12,6 +12,7 @@
 #include <ti/sysbios/hal/Seconds.h>
 #include <msp430.h>
 #include "rfid_reader.h"
+#include "rtc.h"
 
 #include "ADS1220/spi.h"
 #include "ff13b/source/ff.h"
@@ -193,10 +194,9 @@ int log_write_new_entry(uint8_t logchar, uint16_t value)
 
 int log_write_new_rfid_entry(uint64_t uid)
 {
-    uint32_t t = Timestamp_get32();
-    uint32_t msecs = (t & 0x7fff) * 1000 /32768;
-
-    uint16_t msec = msecs;
+//    uint32_t t = Timestamp_get32();
+//    uint32_t msec = (t & 0x7fff) * 1000 /32768;
+//
     uint32_t timestamp = Seconds_get();
 
     log_check_pointer_position();
@@ -223,11 +223,10 @@ int log_write_new_rfid_entry(uint64_t uid)
 
 int log_write_new_weight_entry( uint8_t logchar, uint32_t weight, uint16_t stdev)
 {
-    uint32_t t = Timestamp_get32();
-    uint32_t msecs = (t & 0x7fff) * 1000 /32768;
+//    uint32_t t = Timestamp_get32();
+//    uint32_t msec = (t & 0x7fff) * 1000 /32768;
 
     uint32_t timestamp = Seconds_get();
-    uint16_t msec = msecs;
 
     log_check_pointer_position();
     unsigned int* FRAM_write_ptr = (unsigned int*)(LOG_START_POS + *FRAM_offset_ptr); // = base address plus *FRAM_offset_ptr
@@ -255,53 +254,22 @@ const uint8_t end_string[] = "#========== end FRAM logs ===========\n";
 
 void log_send_data_via_uart(uint16_t* FRAM_read_end_ptr)
 {
+#if LOG_VERBOSE
+    GPIO_write(nbox_spi_cs_n, 0); //turn on SD card
 
-	/********* possible example code for fast DMA transfer **********
-	// Set up DMA0, Repeated single transfer, length = index, UART trigger, transmit bytes
-	DMA_initParam dma_param = {0};
-	dma_param.channelSelect = DMA_CHANNEL_0;
-	dma_param.transferModeSelect = DMA_TRANSFER_REPEATED_SINGLE;
-	dma_param.transferSize = *FRAM_write_index;
-	dma_param.triggerSourceSelect = DMA_TRIGGERSOURCE_15;
-	dma_param.transferUnitSelect = DMA_SIZE_SRCBYTE_DSTBYTE;
-	dma_param.triggerTypeSelect = DMA_TRIGGER_RISINGEDGE;
-	DMA_init(&dma_param);
-
-	// Transfer from ADC_results in FRAM, increment
-	DMA_setSrcAddress(DMA_CHANNEL_0, (unsigned long)FRAM_ADC_RESULTS + 2,
-					  DMA_DIRECTION_INCREMENT);
-
-	// Transfer to TX buffer for UART (UCA0), unchanged
-	DMA_setDstAddress(DMA_CHANNEL_0, (unsigned long)&UCA0TXBUF,
-					  DMA_DIRECTION_UNCHANGED);
-	DMA_enableTransfers(DMA_CHANNEL_0);
-	DMA_enableInterrupt(DMA_CHANNEL_0);
-
-	// Go to sleep until transfer finishes
-	__bis_SR_register(LPM0_bits + GIE);
-	__no_operation();
-
-	EUSCI_A_UART_disable(__MSP430_BASEADDRESS_EUSCI_A0__);                      // Stop UART (UCA0)
-	DMA_disableTransfers(DMA_CHANNEL_0);                                        // disable DMA
-
-
-	************************ end example *************************/
+    uart_stop_debug_prints();
+    uart_serial_write(&debug_uart, start_string, sizeof(start_string));
+    //  uart_serial_write(&debug_uart, title_row, sizeof(title_row));
+#else
     char sd_rx;
     unsigned int sd_retry = 0;
 
     for(sd_retry = 0; sd_retry <= MAX_SD_RETRY; sd_retry++){
 
-    #if LOG_VERBOSE
-        GPIO_write(nbox_spi_cs_n, 0); //turn on SD card
 
-        uart_stop_debug_prints();
-        uart_serial_write(&debug_uart, start_string, sizeof(start_string));
-        //  uart_serial_write(&debug_uart, title_row, sizeof(title_row));
-    #else
         uart_debug_open();
         GPIO_write(nbox_spi_cs_n, 0); //turn on SD card
 
-    #endif
 
         unsigned int sd_delay = 0;
         for(sd_delay = 0; sd_delay < 10; sd_delay++)
@@ -330,19 +298,13 @@ void log_send_data_via_uart(uint16_t* FRAM_read_end_ptr)
             break;
         else
         {
-        #if LOG_VERBOSE
-            uart_serial_write(&debug_uart, end_string, sizeof(end_string));
-            Task_sleep(100);
-            uart_start_debug_prints();
-        #else
             uart_debug_close();
-        #endif
 
             GPIO_write(nbox_spi_cs_n, 1); //turn off SD card
             Task_sleep(5000);
         }
     }
-
+#endif
 
 	uint8_t outbuffer[OUTPUT_BUF_LEN];
 

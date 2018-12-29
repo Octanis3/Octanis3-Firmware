@@ -13,13 +13,13 @@
 #include <msp430.h>
 
 #define DEFAULT_RESUME_HOUR    16  // UTC time! i.e. default resume time is 17h in winter
-#define DEFAULT_PAUSE_HOUR     8  // UTC time! i.e. default system shutdown time is 9 am in winter
+#define DEFAULT_PAUSE_HOUR     10//8  // UTC time! i.e. default system shutdown time is 9 am in winter
 
 
 
 // RTC times when the system will pause operation (usually in the morning)
 static uint8_t pause_hour = DEFAULT_PAUSE_HOUR;
-static uint8_t pause_minute = 0;
+static uint8_t pause_minute = 30;
 // RTC times when the system will resume operating (usually at break of dawn)
 static uint8_t resume_hour = DEFAULT_RESUME_HOUR;
 static uint8_t resume_minute = 0;
@@ -40,7 +40,6 @@ void rtc_example()
     t1 = time(NULL);
     ltm = localtime(&t1);
     curTime = asctime(ltm);
-
 }
 
 uint8_t rtc_get_p_min() {return pause_minute;}
