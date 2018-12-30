@@ -135,7 +135,7 @@ void user_button_Task()
                     timestamp = (timestamp<<8) + (min_ctx.rx_frame_payload_buf[2]);
                     timestamp = (timestamp<<8) + (min_ctx.rx_frame_payload_buf[3]);
                     timestamp = (timestamp<<8) + (min_ctx.rx_frame_payload_buf[4]);
-                    Seconds_set(timestamp);
+                    rtc_set_clock(timestamp);
                 }
                 //send back (new) time value
                 uint32_t new_timestamp = Seconds_get();

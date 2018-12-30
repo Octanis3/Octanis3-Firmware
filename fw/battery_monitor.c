@@ -106,6 +106,8 @@ void goto_deepsleep()
 	//TODO
 //	timer0_A_stop(); //stop timer to make it possible to turn off SMCLK.
 
+    log_write_new_entry('E', 99);
+
 	//write stored data to flash before power down
     log_restart();
 
@@ -173,6 +175,8 @@ void battery_Task()
 		{
 		    // shut down system for the day:
 		    //write stored data to flash before power down
+		    log_write_new_entry('E', 0);
+
             log_restart();
 
             // power off all modules
@@ -180,14 +184,15 @@ void battery_Task()
             GPIO_write(nbox_sdcard_enable_n, 1);
             GPIO_write(nbox_5v_enable, 0);
             load_cell_power_down();
-            GPIO_write(nbox_loadcell_ldo_enable, 0); // LDO UNUSED; BECAUSE WHEN OFF, THIS DRAWS TOO MUCH CURRENT!!
+//            GPIO_write(nbox_loadcell_ldo_enable, 0); // LDO UNUSED; BECAUSE WHEN OFF, THIS DRAWS TOO MUCH CURRENT!!
 
             // Stop tick and wait for RTC calendar alarm to wake up
             rtc_pause_system();
 	        Semaphore_pend((Semaphore_Handle)semSystemPause, BIOS_WAIT_FOREVER);
 
 	        // power on modules again:
-            GPIO_write(nbox_loadcell_ldo_enable, 1);
+//            GPIO_write(nbox_loadcell_ldo_enable, 1);
+            log_write_new_entry('E', 1);
 		}
 
 	}

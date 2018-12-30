@@ -13,13 +13,13 @@
 #include <msp430.h>
 
 #define DEFAULT_RESUME_HOUR    16  // UTC time! i.e. default resume time is 17h in winter
-#define DEFAULT_PAUSE_HOUR     10//8  // UTC time! i.e. default system shutdown time is 9 am in winter
+#define DEFAULT_PAUSE_HOUR     8  // UTC time! i.e. default system shutdown time is 9 am in winter
 
 
 
 // RTC times when the system will pause operation (usually in the morning)
 static uint8_t pause_hour = DEFAULT_PAUSE_HOUR;
-static uint8_t pause_minute = 30;
+static uint8_t pause_minute = 0;
 // RTC times when the system will resume operating (usually at break of dawn)
 static uint8_t resume_hour = DEFAULT_RESUME_HOUR;
 static uint8_t resume_minute = 0;
@@ -105,19 +105,21 @@ void rtc_set_clock(int32_t unix_timestamp)
     RTCMON = 1;                             // Month = 0x04 = April
     RTCDAY = 1;                             // Day = 0x05 = 5th
    // RTCDOW = 0x01;                          // Day of week = 0x01 = Monday
-    RTCHOUR = (unix_timestamp - (unix_timestamp % 3600))/3600; // Hour
-    RTCMIN = (unix_timestamp - (unix_timestamp % 60))/60;      // Minute
+    RTCHOUR = ((unix_timestamp % 86400) - (unix_timestamp % 3600))/3600; // Hour
+    RTCMIN = ((unix_timestamp % 3600) - (unix_timestamp % 60))/60;      // Minute
     RTCSEC = (unix_timestamp % 60);                            // Seconds
 
 
     RTCCTL01 &= ~(RTCHOLD);                 // Start RTC
 
-
+    Seconds_set(unix_timestamp);
 }
 
 int rtc_is_it_time_to_pause()
 {
-    if(RTCHOUR >= pause_hour && RTCHOUR < resume_hour && RTCMIN >= pause_minute)
+    if(RTCHOUR > pause_hour && RTCHOUR < resume_hour)
+        return 1;
+    else if(RTCHOUR >= pause_hour && RTCHOUR < resume_hour && RTCMIN >= pause_minute)
     {
         return 1;
     }
@@ -145,7 +147,7 @@ void rtc_pause_system()
 
     seconds_till_resume = ((((RTCAHOUR & 0x7f) + 24) - RTCHOUR) % 24)*3600;
     seconds_till_resume = seconds_till_resume +
-                          ((((RTCAMIN & 0x7f) + 60) - RTCMIN) % 60)*60;
+                          (((RTCAMIN & 0x7f) - RTCMIN) % 60)*60;
     seconds_till_resume = seconds_till_resume - RTCSEC;
     Clock_tickStop();
 }

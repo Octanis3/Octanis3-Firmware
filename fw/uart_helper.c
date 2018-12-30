@@ -176,7 +176,7 @@ void uart_serial_print_event(char type, const uint8_t* data, unsigned int n)
 		uint32_t rtc_sec = Seconds_get();
 
 		uint8_t strlen;
-		uint8_t sec_buf[7];
+		uint8_t sec_buf[50];
 		strlen = ui2a(rtc_sec, 10, 1, HIDE_LEADING_ZEROS, sec_buf);
 		sec_buf[strlen]=',';
 		UART_write(debug_uart, sec_buf, strlen+1);

@@ -155,15 +155,15 @@ void quick_print(long value, char log_symbol)
         value = -value;
     }
     uint8_t strlen;
-    uint8_t weight_buf[20];
+    uint8_t tx_buf[50];
     if(log_symbol == 'D')
-        strlen = ui2a(value<<8, 10, 1, HIDE_LEADING_ZEROS, &weight_buf[1]);
+        strlen = ui2a(value<<8, 10, 1, HIDE_LEADING_ZEROS, &tx_buf[1]);
     else
-        strlen = ui2a(value, 10, 1, HIDE_LEADING_ZEROS, &weight_buf[1]);
-    weight_buf[0] = sign;
+        strlen = ui2a(value, 10, 1, HIDE_LEADING_ZEROS, &tx_buf[1]);
+    tx_buf[0] = sign;
 
     Semaphore_pend((Semaphore_Handle)semSerial,BIOS_WAIT_FOREVER);
-    uart_serial_print_event(log_symbol, weight_buf, strlen+1);
+    uart_serial_print_event(log_symbol, tx_buf, strlen+1);
     Semaphore_post((Semaphore_Handle)semSerial);
 }
 

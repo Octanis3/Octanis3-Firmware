@@ -70,7 +70,7 @@ Task_Struct button_task_Struct;
 Char button_task_Stack[BUTTON_TASKSTACKSIZE];
 
 // log task
-#define LOG_TASKSTACKSIZE   2048
+#define LOG_TASKSTACKSIZE   1024
 Task_Struct log_task_Struct;
 Char log_task_Stack[LOG_TASKSTACKSIZE];
 
@@ -80,7 +80,7 @@ Task_Struct load_cell_task_Struct;
 Char load_cell_task_Stack[LOAD_CELL_TASKSTACKSIZE];
 
 // battery task
-#define BATTERY_TASKSTACKSIZE   300
+#define BATTERY_TASKSTACKSIZE   1024
 Task_Struct bat_task_Struct;
 Char bat_task_Stack[BATTERY_TASKSTACKSIZE];
 
@@ -95,7 +95,6 @@ Char pir_task_Stack[PIR_TASKSTACKSIZE];
  *  ======== main ========
  */
 int main(void)
-
 {
 #ifdef LIGHTBARRIER_VERSION
     Task_Params lb_taskParams;
