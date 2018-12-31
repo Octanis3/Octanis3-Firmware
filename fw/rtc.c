@@ -12,6 +12,8 @@
 #include <ti/sysbios/hal/Seconds.h>
 #include <msp430.h>
 
+#include "rtc.h"
+
 #define DEFAULT_RESUME_HOUR    16  // UTC time! i.e. default resume time is 17h in winter
 #define DEFAULT_PAUSE_HOUR     8  // UTC time! i.e. default system shutdown time is 9 am in winter
 
@@ -24,23 +26,6 @@ static uint8_t pause_minute = 0;
 static uint8_t resume_hour = DEFAULT_RESUME_HOUR;
 static uint8_t resume_minute = 0;
 
-void rtc_example()
-{
-    UInt32 t;
-    time_t t1;
-    struct tm *ltm;
-    char *curTime;
-    /* retrieve current time relative to Jan 1, 1970 */
-    t = Seconds_get();
-    /*
-     * Use overridden time() function to get the current time.
-     * Use standard C RTS library functions with return from time().
-     * Assumes Seconds_set() has been called as above
-     */
-    t1 = time(NULL);
-    ltm = localtime(&t1);
-    curTime = asctime(ltm);
-}
 
 uint8_t rtc_get_p_min() {return pause_minute;}
 uint8_t rtc_get_r_min() {return resume_minute;}
@@ -86,31 +71,56 @@ void rtc_calibration()
         RTCCTL01 &= ~(RTCHOLD);                 // Start RTC
 }
 
-
 void rtc_config()
 {
     rtc_calibration();
-
 }
 
-
-void rtc_set_clock(int32_t unix_timestamp)
+void rtc_set_clock(uint32_t unix_timestamp)
 {
+    struct tm *ltm;
+    /* retrieve current time relative to Jan 1, 1970 */
+    /*
+     * Use overridden time() function to get the current time.
+     * Use standard C RTS library functions with return from time().
+     * Assumes Seconds_set() has been called as above
+     */
+    time_t t1 = unix_timestamp + 2208988800; // add offset from year 1900 to 1970.
+    ltm = localtime(&t1);
 
     RTCCTL01 =  /* | RTCBCD*/ RTCHOLD; //RTCBCD = 0 --> binary mode!
                                             // RTC enable, binary mode, RTC hold
 
     // we dont care about the date, only about the time of day
-    RTCYEAR = 2019;                          // Year = 0x2010
-    RTCMON = 1;                             // Month = 0x04 = April
-    RTCDAY = 1;                             // Day = 0x05 = 5th
-   // RTCDOW = 0x01;                          // Day of week = 0x01 = Monday
-    RTCHOUR = ((unix_timestamp % 86400) - (unix_timestamp % 3600))/3600; // Hour
-    RTCMIN = ((unix_timestamp % 3600) - (unix_timestamp % 60))/60;      // Minute
-    RTCSEC = (unix_timestamp % 60);                            // Seconds
+    RTCYEAR = ltm->tm_year+1900;   // Year – low byte. Valid values of Year are 0 to 4095.
+    RTCMON = ltm->tm_mon+1;     // Month. Valid values are 1 to 12.                               // Month = 0x04 = April
+    RTCDAY = ltm->tm_mday;    // Day of month. Valid values are 1 to 31.                        // Day = 0x05 = 5th
+    RTCDOW = ltm->tm_wday;    // Day of week. Valid values are 0 to 6.                 // Day of week = 0x01 = Monday
+    RTCHOUR = ltm->tm_hour;   // Hours. Valid values are 0 to 23. // ((unix_timestamp % 86400) - (unix_timestamp % 3600))/3600; // Hour
+    RTCMIN = ltm->tm_min;     // Minutes. Valid values are 0 to 59. //  ((unix_timestamp % 3600) - (unix_timestamp % 60))/60;      // Minute
+    RTCSEC = ltm->tm_sec;     // Seconds. Valid values are 0 to 59. //(unix_timestamp % 60);                            // Seconds
 
 
     RTCCTL01 &= ~(RTCHOLD);                 // Start RTC
+
+    rtc_update_system_time();
+}
+
+void rtc_update_system_time()
+{
+    struct tm ltm;
+    time_t unix_timestamp;
+
+    // we dont care about the date, only about the time of day
+    ltm.tm_year = RTCYEAR - 1900;   // Year – low byte. Valid values of Year are 0 to 4095.
+    ltm.tm_mon = RTCMON - 1;     // Month. Valid values are 1 to 12.                               // Month = 0x04 = April
+    ltm.tm_mday = RTCDAY;    // Day of month. Valid values are 1 to 31.                        // Day = 0x05 = 5th
+    ltm.tm_wday = RTCDOW;    // Day of week. Valid values are 0 to 6.                 // Day of week = 0x01 = Monday
+    ltm.tm_hour = RTCHOUR;   // Hours. Valid values are 0 to 23. // ((unix_timestamp % 86400) - (unix_timestamp % 3600))/3600; // Hour
+    ltm.tm_min = RTCMIN;     // Minutes. Valid values are 0 to 59. //  ((unix_timestamp % 3600) - (unix_timestamp % 60))/60;      // Minute
+    ltm.tm_sec = RTCSEC;     // Seconds. Valid values are 0 to 59. //(unix_timestamp % 60);                            // Seconds
+
+    unix_timestamp = mktime(&ltm) - 2208988800; // add offset from year 1900 to 1970.
 
     Seconds_set(unix_timestamp);
 }
@@ -126,7 +136,7 @@ int rtc_is_it_time_to_pause()
     else return 0;
 }
 
-static uint32_t seconds_till_resume = 0;
+//static uint32_t seconds_till_resume = 0;
 
 void rtc_pause_system()
 {
@@ -145,11 +155,19 @@ void rtc_pause_system()
 
     RTCCTL01 &= ~(RTCHOLD);             // Start RTC
 
-    seconds_till_resume = ((((RTCAHOUR & 0x7f) + 24) - RTCHOUR) % 24)*3600;
-    seconds_till_resume = seconds_till_resume +
-                          (((RTCAMIN & 0x7f) - RTCMIN) % 60)*60;
-    seconds_till_resume = seconds_till_resume - RTCSEC;
+//    seconds_till_resume = ((((RTCAHOUR & 0x7f) + 24) - RTCHOUR) % 24)*3600;
+//    seconds_till_resume = seconds_till_resume +
+//                          (((RTCAMIN & 0x7f) - RTCMIN) % 60)*60;
+//    seconds_till_resume = seconds_till_resume - RTCSEC;
     Clock_tickStop();
+}
+
+void rtc_resume_system()
+{
+    // restore system timer value
+    //Seconds_set(Seconds_get()+seconds_till_resume);
+    Clock_tickStart();
+    rtc_update_system_time();
 }
 
 // IV 0FFCEh
@@ -163,10 +181,7 @@ void rtc_isr()
         case RTCIV_RTCRDYIFG: break;        // RTCRDYIFG
         case RTCIV_RTCTEVIFG: break;        // RTCEVIFG
         case RTCIV_RTCAIFG:
-            // restore system timer value
-            Seconds_set(Seconds_get()+seconds_till_resume);
             //Resume system:
-            Clock_tickStart();
             Semaphore_post((Semaphore_Handle)semSystemPause);
             break;        // RTCAIFG
         case RTCIV_RT0PSIFG:  break;        // RT0PSIFG

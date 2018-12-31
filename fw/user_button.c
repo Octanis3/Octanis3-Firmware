@@ -30,7 +30,9 @@
 
 #define WRITE_REQ 0x80
 
-static int interrupt_triggered = 0;
+static int wifi_interrupt_triggered = 0;
+static int start_interrupt_triggered = 0;
+
 static int wifi_on = 0;
 
 
@@ -40,14 +42,8 @@ void user_button_Task()
     GPIO_enableInt(Board_wifi_sense);
 
 	Task_sleep(5000);
-//
-	// MIN test program
-        // A MIN context (we only have one because we're going to use a single port).
-        // MIN 2.0 supports multiple contexts, each on a separate port, but in this example
-        // we will use just SerialUSB.
-#ifndef ESP12_FLASH_MODE
-	//uart_wifi_open();
-#else
+
+#ifdef ESP12_FLASH_MODE
 	uart_wifi_set_floating();
 #endif
 	struct min_context min_ctx;
@@ -72,27 +68,32 @@ void user_button_Task()
 	    else
 	    {
 	        P1IES &= ~BIT0; // set wifi sense to rising edge
+            Semaphore_reset((Semaphore_Handle)semButton, 0);
 	        Semaphore_pend((Semaphore_Handle)semButton, BIOS_WAIT_FOREVER);
 	    }
-	    Task_sleep(100); // wait to power up.
-        uart_wifi_open();
 
-#ifdef WIFI_USE_5V
-        GPIO_write(nbox_5v_enable, 1);
-#endif
-        GPIO_write(nbox_wifi_enable, 1);
+	    if(start_interrupt_triggered) //the button on the PCB was pressed -> user asked for a memory flush to SD card.
+	    {
+	        //write stored data to flash
+            log_restart();
+            start_interrupt_triggered = 0;
+	    }
 
-	    Task_sleep(1000); //avoid too many subsequent memory readouts
-        if(interrupt_triggered)
+        if(wifi_interrupt_triggered)
         {
-            interrupt_triggered = 0;
+            Task_sleep(100); // wait to power up.
+            uart_wifi_open();
+
+            Task_sleep(1000); //avoid too many subsequent memory readouts
+
+            wifi_interrupt_triggered = 0;
             GPIO_clearInt(Board_button);
             GPIO_enableInt(Board_button);
             GPIO_clearInt(Board_wifi_sense);
             GPIO_enableInt(Board_wifi_sense);
         }
 
-        while(interrupt_triggered == 0)
+        while(wifi_on)
         {
             do
             {
@@ -109,7 +110,7 @@ void user_button_Task()
             //	        uart_serial_write(&debug_uart, (uint8_t*)test_string, sizeof(test_string));
                 }
 
-            }while(min_ctx.rx_frame_state != RECEIVING_EOF && interrupt_triggered==0);
+            }while(min_ctx.rx_frame_state != RECEIVING_EOF && wifi_on);
 
             uart_serial_read(&wifi_uart, rx_bytes, 1); //receive the EOF character
             min_poll(&min_ctx, rx_bytes, 1);
@@ -293,17 +294,16 @@ void user_button_Task()
             }
         }
 
-		/* Turn on data LED  */
+        if(wifi_interrupt_triggered)
+        {
+            uart_wifi_close();
 
-        uart_wifi_close();
-
-        // turn off all special user modes:
-        load_cell_bypass_threshold(0);
-
+            // turn off all special user modes:
+            load_cell_bypass_threshold(0);
+        }
 
         GPIO_clearInt(Board_button);
    		GPIO_enableInt(Board_button);
-
    	    GPIO_clearInt(Board_wifi_sense);
    	    GPIO_enableInt(Board_wifi_sense);
 
@@ -329,44 +329,32 @@ void wifi_sense_isr(unsigned int index)
         P1IES |= BIT0; // set wifi sense to falling edge
         GPIO_write(Board_led_data, Board_LED_ON);
         wifi_on = 1;
+        //resume system, if on pause:
+        Semaphore_post((Semaphore_Handle)semSystemPause);
+        //handle wifi in task
         Semaphore_post((Semaphore_Handle)semButton);
     }
     else
     {
-        GPIO_write(nbox_wifi_enable, 0);
-#ifdef WIFI_USE_5V
-        GPIO_write(nbox_5v_enable, 0);
-#endif
         GPIO_write(Board_led_data, Board_LED_OFF);
         wifi_on = 0;
         P1IES &= ~BIT0; // set wifi sense to rising edge
     }
 
-    //check interrupt source
-    interrupt_triggered = 1;
+    //mark that the interrupt source was wifi button
+    wifi_interrupt_triggered = 1;
 }
 
 
 void user_button_isr(unsigned int index)
 {
-	GPIO_disableInt(Board_button);
+    GPIO_disableInt(Board_button);
 
-	if(wifi_on == 0)
-	{
-        GPIO_write(Board_led_data, Board_LED_ON);
-	    wifi_on = 1;
-	    Semaphore_post((Semaphore_Handle)semButton);
-	}
-	else
-	{
-        GPIO_write(nbox_wifi_enable, 0);
-#ifdef WIFI_USE_5V
-        GPIO_write(nbox_5v_enable, 0);
-#endif
-        GPIO_write(Board_led_data, Board_LED_OFF);
-        wifi_on = 0;
-	}
+    GPIO_write(Board_led_data, Board_LED_ON);
+    //Resume system, in case it was paused:
+    Semaphore_post((Semaphore_Handle)semSystemPause);
+    //handle button input:
+    start_interrupt_triggered = 1;
+    Semaphore_post((Semaphore_Handle)semButton);
 
-	//check interrupt source
-	interrupt_triggered = 1;
 }

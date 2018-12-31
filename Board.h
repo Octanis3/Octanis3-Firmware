@@ -67,8 +67,6 @@ extern "C" {
 #define Board_led_data              nbox_led_data
 #define Board_led_status            nbox_led_status
 
-#define nbox_wifi_enable            nbox_led_status
-
 #define Board_LED_ON					nbox_LED_ON
 #define Board_LED_OFF				nbox_LED_OFF
 
