@@ -113,6 +113,9 @@ void goto_deepsleep()
     log_restart();
 
 	//todo: power off all modules
+    GPIO_write(Board_led_data, Board_LED_OFF);
+    GPIO_write(Board_led_status, Board_LED_OFF);
+
 	GPIO_write(nbox_vbat_test_enable, 0);
 	GPIO_write(nbox_sdcard_enable_n, 1);
 	GPIO_write(nbox_5v_enable, 0);
@@ -147,6 +150,8 @@ void battery_Task()
 {
 	Task_sleep(2000);
 
+    log_write_new_entry('E', 111); // startup symbol
+
 	ADC_init();
 	uint8_t counter=0;
 
@@ -171,13 +176,15 @@ void battery_Task()
 		Task_sleep(BAT_TEST_INTERVAL); //300000
 
 		// Check RTC for system pause schedule:
-		if(rtc_is_it_time_to_pause() && !user_wifi_enabled())
+		int rtc_state = rtc_is_it_time_to_pause();
+		if(rtc_state && !user_wifi_enabled() && !log_sd_card_busy())
 		{
 		    // shut down system for the day:
 		    //write stored data to flash before power down
 		    log_write_new_entry('E', 0);
 
-            log_restart();
+		    if(rtc_state == 2) //means that this is the end of the nightshift.
+		        log_restart();
 
             // power off all modules
             GPIO_write(nbox_vbat_test_enable, 0);

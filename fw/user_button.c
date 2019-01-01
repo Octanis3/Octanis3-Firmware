@@ -35,7 +35,6 @@ static int start_interrupt_triggered = 0;
 
 static int wifi_on = 0;
 
-
 void user_button_Task()
 {
     GPIO_enableInt(Board_button);
@@ -57,6 +56,8 @@ void user_button_Task()
 	unsigned short n_rx=0;
 	unsigned char ctrl_byte = 0;
 
+	int sd_card_detection_status = 0;
+
 	while(1)
 	{
 	    if(GPIO_read(Board_wifi_sense))
@@ -70,28 +71,43 @@ void user_button_Task()
 	    {
 	        P1IES &= ~BIT0; // set wifi sense to rising edge
             Semaphore_reset((Semaphore_Handle)semButton, 0);
+            GPIO_clearInt(Board_button);
+            GPIO_enableInt(Board_button);
+            GPIO_clearInt(Board_wifi_sense);
+            GPIO_enableInt(Board_wifi_sense);
 	        Semaphore_pend((Semaphore_Handle)semButton, BIOS_WAIT_FOREVER);
 	    }
 
 	    if(start_interrupt_triggered) //the button on the PCB was pressed -> user asked for a memory flush to SD card.
 	    {
 	        //write stored data to flash
+	        GPIO_write(Board_led_data, Board_LED_ON);
             log_restart();
+            if(!wifi_on)
+                GPIO_write(Board_led_data, Board_LED_OFF);
             start_interrupt_triggered = 0;
 	    }
 
         if(wifi_interrupt_triggered)
         {
             Task_sleep(100); // wait to power up.
-            uart_wifi_open();
 
-            Task_sleep(1000); //avoid too many subsequent memory readouts
-
-            wifi_interrupt_triggered = 0;
-            GPIO_clearInt(Board_button);
-            GPIO_enableInt(Board_button);
-            GPIO_clearInt(Board_wifi_sense);
-            GPIO_enableInt(Board_wifi_sense);
+            if(GPIO_read(Board_wifi_sense))
+            {
+                uart_wifi_open();
+                wifi_interrupt_triggered = 0;
+                GPIO_clearInt(Board_button);
+                GPIO_enableInt(Board_button);
+                GPIO_clearInt(Board_wifi_sense);
+                GPIO_enableInt(Board_wifi_sense);
+            }
+            else
+            {
+                // button was only pressed accidentally!
+                wifi_interrupt_triggered = 0;
+                wifi_on = 0;
+                GPIO_write(Board_led_data, Board_LED_OFF);
+            }
         }
 
         while(wifi_on)
@@ -112,6 +128,9 @@ void user_button_Task()
                 }
 
             }while(min_ctx.rx_frame_state != RECEIVING_EOF && wifi_on);
+
+            if(!wifi_on) //exit loop without looking at the input buffer
+                break;
 
             uart_serial_read(&wifi_uart, rx_bytes, 1); //receive the EOF character
             min_poll(&min_ctx, rx_bytes, 1);
@@ -286,7 +305,16 @@ void user_button_Task()
                 tx_buf[1] = 1;
 
                 min_send_frame(&min_ctx, 0x33U, tx_buf, 2);
-                log_restart();
+                sd_card_detection_status = log_restart();
+                break; // DONT FORGET THIS!
+            }
+            case 'f':
+            {
+                unsigned char tx_buf[2];
+                tx_buf[0] = 'f';
+                tx_buf[1] = sd_card_detection_status;
+
+                min_send_frame(&min_ctx, 0x33U, tx_buf, 2);
                 break; // DONT FORGET THIS!
             }
 
@@ -302,12 +330,6 @@ void user_button_Task()
             // turn off all special user modes:
             load_cell_bypass_threshold(0);
         }
-
-        GPIO_clearInt(Board_button);
-   		GPIO_enableInt(Board_button);
-   	    GPIO_clearInt(Board_wifi_sense);
-   	    GPIO_enableInt(Board_wifi_sense);
-
 	}
 }
 
@@ -350,8 +372,6 @@ void wifi_sense_isr(unsigned int index)
 void user_button_isr(unsigned int index)
 {
     GPIO_disableInt(Board_button);
-
-    GPIO_write(Board_led_data, Board_LED_ON);
     //Resume system, in case it was paused:
     Semaphore_post((Semaphore_Handle)semSystemPause);
     //handle button input:

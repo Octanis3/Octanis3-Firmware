@@ -25,11 +25,6 @@ static int wifi_uart_initialized = 0;
 int uart_debug_open(){
 	static UART_Params uartParams;
 
-//	Task_sleep(30000);
-	GPIO_write(Board_led_status, 1);
-	Task_sleep(1000);
-	GPIO_write(Board_led_status, 0);
-
 	if(debug_uart_initialized == 0)
 	{
 	    //reset TX gpio register settings:
@@ -44,7 +39,7 @@ int uart_debug_open(){
 		uartParams.readEcho = UART_ECHO_OFF;
 		uartParams.baudRate = 9600;
 		//uartParams.readMode = UART_MODE_BLOCKING;
-		//uartParams.readTimeout = 10;
+		uartParams.readTimeout = 100;
 		//uartParams.dataLength = UART_LEN_8;
 
 		//Correct port for the mainboard
@@ -57,14 +52,8 @@ int uart_debug_open(){
 
 		const char test_string[] = "nestbox UART initialized\n";
 		uart_serial_write(&debug_uart, (uint8_t*)test_string, sizeof(test_string));
+        Semaphore_post((Semaphore_Handle)semSerial);
 #endif
-
-		Task_sleep(500);
-		GPIO_write(Board_led_status, 1);
-		Task_sleep(500);
-		GPIO_write(Board_led_status, 0);
-
-		Semaphore_post((Semaphore_Handle)semSerial);
 
 		debug_uart_initialized = 1;
 	}

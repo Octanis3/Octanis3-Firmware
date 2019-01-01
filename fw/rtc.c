@@ -125,15 +125,30 @@ void rtc_update_system_time()
     Seconds_set(unix_timestamp);
 }
 
+static enum rtc_state_ {
+    NIGHT_SHIFT,
+    DAY_BREAK,
+    USER_INTERRUPT
+} rtc_state = NIGHT_SHIFT;
+
 int rtc_is_it_time_to_pause()
 {
+    int retval = 0;
     if(RTCHOUR > pause_hour && RTCHOUR < resume_hour)
-        return 1;
+        retval = 1;
     else if(RTCHOUR >= pause_hour && RTCHOUR < resume_hour && RTCMIN >= pause_minute)
     {
-        return 1;
+        retval = 1;
     }
-    else return 0;
+
+    if(retval == 1)
+    {
+        if(rtc_state == NIGHT_SHIFT)
+            retval = 2; // to indicate that the fram content shall be flushed to SD card.
+        rtc_state = DAY_BREAK;
+    }
+
+    return retval;
 }
 
 //static uint32_t seconds_till_resume = 0;
@@ -168,6 +183,11 @@ void rtc_resume_system()
     //Seconds_set(Seconds_get()+seconds_till_resume);
     Clock_tickStart();
     rtc_update_system_time();
+    if(rtc_state == DAY_BREAK) // as the state was not changed in the ISR to NIGHT_SHIFT,
+                               // it means the system was woken up by the user.
+    {
+        rtc_state = USER_INTERRUPT;
+    }
 }
 
 // IV 0FFCEh
@@ -182,6 +202,7 @@ void rtc_isr()
         case RTCIV_RTCTEVIFG: break;        // RTCEVIFG
         case RTCIV_RTCAIFG:
             //Resume system:
+            rtc_state = NIGHT_SHIFT;
             Semaphore_post((Semaphore_Handle)semSystemPause);
             break;        // RTCAIFG
         case RTCIV_RT0PSIFG:  break;        // RT0PSIFG

@@ -20,7 +20,7 @@
 #include <xdc/cfg/global.h> //needed for semaphore
 #include <ti/sysbios/knl/Semaphore.h>
 
-#define MAX_SD_RETRY        3 // number of times we try to initialize the SD card.
+#define MAX_SD_RETRY        5 // number of times we try to initialize the SD card.
 
 #define LOG_POS_VALID_PW		0x1234 	// write this value to the LOG_NEXT_POS_VALID space in memory
 									// at the first time we make a log entry to this FRAM
@@ -83,6 +83,8 @@ enum log_partitions current_log_partition = FIRST;
 unsigned int log_initialized = 0;
 //const unsigned int phase_two = 0;
 
+int log_send_data_via_uart(unsigned int* FRAM_read_end_ptr);
+
 void log_startup()
 {
 	FRAM_offset_ptr = (unsigned int*)LOG_NEXT_POS_OFS;
@@ -112,13 +114,12 @@ void log_startup()
 	log_initialized = 1;
 }
 
-void log_restart()
+int log_restart()
 {
-    //reset time stamp:
-    // Seconds_set(0); // not anymore!
+    int retval; // returns 1 on success.
 
-    // then flush out all the data recorded so far:
-    log_send_data_via_uart((uint16_t*)(*FRAM_offset_ptr+LOG_START_POS));
+    // flush out all the data recorded so far:
+    retval = log_send_data_via_uart((uint16_t*)(*FRAM_offset_ptr+LOG_START_POS));
     current_log_partition = FIRST;
     FRAM_read_ptr = (uint16_t*)LOG_START_POS; // points back to start of logged data.
 
@@ -130,6 +131,8 @@ void log_restart()
     (*FRAM_pw) = LOG_POS_VALID_PW;
 
     (*(uint32_t*)LOG_TIMESTAMP) = Seconds_get();
+
+    return retval;
 }
 
 void log_check_pointer_position()
@@ -252,141 +255,162 @@ const uint8_t start_string[] = "#=========== start FRAM logs =========\n";
 const uint8_t title_row[] = "time [s],RFID UID,event type, weight [g], tolerance [mg], temperature [1/10 K]\n";
 const uint8_t end_string[] = "#========== end FRAM logs ===========\n";
 
-void log_send_data_via_uart(uint16_t* FRAM_read_end_ptr)
+static int sd_card_busy = 0;
+
+int log_sd_card_busy()
 {
-#if LOG_VERBOSE
-    GPIO_write(nbox_spi_cs_n, 0); //turn on SD card
+    return sd_card_busy;
+}
 
-    uart_stop_debug_prints();
-    uart_serial_write(&debug_uart, start_string, sizeof(start_string));
-    //  uart_serial_write(&debug_uart, title_row, sizeof(title_row));
-#else
-    char sd_rx;
-    unsigned int sd_retry = 0;
+int log_send_data_via_uart(uint16_t* FRAM_read_end_ptr)
+{
+    int retval = 0; //returns 1 on successful SD card detection.
 
-    for(sd_retry = 0; sd_retry <= MAX_SD_RETRY; sd_retry++){
+    if(!sd_card_busy)
+    {
+        sd_card_busy = 1;
 
-        uart_debug_open();
+    #if LOG_VERBOSE
         GPIO_write(nbox_spi_cs_n, 0); //turn on SD card
 
+        uart_stop_debug_prints();
+        uart_serial_write(&debug_uart, start_string, sizeof(start_string));
+        //  uart_serial_write(&debug_uart, title_row, sizeof(title_row));
+    #else
+        char sd_rx;
+        unsigned int sd_retry = 0;
 
-        unsigned int sd_delay = 0;
-        for(sd_delay = 0; sd_delay < 10; sd_delay++)
-        {
-            sd_rx=uart_serial_getc(&debug_uart);
-            if(sd_rx == '1')
-                break;
-            Task_sleep(100);
-        }
-        for(sd_delay = 0; sd_delay < 20; sd_delay++)
-        {
-            sd_rx=uart_serial_getc(&debug_uart);
-            if(sd_rx == '2')
-                break;
-            Task_sleep(100);
-        }
-        for(sd_delay = 0; sd_delay < 20; sd_delay++)
-        {
-            sd_rx=uart_serial_getc(&debug_uart);
-            if(sd_rx == '<')
-                break;
-            Task_sleep(100);
-        }
+        for(sd_retry = 0; sd_retry <= MAX_SD_RETRY; sd_retry++){
+            uart_debug_open();
+            GPIO_write(nbox_spi_cs_n, 0); //turn on SD card
 
-        if(sd_rx == '<' || sd_retry == MAX_SD_RETRY)
-            break;
-        else
-        {
-            uart_debug_close();
-
-            GPIO_write(nbox_spi_cs_n, 1); //turn off SD card
-            Task_sleep(5000);
-        }
-    }
-#endif
-
-	uint8_t outbuffer[OUTPUT_BUF_LEN];
-
-	//print load cell offset as header of each file:
-	outbuffer[0] = 'H';
-	outbuffer[1] = ',';
-	int strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_TIME_32b_OFS), 10, 1, HIDE_LEADING_ZEROS, &(outbuffer[2]));
-	outbuffer[strlen+2] = ',';
-    uart_serial_write(&debug_uart, outbuffer, strlen+3);
-
-    strlen = ui2a(get_weight_offset(), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
-    outbuffer[strlen] = '\n';
-    uart_serial_write(&debug_uart, outbuffer, strlen+1);
-
-
-	while(FRAM_read_ptr < FRAM_read_end_ptr)
-	{
-		//send out log character and time stamp:
-        outbuffer[0] = *((uint8_t*)FRAM_read_ptr+LOG_CHAR_8b_OFS);
-        outbuffer[1] = ',';
-		int strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_TIME_32b_OFS), 10, 1, HIDE_LEADING_ZEROS, &(outbuffer[2]));
-        outbuffer[strlen+2] = ',';
-		uart_serial_write(&debug_uart, outbuffer, strlen+3);
-
-        unsigned char logchar = outbuffer[0];
-
-		if(logchar == 'X' || logchar == 'O' || logchar == 'S' || logchar == 'A' || logchar == 'R')
-		{
-		    //send out milliseconds:
-//		    strlen = ui2a((*((uint8_t*)FRAM_read_ptr+LOG_MSEC_8b_OFS)<<2), 10, 1,HIDE_LEADING_ZEROS, outbuffer);
-//		    outbuffer[strlen] = ',';
-//		    uart_serial_write(&debug_uart, outbuffer, strlen+1);
-            if(logchar == 'R')
+            unsigned int sd_delay = 0;
+            for(sd_delay = 0; sd_delay < 20; sd_delay++)
             {
-                //send out UID and I/O:
-                strlen = ui2a(((*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_MSB_OFS))>>16) & 0x000000ff, 16, 1,HIDE_LEADING_ZEROS, outbuffer); //the first 32 (actually 8) bits
-                uart_serial_write(&debug_uart, outbuffer, strlen);
-                strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_LSB_OFS), 16, 1,PRINT_LEADING_ZEROS, outbuffer); //the second 32 bits
-                outbuffer[strlen] = '\n';
-                uart_serial_write(&debug_uart, outbuffer, strlen+1);
+                sd_rx=uart_serial_getc(&debug_uart); //read timeout is 100ms
+                if(sd_rx == '1' || sd_rx == '2' || sd_rx == '<')
+                    break;
             }
+            if(sd_rx == '1')
+            {
+                for(sd_delay = 0; sd_delay < 20; sd_delay++)
+                {
+                    sd_rx=uart_serial_getc(&debug_uart);
+                    if(sd_rx == '2' || sd_rx == '<')
+                        break;
+                }
+            }
+            if(sd_rx == '2')
+            {
+                for(sd_delay = 0; sd_delay < 20; sd_delay++)
+                {
+                    sd_rx=uart_serial_getc(&debug_uart);
+                    if(sd_rx == '<')
+                    {
+                        retval = 1;
+                        break;
+                    }
+                }
+            }
+
+            if(sd_rx == '<' || sd_retry == MAX_SD_RETRY)
+                break;
             else
             {
-                strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_VALUE_LONG_32b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
-                outbuffer[strlen] = ',';
-                uart_serial_write(&debug_uart, outbuffer, strlen+1);
-                strlen = ui2a(*((uint16_t*)FRAM_read_ptr+LOG_STDDEV_16b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
-                outbuffer[strlen] = '\n';
-                uart_serial_write(&debug_uart, outbuffer, strlen+1);
+                uart_debug_close();
+
+                GPIO_write(nbox_spi_cs_n, 1); //turn off SD card
+                Task_sleep(5000);
             }
+        }
+    #endif
 
-            //increment pointer to next memory location
-            FRAM_read_ptr += LOG_ENTRY_LONG_16b_LEN; // TODO_ why not 8bit value???
-            continue;
-		}
+        uint8_t outbuffer[OUTPUT_BUF_LEN];
 
+        //print load cell offset as header of each file:
+        outbuffer[0] = 'H';
+        outbuffer[1] = ',';
+        int strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_TIME_32b_OFS), 10, 1, HIDE_LEADING_ZEROS, &(outbuffer[2]));
+        outbuffer[strlen+2] = ',';
+        uart_serial_write(&debug_uart, outbuffer, strlen+3);
 
-		//print short value:
-		if(logchar == 'D')
-		    strlen = ui2a(((uint32_t)(*((uint16_t*)FRAM_read_ptr+LOG_VALUE_SHORT_16b_OFS)))<<8, 10, 1, HIDE_LEADING_ZEROS, outbuffer);
-		else
-		    strlen = ui2a(*((uint16_t*)FRAM_read_ptr+LOG_VALUE_SHORT_16b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
-
+        strlen = ui2a(get_weight_offset(), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
         outbuffer[strlen] = '\n';
         uart_serial_write(&debug_uart, outbuffer, strlen+1);
 
-        //increment pointer to next memory location
-        FRAM_read_ptr += LOG_ENTRY_SHORT_16b_LEN;
 
-	}
+        while(FRAM_read_ptr < FRAM_read_end_ptr)
+        {
+            //send out log character and time stamp:
+            outbuffer[0] = *((uint8_t*)FRAM_read_ptr+LOG_CHAR_8b_OFS);
+            outbuffer[1] = ',';
+            int strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_TIME_32b_OFS), 10, 1, HIDE_LEADING_ZEROS, &(outbuffer[2]));
+            outbuffer[strlen+2] = ',';
+            uart_serial_write(&debug_uart, outbuffer, strlen+3);
+
+            unsigned char logchar = outbuffer[0];
+
+            if(logchar == 'X' || logchar == 'O' || logchar == 'S' || logchar == 'A' || logchar == 'R')
+            {
+                //send out milliseconds:
+    //		    strlen = ui2a((*((uint8_t*)FRAM_read_ptr+LOG_MSEC_8b_OFS)<<2), 10, 1,HIDE_LEADING_ZEROS, outbuffer);
+    //		    outbuffer[strlen] = ',';
+    //		    uart_serial_write(&debug_uart, outbuffer, strlen+1);
+                if(logchar == 'R')
+                {
+                    //send out UID and I/O:
+                    strlen = ui2a(((*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_MSB_OFS))>>16) & 0x000000ff, 16, 1,HIDE_LEADING_ZEROS, outbuffer); //the first 32 (actually 8) bits
+                    uart_serial_write(&debug_uart, outbuffer, strlen);
+                    strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_UID_32b_LSB_OFS), 16, 1,PRINT_LEADING_ZEROS, outbuffer); //the second 32 bits
+                    outbuffer[strlen] = '\n';
+                    uart_serial_write(&debug_uart, outbuffer, strlen+1);
+                }
+                else
+                {
+                    strlen = ui2a(*((uint32_t*)FRAM_read_ptr+LOG_VALUE_LONG_32b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
+                    outbuffer[strlen] = ',';
+                    uart_serial_write(&debug_uart, outbuffer, strlen+1);
+                    strlen = ui2a(*((uint16_t*)FRAM_read_ptr+LOG_STDDEV_16b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
+                    outbuffer[strlen] = '\n';
+                    uart_serial_write(&debug_uart, outbuffer, strlen+1);
+                }
+
+                //increment pointer to next memory location
+                FRAM_read_ptr += LOG_ENTRY_LONG_16b_LEN; // TODO_ why not 8bit value???
+                continue;
+            }
 
 
-    Task_sleep(3000); //wait for data to be written
+            //print short value:
+            if(logchar == 'D')
+                strlen = ui2a(((uint32_t)(*((uint16_t*)FRAM_read_ptr+LOG_VALUE_SHORT_16b_OFS)))<<8, 10, 1, HIDE_LEADING_ZEROS, outbuffer);
+            else
+                strlen = ui2a(*((uint16_t*)FRAM_read_ptr+LOG_VALUE_SHORT_16b_OFS), 10, 1, HIDE_LEADING_ZEROS, outbuffer);
 
-#if LOG_VERBOSE
-    uart_serial_write(&debug_uart, end_string, sizeof(end_string));
-    Task_sleep(100);
-    uart_start_debug_prints();
-#else
-    uart_debug_close();
-#endif
+            outbuffer[strlen] = '\n';
+            uart_serial_write(&debug_uart, outbuffer, strlen+1);
 
-    GPIO_write(nbox_spi_cs_n, 1); //turn off SD card
+            //increment pointer to next memory location
+            FRAM_read_ptr += LOG_ENTRY_SHORT_16b_LEN;
+        }
+
+        Task_sleep(3000); //wait for data to be written
+
+    #if LOG_VERBOSE
+        uart_serial_write(&debug_uart, end_string, sizeof(end_string));
+        Task_sleep(100);
+        uart_start_debug_prints();
+    #else
+        uart_debug_close();
+        Semaphore_post((Semaphore_Handle)semSerial);
+    #endif
+
+        GPIO_write(nbox_spi_cs_n, 1); //turn off SD card
+
+        sd_card_busy = 0;
+    }
+
+    return retval;
 }
 
 uint8_t log_phase_two()
@@ -396,9 +420,6 @@ uint8_t log_phase_two()
 
 //called periodically
 Void cron_quick_clock(UArg arg){
-	// flash led
-//	GPIO_toggle(Board_led_green); // use red led for user inputs
-
 	// back up time stamp
 	if(log_initialized)
 		(*(uint32_t*)LOG_TIMESTAMP) = Seconds_get();
@@ -584,16 +605,22 @@ void log_Task()
     //TODO: check first if there is some logged stuff on the FRAM to avoid data loss after a crash.
     FRAM_read_ptr = (unsigned int*)LOG_START_POS; // points to start of logged data.
 
-	Task_sleep(500); //wait until other functions are initialized
-
 #if(LOG_VERBOSE)
     uart_debug_open();
 	uart_start_debug_prints(); // disable all UART comm except when SD card is on
 #else
     uart_debug_close();
+    Semaphore_post((Semaphore_Handle)semSerial); // in this mode, it is used as SD card flush semaphore
 #endif
 
-
+    // indicate system is running/restarting:
+    GPIO_write(Board_led_status, 1);
+    Task_sleep(1000);
+    GPIO_write(Board_led_status, 0);
+    Task_sleep(500);
+    GPIO_write(Board_led_status, 1);
+    Task_sleep(500);
+    GPIO_write(Board_led_status, 0);
 
     //sd_spi_init_logger();
     //fat_disk_initialize (0);
