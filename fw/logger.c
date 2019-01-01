@@ -266,7 +266,6 @@ void log_send_data_via_uart(uint16_t* FRAM_read_end_ptr)
 
     for(sd_retry = 0; sd_retry <= MAX_SD_RETRY; sd_retry++){
 
-
         uart_debug_open();
         GPIO_write(nbox_spi_cs_n, 0); //turn on SD card
 

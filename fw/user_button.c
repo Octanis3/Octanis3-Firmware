@@ -63,6 +63,7 @@ void user_button_Task()
 	    {
 	        GPIO_write(Board_led_data, Board_LED_ON);
 	        wifi_on = 1;
+	        wifi_interrupt_triggered=1;
 	        P1IES |= BIT0; // set wifi sense to falling edge
 	    }
 	    else

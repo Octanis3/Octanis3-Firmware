@@ -184,11 +184,15 @@ void battery_Task()
             GPIO_write(nbox_sdcard_enable_n, 1);
             GPIO_write(nbox_5v_enable, 0);
             load_cell_power_down();
+            GPIO_write(Board_led_data, Board_LED_OFF);
+            GPIO_write(Board_led_status, Board_LED_OFF);
+
 //            GPIO_write(nbox_loadcell_ldo_enable, 0); // LDO UNUSED; BECAUSE WHEN OFF, THIS DRAWS TOO MUCH CURRENT!!
 
             // Stop tick and wait for RTC calendar alarm or user button to wake up the system.
             rtc_pause_system();
 
+            Semaphore_reset((Semaphore_Handle)semSystemPause, 0);
 	        Semaphore_pend((Semaphore_Handle)semSystemPause, BIOS_WAIT_FOREVER);
 
 	        rtc_resume_system();
