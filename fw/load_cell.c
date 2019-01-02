@@ -436,6 +436,17 @@ void load_cell_Task()
 //			}
 			else if(res == UNSTABLE) // owl is still on the perch, but not stable
 			{
+			    uint64_t dummy_owl_ID;
+			    // re-check if bird is still here.
+			    rfid_start_detection();
+                Semaphore_pend((Semaphore_Handle)semLoadCell,RFID_TIMEOUT);
+                rfid_stop_detection();
+
+                if(!rfid_get_id(&dummy_owl_ID))
+                {
+                    log_write_new_entry('U', (uint16_t)owl_ID); //un-detected RFID
+                }
+
 				Task_sleep(T_LOADCELL_POLL);
 			}
 		}
