@@ -62,8 +62,8 @@ MEMORY
     INFOC                   : origin = 0x1880, length = 0x0080
     INFOD                   : origin = 0x1800, length = 0x0080
     FRAM                    : origin = 0x4400, length = 0xBB80
-    FRAM2                   : origin = 0x10000,length = 0x2FF8
-    NESTBOX_DATA_STORAGE	    : origin = 0x12FF8, length = 0x1008
+    FRAM2                   : origin = 0x10000,length = 0x2FF0
+    NESTBOX_DATA_STORAGE	    : origin = 0x12FF0, length = 0x1010
     JTAGSIGNATURE           : origin = 0xFF80, length = 0x0004, fill = 0xFFFF
     BSLSIGNATURE            : origin = 0xFF84, length = 0x0004, fill = 0xFFFF
     IPESIGNATURE            : origin = 0xFF88, length = 0x0008, fill = 0xFFFF

@@ -30,6 +30,8 @@
 #define LOG_NEXT_POS_VALID	0x12FFC // store the 16bit "password" (type unsigned int == uint16_t)
 #define LOG_NEXT_POS_OFS		0x12FFE // store the 16bit offset (type unsigned int == uint16_t)
 #define LOG_TIMESTAMP		0x12FF8 // store the 32bit timestamp (type unsigned long == uint32_t)
+#define LOG_RESERVED        0x12FF4 // variable space reserved for future use.
+#define LOG_RTC_ALARM_TIMES 0x12FF0 // store 4x8bit for all RTC alarm times (pause/resume hours/minutes)
 							// ^--- RESERVED SPACE STARTS HERE!! CHANGE nestbox_memory_map.cmd FILE IF MODIFYING THIS VALUE!
 #define LOG_START_POS		0x00013000
 #define LOG_END_POS			0x00013FF0 // this is the last byte position to write to; conservative...
@@ -98,20 +100,31 @@ void log_startup()
 		// store correct password
 		(*FRAM_pw) = LOG_POS_VALID_PW;
 
-		//reset time stamp:
+		//reset timestamp:
 		(*(uint32_t*)LOG_TIMESTAMP) = Seconds_get();
+
+		//reset RTC alarm times to default values:
+	    (*(uint32_t*)LOG_RTC_ALARM_TIMES) = rtc_get_pause_times_compact();
 	}
 	else
 	{
 		//recover time stamp, except if user button is pressed --> full reset.
 		Seconds_set((*(uint32_t*)LOG_TIMESTAMP) + (LOG_BACKUP_PERIOD/2));
 		//LOG_BACKUP_PERIOD/2: add the average time difference that got lost due to backup interval
-	}
 
+		//recover RTC alarm times:
+		rtc_set_pause_times_compact (*(uint32_t*)LOG_RTC_ALARM_TIMES);
+	}
 	rtc_config();
 	rtc_set_clock(Seconds_get());
 
 	log_initialized = 1;
+}
+
+void log_set_rtc_pause_times()
+{
+    //set RTC alarm times to currently active values:
+    (*(uint32_t*)LOG_RTC_ALARM_TIMES) = rtc_get_pause_times_compact();
 }
 
 int log_restart()

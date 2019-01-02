@@ -15,6 +15,8 @@ void rtc_update_system_time();
 
 // set new values for pause and resume times:
 void rtc_set_pause_times(uint8_t p_hour, uint8_t p_min, uint8_t r_hour, uint8_t r_min);
+void rtc_set_pause_times_compact(uint32_t value);
+uint32_t rtc_get_pause_times_compact();
 uint8_t rtc_get_p_min();
 uint8_t rtc_get_r_min();
 uint8_t rtc_get_p_hour();

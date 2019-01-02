@@ -13,6 +13,7 @@
 #include <msp430.h>
 
 #include "rtc.h"
+#include "logger.h"
 
 #define DEFAULT_RESUME_HOUR    16  // UTC time! i.e. default resume time is 17h in winter
 #define DEFAULT_PAUSE_HOUR     8  // UTC time! i.e. default system shutdown time is 9 am in winter
@@ -30,7 +31,7 @@ static uint8_t resume_minute = 0;
 uint8_t rtc_get_p_min() {return pause_minute;}
 uint8_t rtc_get_r_min() {return resume_minute;}
 uint8_t rtc_get_p_hour() {return pause_hour;}
-uint8_t rtc_get_r_hour() {return resume_minute;}
+uint8_t rtc_get_r_hour() {return resume_hour;}
 
 void rtc_set_pause_times(uint8_t p_hour, uint8_t p_min, uint8_t r_hour, uint8_t r_min)
 {
@@ -56,17 +57,48 @@ void rtc_set_pause_times(uint8_t p_hour, uint8_t p_min, uint8_t r_hour, uint8_t 
     }
     pause_minute = p_min;
     resume_minute = r_min;
+
+    log_set_rtc_pause_times(); //and back up the values!
 }
+
+void rtc_set_pause_times_compact(uint32_t value)
+{
+    rtc_set_pause_times((value   )  & 0x000000FF,
+                        (value>>8)  & 0x000000FF,
+                        (value>>16) & 0x000000FF,
+                        (value>>24) & 0x000000FF);
+}
+
+uint32_t rtc_get_pause_times_compact()
+{
+    uint32_t value = 0;
+
+    value = resume_minute;
+    value = (value << 8) + resume_hour;
+    value = (value << 8) + pause_minute;
+    value = (value << 8) + pause_hour;
+
+    return value;
+}
+
 
 void rtc_calibration()
 {
     // compensate for LFX deviation:
         RTCCTL01 = RTCHOLD;
 
-        //TODO: make correct compensation
-        // Here we compensate for 11.1ppm = 5*2.17 --> 5 = 0b101
-        RTCCTL23 = RTCCAL2 + RTCCAL0;
-        RTCCTL23 &= ~RTCCALS;
+        // measured 511.824689 Hz! --> -342 ppm --> RTCCAL = 342/4.34 = 79 --> maxed out!!
+
+        RTCCTL23 = RTCCAL5 + RTCCAL4 + RTCCAL3 + RTCCAL2 + RTCCAL1 + RTCCAL0;
+        RTCCTL23 |= RTCCALS;
+
+
+
+/*********** OLD VALUES: ********/
+//        // Here we compensate for 11.1ppm = 5*2.17 --> 5 = 0b101
+//
+//        RTCCTL23 = RTCCAL2 + RTCCAL0;
+//        RTCCTL23 &= ~RTCCALS;
 
         RTCCTL01 &= ~(RTCHOLD);                 // Start RTC
 }

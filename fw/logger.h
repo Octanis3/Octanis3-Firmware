@@ -14,6 +14,8 @@ int log_sd_card_busy();
 
 int log_restart();
 
+void log_set_rtc_pause_times();
+
 int log_write_new_entry(uint8_t logchar, uint16_t value);
 int log_write_new_rfid_entry(uint64_t uid);
 int log_write_new_weight_entry(uint8_t logchar, uint32_t weight, uint16_t stdev);
