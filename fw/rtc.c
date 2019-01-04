@@ -89,7 +89,7 @@ void rtc_calibration()
 
         // measured 511.824689 Hz! --> -342 ppm --> RTCCAL = 342/4.34 = 79 --> maxed out!!
 
-        RTCCTL23 = RTCCAL5 + RTCCAL4 + RTCCAL3 + RTCCAL2 + RTCCAL1 + RTCCAL0;
+        RTCCTL23 = 0; //RTCCAL5 + RTCCAL4 + RTCCAL3 + RTCCAL2 + RTCCAL1 + RTCCAL0;
         RTCCTL23 |= RTCCALS;
 
 

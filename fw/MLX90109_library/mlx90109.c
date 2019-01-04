@@ -43,6 +43,7 @@
 
 #include <xdc/runtime/Timestamp.h>
 #include "../uart_helper.h"
+#include "../user_button.h"
 #include <assert.h>
 
 
@@ -91,7 +92,8 @@ int16_t mlx90109_init(mlx90109_t *dev, const mlx90109_params_t *params)
 
 void mlx90109_activate_reader(mlx90109_t *dev)
 {
-	GPIO_write(Board_led_status,1);
+    if(user_wifi_enabled())
+        GPIO_write(Board_led_status,1);
 
 	time_on = Timestamp_get32();
 	GPIO_write(dev->p.modu, 1); //turns ON CW field
