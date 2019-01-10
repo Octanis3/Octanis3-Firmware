@@ -73,6 +73,11 @@ void rfid_Task()
     }
 }
 
+void rfid_get_last_id(uint64_t* id)
+{
+    *id = lf_tagdata.tagId;
+}
+
 int rfid_get_id(uint64_t* id)
 {
 	if(lf_tagdata.detection_counts)

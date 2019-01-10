@@ -53,6 +53,7 @@ Semaphore_Handle semLoadCellDRDY;
 
 static int32_t last_stored_weight = 0;
 static int32_t last_measured_offset = 0;
+static int32_t last_measured_threshold = 0;
 static int tare_request = 0;
 static int threshold_bypass_request = 0;
 
@@ -66,7 +67,7 @@ int32_t get_weight_offset()
 }
 int32_t get_weight_threshold()
 {
-    return last_measured_offset + WEIGHT_THRESHOLD;
+    return last_measured_threshold;
     // todo
 }
 void set_weight_threshold(int32_t new_th)
@@ -84,6 +85,7 @@ void load_cell_trigger_tare()
 {
     tare_request = 1;
 }
+
 typedef enum weightResultStatus_
 {
 	OWL_LEFT = 0,
@@ -118,11 +120,11 @@ weightResultStatus load_cell_get_stable(struct Ads1220 *ads, uint8_t type) //typ
 		log_write_new_weight_entry(type, meas_buf[tmp], 0x0000ffff & deviation);
 		last_stored_weight = meas_buf[tmp];
 
-		if(meas_buf[tmp] < ads->cont_threshold)
+		if(meas_buf[tmp] < ads->cont_threshold || tare_request)
 		{
 		    threshold_cnt = threshold_cnt+1;
 
-		    if(threshold_cnt>100) // measure zero value 100 times!
+		    if(threshold_cnt>100 || tare_request) // measure zero value 100 times!
 		    {
                 first_valid = 0;
                 threshold_cnt = 0;
@@ -275,8 +277,9 @@ void load_cell_Task()
             ads1220_tare(20, &max_cont_deviation, &max_periodic_deviation, &ads);
             if((max_cont_deviation + max_periodic_deviation) < i*TARE_TOLERANCE)
             {
-                last_measured_offset = ads.cont_offset;
                 ads1220_set_thresholds(&ads, WEIGHT_THRESHOLD);
+                last_measured_offset = ads.cont_offset;
+                last_measured_threshold = ads.periodic_threshold;
                 break;
             }
         }
@@ -295,7 +298,7 @@ void load_cell_Task()
 	while(1)
 	{
 		// currently no event detected & reader was off
-		if(!event_ongoing || series_completed)
+		if(!event_ongoing || series_completed || tare_request)
 		{
             /************ADS1220 POLLING*************/
             Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
@@ -306,7 +309,34 @@ void load_cell_Task()
             ads1220_event(&ads);
             ads1220_powerdown(&ads);
 
-            if((ads.data)>ads.periodic_threshold || threshold_bypass_request>0)
+            if(tare_request) // user requested new tare
+            {
+                tare_request = 0;
+                event_ongoing = 0;
+                series_completed = 0;
+                ads1220_tare(20, &max_cont_deviation, &max_periodic_deviation, &ads);
+                if((max_cont_deviation + max_periodic_deviation) < TARE_TOLERANCE)
+                {
+                    ads1220_set_thresholds(&ads, WEIGHT_THRESHOLD);
+                    last_measured_offset = ads.cont_offset;
+                    last_measured_threshold = ads.periodic_threshold;
+                }
+                else
+                {
+                    GPIO_write(Board_led_status,1);
+                    Task_sleep(200);
+                    GPIO_write(Board_led_status,0);
+                    Task_sleep(200);
+                    GPIO_write(Board_led_status,1);
+                    Task_sleep(200);
+                    GPIO_write(Board_led_status,0);
+                    Task_sleep(200);
+                    GPIO_write(Board_led_status,1);
+                    Task_sleep(200);
+                    GPIO_write(Board_led_status,0);
+                }
+            }
+            else if((ads.data)>ads.periodic_threshold || threshold_bypass_request>0)
             {
 	            log_write_new_entry('D', ((ads.data)>>8) & 0x0000ffff);
 				if(event_ongoing==0)
@@ -335,16 +365,6 @@ void load_cell_Task()
 						Task_sleep(T_RFID_RETRY);
 				}
 			}
-            else if(tare_request) // user requested new tare
-            {
-                tare_request = 0;
-                ads1220_tare(20, &max_cont_deviation, &max_periodic_deviation, &ads);
-                if((max_cont_deviation + max_periodic_deviation) < TARE_TOLERANCE)
-                {
-                    last_measured_offset = ads.cont_offset;
-                    ads1220_set_thresholds(&ads, WEIGHT_THRESHOLD);
-                }
-            }
 			else
 			{
 				// periodically measure tare offset again

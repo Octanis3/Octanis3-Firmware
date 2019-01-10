@@ -19,6 +19,7 @@
 
 void rfid_Task();
 int rfid_get_id(uint64_t* id);
+void rfid_get_last_id(uint64_t* id);
 
 void rfid_start_detection();
 void rfid_stop_detection();

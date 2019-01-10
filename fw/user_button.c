@@ -255,16 +255,16 @@ void user_button_Task()
             case 'R':
             {
                 uint64_t tag_id = 0;
-                rfid_get_id(&tag_id);
+                rfid_get_last_id(&tag_id);
 
-                unsigned char tx_buf[5];
-                tx_buf[0] = 'R';
-                tx_buf[1] = (unsigned char)(tag_id >> 24);
-                tx_buf[2] = (unsigned char)(tag_id >> 16);
-                tx_buf[3] = (unsigned char)(tag_id >> 8);
-                tx_buf[4] = (unsigned char)(tag_id);
+                unsigned char rfid_tx_buf[5];
+                rfid_tx_buf[0] = 'R';
+                rfid_tx_buf[1] = (unsigned char)(tag_id >> 24);
+                rfid_tx_buf[2] = (unsigned char)(tag_id >> 16);
+                rfid_tx_buf[3] = (unsigned char)(tag_id >> 8);
+                rfid_tx_buf[4] = (unsigned char)(tag_id);
 
-                min_send_frame(&min_ctx, 0x33U, tx_buf, 5);
+                min_send_frame(&min_ctx, 0x33U, rfid_tx_buf, 5);
 
                 break;
             }
