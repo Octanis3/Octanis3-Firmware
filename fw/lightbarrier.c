@@ -5,6 +5,8 @@
  *      Author: raffael
  */
 
+#if USE_LB
+
 #include "lightbarrier.h"
 #include "../Board.h"
 #include <ti/sysbios/hal/Hwi.h>
@@ -53,7 +55,6 @@ void lightBarrier_init()
     // CSCTL3 |= DIVS__0;                     // Default SMCLK, ACLK and MCLK: divide by 0!
     CSCTL0_H = 0;                             // Lock CS registers
 }
-
 void lightBarrier_start()
 {
     // Configure Timer0_A
@@ -104,7 +105,6 @@ void lightBarrier_turn_on()
 #endif
 }
 
-#ifdef LIGHTBARRIER_VERSION
 
 void lightBarrier_Task()
 {
@@ -211,11 +211,9 @@ void lightBarrier_Task()
 
     }
 }
-#endif
 
 void lightbarrier_input_isr(unsigned int index)
 {
-#ifdef LIGHTBARRIER_VERSION
 //	//check interrupt source
 	if(index == nbox_lightbarrier_ext)
 	{
@@ -259,7 +257,6 @@ void lightbarrier_input_isr(unsigned int index)
 	}
 
 	lb_status.event_counter = lb_status.event_counter+1;
-#else
-    GPIO_disableInt(nbox_lightbarrier_ext);
-#endif
 }
+#endif
+

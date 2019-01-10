@@ -85,22 +85,14 @@ uint32_t rtc_get_pause_times_compact()
 void rtc_calibration()
 {
     // compensate for LFX deviation:
-        RTCCTL01 = RTCHOLD;
+    RTCCTL01 = RTCHOLD;
 
-        // measured 511.824689 Hz! --> -342 ppm --> RTCCAL = 342/4.34 = 79 --> maxed out!!
+    // measured 511.824689 Hz! --> -342 ppm --> RTCCAL = 342/4.34 = 79 --> maxed out!!
 
-        RTCCTL23 = 0; //RTCCAL5 + RTCCAL4 + RTCCAL3 + RTCCAL2 + RTCCAL1 + RTCCAL0;
-        RTCCTL23 |= RTCCALS;
+    RTCCTL23 = 0; //RTCCAL5 + RTCCAL4 + RTCCAL3 + RTCCAL2 + RTCCAL1 + RTCCAL0;
+//        RTCCTL23 |= RTCCALS;
 
-
-
-/*********** OLD VALUES: ********/
-//        // Here we compensate for 11.1ppm = 5*2.17 --> 5 = 0b101
-//
-//        RTCCTL23 = RTCCAL2 + RTCCAL0;
-//        RTCCTL23 &= ~RTCCALS;
-
-        RTCCTL01 &= ~(RTCHOLD);                 // Start RTC
+    RTCCTL01 &= ~(RTCHOLD);                 // Start RTC
 }
 
 void rtc_config()
@@ -155,6 +147,7 @@ void rtc_update_system_time()
     unix_timestamp = mktime(&ltm) - 2208988800; // add offset from year 1900 to 1970.
 
     Seconds_set(unix_timestamp);
+    log_write_new_entry('U', 0);
 }
 
 static enum rtc_state_ {

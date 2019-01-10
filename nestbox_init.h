@@ -65,7 +65,7 @@ extern "C" {
 //#define WIFI_USE_5V         1 //def or undef
 
 #define USE_PIR     0 // define as 0 or 1!
-
+#define USE_LB      0 // define as 0 or 1!
 
 /* LEDs on nestbox_board are active high. */
 #define nbox_LED_OFF (0)
@@ -79,9 +79,10 @@ typedef enum nbox_GPIOName {
     //inputs
     nbox_wifi_sense = 0,
 	nbox_button,
-
+#if USE_LB
 	nbox_lightbarrier_ext,
 	nbox_lightbarrier_int,
+#endif
 	nbox_loadcell_data_ready,
 #if USE_PIR
 	nbox_pir_in1,

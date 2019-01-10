@@ -123,10 +123,12 @@ GPIO_PinConfig gpioPinConfigs[] = {
 #else
     GPIOMSP430_P4_2 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
 #endif
+#if USE_LB
 	/* NESTBOX_LIGHTBARRIER_IN_EXT */
 	GPIOMSP430_P1_4 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
 	/* NESTBOX_LIGHTBARRIER_IN_INT */
 	GPIOMSP430_P1_3 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
+#endif
 	/* NESTBOX_LOADCELL_DRDY */
 	GPIOMSP430_P3_4 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
 #if USE_PIR
@@ -203,6 +205,12 @@ GPIO_PinConfig gpioPinConfigs[] = {
 	/* NESTBOX_PIR_IN2 */
     GPIOMSP430_P3_1 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_LOW | GPIO_CFG_OUT_LOW,
 #endif
+#if !USE_LB
+    /* NESTBOX_PIR_IN1 */
+    GPIOMSP430_P1_4 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_LOW | GPIO_CFG_OUT_LOW,
+    /* NESTBOX_PIR_IN2 */
+    GPIOMSP430_P1_3 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_LOW | GPIO_CFG_OUT_LOW,
+#endif
 	//TODO: REMOVE WHEN DEFINING LORA
 	GPIOMSP430_P4_4 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_LOW | GPIO_CFG_OUT_HIGH,
 	GPIOMSP430_P2_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_LOW | GPIO_CFG_OUT_LOW,
@@ -221,8 +229,10 @@ GPIO_PinConfig gpioPinConfigs[] = {
 GPIO_CallbackFxn gpioCallbackFunctions[] = {
     wifi_sense_isr,  /* nestbox user button */
 	user_button_isr,  /* nestbox user button */
+#if USE_LB
 	lightbarrier_input_isr, /* lightbarrier detection routine */
 	lightbarrier_input_isr, /* lightbarrier detection routine */
+#endif
 	load_cell_isr, /* Data ready pin for the ADS1220 load cell amplifier */
 #if USE_PIR
 	PIR_wakeup_isr,

@@ -77,6 +77,7 @@ void set_weight_threshold(int32_t new_th)
 void load_cell_bypass_threshold(int status)
 {
     threshold_bypass_request = status;
+    log_write_new_entry('C', status);
 }
 
 void load_cell_trigger_tare()
