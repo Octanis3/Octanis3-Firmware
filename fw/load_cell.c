@@ -37,9 +37,9 @@
 #define PLUS_SIGN 		' '
 #define MINUS_SIGN		'-'
 
-#define RFID_TIMEOUT		200 	//ms
-#define T_RFID_RETRY		1000 	//ms
-#define T_LOADCELL_POLL	1000 	//ms
+#define RFID_TIMEOUT		500 	//ms
+#define T_RFID_RETRY		500 	//ms
+#define T_LOADCELL_POLL	100 	//ms
 
 #define TARE_TOLERANCE      6000    // maximum variation to get a new tare value
 #define SAMPLE_TOLERANCE 	1000		// maximum variation of the sampled values within N_AVERAGES samples
@@ -298,7 +298,8 @@ void load_cell_Task()
 	while(1)
 	{
 		// currently no event detected & reader was off
-		if(!event_ongoing || series_completed || tare_request)
+//		if(!event_ongoing || series_completed || tare_request)
+	    if(1)
 		{
             /************ADS1220 POLLING*************/
             Semaphore_reset((Semaphore_Handle)semLoadCellDRDY, 0);
@@ -336,10 +337,11 @@ void load_cell_Task()
                     GPIO_write(Board_led_status,0);
                 }
             }
-            else if((ads.data)>ads.periodic_threshold || threshold_bypass_request>0)
+//            else if((ads.data)>ads.periodic_threshold || threshold_bypass_request>0)
+             if(1)
             {
 	            log_write_new_entry('D', ((ads.data)>>8) & 0x0000ffff);
-				if(event_ongoing==0)
+				if(1)
 				{
 				    rfid_start_detection();
                     Semaphore_pend((Semaphore_Handle)semLoadCell,RFID_TIMEOUT);
@@ -350,6 +352,7 @@ void load_cell_Task()
 					if(rfid_type>0 || threshold_bypass_request>0)
 					{
 	                    rfid_reset_detection_counts();
+	                    GPIO_write(Board_led_status,1);
 
 						// change to slow = exact mode
 					    GPIO_disableInt(nbox_loadcell_data_ready);
@@ -362,7 +365,10 @@ void load_cell_Task()
 						series_completed = 0;
 					}
 					else
-						Task_sleep(T_RFID_RETRY);
+					{
+					    GPIO_write(Board_led_status,0);
+					}
+					Task_sleep(T_RFID_RETRY);
 				}
 			}
 			else
@@ -392,7 +398,8 @@ void load_cell_Task()
 			Task_sleep(T_LOADCELL_POLL);
 		}
 
-		if(event_ongoing>0 && series_completed==0)
+//		if(event_ongoing>0 && series_completed==0)
+	    if(0)
 		{
 			// -->ID WAS DETECTED!
 

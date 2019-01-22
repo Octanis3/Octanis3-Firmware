@@ -113,7 +113,7 @@ void mlx90109_disable_reader(mlx90109_t *dev, tagdata *tag)
 	//disable clk interrupt
 	GPIO_disableInt(nbox_lf_clk);
 
-	GPIO_write(Board_led_status,0);
+//	GPIO_write(Board_led_status,0);
 
 #ifdef VERBOSE
 	//send out tag ID:
